@@ -1,0 +1,388 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+/* Charte Graphique - Palette Orange Mali Stricte */
+/* Couleurs autorisées uniquement : Noir, Blanc, Orange, Gris */
+/* Le noir et le blanc sont les couleurs primaires */
+/* L'orange doit maximiser son impact */
+/* Le gris doit être utilisé modérément */
+
+:root {
+  /* Background & Surface - Blanc (Couleur Primaire) */
+  --background: oklch(1 0 0); /* #FFFFFF - Blanc pur */
+  --foreground: oklch(0 0 0); /* #000000 - Noir pur */
+  --card: oklch(1 0 0); /* #FFFFFF - Blanc pur */
+  --card-foreground: oklch(0 0 0); /* #000000 - Noir pur */
+  --popover: oklch(1 0 0); /* #FFFFFF - Blanc pur */
+  --popover-foreground: oklch(0 0 0); /* #000000 - Noir pur */
+  
+  /* Primary - Orange Digital (Couleur d'Impact) - Maximiser l'impact */
+  --primary: oklch(0.65 0.18 55); /* #FF7900 - Orange Digital 1 */
+  --primary-foreground: oklch(1 0 0); /* #FFFFFF - Blanc */
+  
+  /* Secondary - Noir (Couleur Primaire) pour éléments secondaires */
+  --secondary: oklch(0.15 0 0); /* #1A1A1A - Noir 900 */
+  --secondary-foreground: oklch(1 0 0); /* #FFFFFF - Blanc */
+  
+  /* Accent - Orange variante pour accents */
+  --accent: oklch(0.58 0.18 55); /* #F16E00 - Orange Digital 2 */
+  --accent-foreground: oklch(1 0 0); /* #FFFFFF - Blanc */
+  
+  /* Muted - Gris modéré uniquement */
+  --muted: oklch(0.96 0.002 260); /* #F5F5F5 - Gris 100 */
+  --muted-foreground: oklch(0.45 0.002 260); /* #525252 - Gris 600 */
+  
+  /* Semantic Colors - Utiliser uniquement la palette stricte */
+  /* Destructive - Noir pour erreurs */
+  --destructive: oklch(0 0 0); /* #000000 - Noir pur */
+  --destructive-foreground: oklch(1 0 0); /* #FFFFFF - Blanc */
+  
+  /* Success - Orange pour succès (maximiser l'impact) */
+  --success: oklch(0.65 0.18 55); /* #FF7900 - Orange Digital 1 */
+  --success-foreground: oklch(1 0 0); /* #FFFFFF - Blanc */
+  
+  /* Warning - Orange pour attention (maximiser l'impact) */
+  --warning: oklch(0.65 0.18 55); /* #FF7900 - Orange Digital 1 */
+  --warning-foreground: oklch(0 0 0); /* #000000 - Noir */
+  
+  /* Borders & Inputs - Gris modéré */
+  --border: oklch(0.92 0.002 260); /* #E5E5E5 - Gris 200 */
+  --input: oklch(0.92 0.002 260); /* #E5E5E5 - Gris 200 */
+  --ring: oklch(0.65 0.18 55); /* #FF7900 - Orange pour focus (maximiser l'impact) */
+  
+  /* Radius */
+  --radius: 0.75rem;
+  
+  /* Chart Colors - Uniquement palette stricte */
+  --chart-1: oklch(0.65 0.18 55); /* Orange Digital 1 */
+  --chart-2: oklch(0.58 0.18 55); /* Orange Digital 2 */
+  --chart-3: oklch(0.73 0.15 55); /* Orange clair */
+  --chart-4: oklch(0.50 0.18 55); /* Orange foncé */
+  --chart-5: oklch(0.45 0.002 260); /* Gris 600 */
+  
+  /* Sidebar */
+  --sidebar: oklch(0.98 0 0); /* #FAFAFA - Blanc cassé */
+  --sidebar-foreground: oklch(0 0 0); /* #000000 - Noir */
+  --sidebar-primary: oklch(0.65 0.18 55); /* #FF7900 - Orange */
+  --sidebar-primary-foreground: oklch(1 0 0); /* #FFFFFF - Blanc */
+  --sidebar-accent: oklch(0.96 0.002 260); /* #F5F5F5 - Gris 100 */
+  --sidebar-accent-foreground: oklch(0 0 0); /* #000000 - Noir */
+  --sidebar-border: oklch(0.92 0.002 260); /* #E5E5E5 - Gris 200 */
+  --sidebar-ring: oklch(0.65 0.18 55); /* #FF7900 - Orange */
+}
+
+.dark {
+  /* Background & Surface - Noir (Couleur Primaire) */
+  --background: oklch(0 0 0); /* #000000 - Noir pur */
+  --foreground: oklch(1 0 0); /* #FFFFFF - Blanc pur */
+  --card: oklch(0.15 0 0); /* #1A1A1A - Noir 900 */
+  --card-foreground: oklch(1 0 0); /* #FFFFFF - Blanc */
+  --popover: oklch(0.15 0 0); /* #1A1A1A - Noir 900 */
+  --popover-foreground: oklch(1 0 0); /* #FFFFFF - Blanc */
+  
+  /* Primary - Orange (légèrement plus clair pour dark mode) */
+  --primary: oklch(0.73 0.18 55); /* Orange clair pour meilleur contraste */
+  --primary-foreground: oklch(0 0 0); /* #000000 - Noir */
+  
+  /* Secondary - Blanc pour éléments secondaires */
+  --secondary: oklch(0.98 0 0); /* #FAFAFA - Blanc cassé */
+  --secondary-foreground: oklch(0 0 0); /* #000000 - Noir */
+  
+  /* Accent - Orange variante */
+  --accent: oklch(0.70 0.18 55); /* Orange moyen */
+  --accent-foreground: oklch(0 0 0); /* #000000 - Noir */
+  
+  /* Muted - Gris modéré */
+  --muted: oklch(0.25 0.002 260); /* Gris foncé */
+  --muted-foreground: oklch(0.70 0.002 260); /* Gris clair */
+  
+  /* Semantic Colors */
+  --destructive: oklch(0.98 0 0); /* Blanc pour erreurs sur fond noir */
+  --destructive-foreground: oklch(0 0 0); /* Noir */
+  --success: oklch(0.73 0.18 55); /* Orange clair */
+  --success-foreground: oklch(0 0 0); /* Noir */
+  --warning: oklch(0.73 0.18 55); /* Orange clair */
+  --warning-foreground: oklch(0 0 0); /* Noir */
+  
+  /* Borders & Inputs */
+  --border: oklch(0.35 0.002 260); /* Gris moyen */
+  --input: oklch(0.35 0.002 260); /* Gris moyen */
+  --ring: oklch(0.73 0.18 55); /* Orange clair */
+  
+  /* Chart Colors */
+  --chart-1: oklch(0.73 0.18 55); /* Orange clair */
+  --chart-2: oklch(0.70 0.18 55); /* Orange moyen */
+  --chart-3: oklch(0.65 0.18 55); /* Orange Digital 1 */
+  --chart-4: oklch(0.58 0.18 55); /* Orange Digital 2 */
+  --chart-5: oklch(0.70 0.002 260); /* Gris clair */
+  
+  /* Sidebar */
+  --sidebar: oklch(0.15 0 0); /* #1A1A1A - Noir 900 */
+  --sidebar-foreground: oklch(1 0 0); /* #FFFFFF - Blanc */
+  --sidebar-primary: oklch(0.73 0.18 55); /* Orange clair */
+  --sidebar-primary-foreground: oklch(0 0 0); /* Noir */
+  --sidebar-accent: oklch(0.25 0.002 260); /* Gris foncé */
+  --sidebar-accent-foreground: oklch(1 0 0); /* Blanc */
+  --sidebar-border: oklch(0.35 0.002 260); /* Gris moyen */
+  --sidebar-ring: oklch(0.73 0.18 55); /* Orange clair */
+}
+
+@theme inline {
+  /* Fonts - Using system fonts as fallback to avoid Turbopack font loading issues */
+  --font-sans: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+  --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+  
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  
+  html {
+    font-family: var(--font-sans);
+  }
+  
+  body {
+    @apply bg-background text-foreground;
+    font-family: var(--font-sans);
+  }
+  
+  /* Accessibility: Focus visible styles - Orange pour maximiser l'impact */
+  *:focus-visible {
+    @apply outline-2 outline-offset-2 outline-primary;
+  }
+  
+  /* Skip to content link - hidden by default, visible on focus */
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border-width: 0;
+  }
+  
+  .sr-only:focus {
+    position: static;
+    width: auto;
+    height: auto;
+    padding: inherit;
+    margin: inherit;
+    overflow: visible;
+    clip: auto;
+    white-space: normal;
+  }
+  
+  /* Scrollbar hide utility */
+  .scrollbar-hide {
+    -ms-overflow-style: none;  /* IE and Edge */
+    scrollbar-width: none;  /* Firefox */
+  }
+  
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;  /* Chrome, Safari and Opera */
+  }
+
+  /* Prevent text truncation in category links */
+  .category-link {
+    overflow: visible;
+    text-overflow: clip;
+    white-space: nowrap;
+    word-break: keep-all;
+    min-width: max-content;
+    /* Ensure text is never cut */
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* Smooth scroll snap for categories on mobile */
+  @media (max-width: 768px) {
+    .category-link {
+      min-width: fit-content;
+      touch-action: manipulation;
+      /* Minimum touch target size (44x44px recommended) */
+      min-height: 36px;
+    }
+    
+    /* Ensure horizontal scroll works smoothly on mobile */
+    .category-scroll-container {
+      -webkit-overflow-scrolling: touch;
+      scroll-behavior: smooth;
+      overscroll-behavior-x: contain;
+      /* Prevent vertical scroll when scrolling horizontally */
+      overscroll-behavior-y: none;
+      /* Smooth momentum scrolling on iOS */
+      -webkit-overflow-scrolling: touch;
+    }
+    
+    /* Add visual scroll indicators on mobile */
+    .category-scroll-container::before,
+    .category-scroll-container::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      width: 20px;
+      pointer-events: none;
+      z-index: 10;
+    }
+  }
+
+  /* Desktop: Remove scroll, center content */
+  @media (min-width: 768px) {
+    .category-scroll-container {
+      overflow-x: visible !important;
+    }
+  }
+
+  /* Smooth scrolling */
+  html {
+    scroll-behavior: smooth;
+  }
+
+  /* Improved focus styles for better accessibility - Orange pour maximiser l'impact */
+  a:focus-visible,
+  button:focus-visible,
+  input:focus-visible,
+  textarea:focus-visible,
+  select:focus-visible,
+  [tabindex]:focus-visible {
+    @apply outline-2 outline-offset-2 outline-primary ring-2 ring-primary/30;
+  }
+
+  /* Skip links visible on focus */
+  .skip-link:focus {
+    position: absolute;
+    top: 1rem;
+    left: 1rem;
+    z-index: 9999;
+    padding: 0.75rem 1.5rem;
+    background: hsl(var(--primary));
+    color: white;
+    border-radius: 0.375rem;
+    font-weight: 600;
+    text-decoration: none;
+    box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+  }
+
+  /* Better transitions for interactive elements */
+  a, button {
+    @apply transition-all duration-200;
+  }
+
+  /* Ripple animation */
+  @keyframes ripple {
+    from {
+      transform: translate(-50%, -50%) scale(0);
+      opacity: 1;
+    }
+    to {
+      transform: translate(-50%, -50%) scale(4);
+      opacity: 0;
+    }
+  }
+
+  .animate-ripple {
+    animation: ripple 0.6s ease-out;
+  }
+
+  /* Sticky tabs for mobile - bottom navigation */
+  @media (max-width: 768px) {
+    .course-detail-tabs {
+      position: sticky;
+      bottom: 0;
+      top: auto;
+      z-index: 50;
+      background: white;
+      border-top: 2px solid hsl(var(--border));
+      box-shadow: 0 -4px 6px -1px rgb(0 0 0 / 0.1);
+    }
+  }
+
+  /* Scroll margin for sections with sticky tabs */
+  .scroll-mt-24 {
+    scroll-margin-top: 6rem;
+  }
+
+  /* Page transition */
+  .page-transition-enter {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+
+  .page-transition-enter-active {
+    opacity: 1;
+    transform: translateY(0);
+    transition: opacity 0.3s ease, transform 0.3s ease;
+  }
+
+  .page-transition-exit {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  .page-transition-exit-active {
+    opacity: 0;
+    transform: translateY(-20px);
+    transition: opacity 0.3s ease, transform 0.3s ease;
+  }
+
+  /* Fade in up animation for stats */
+  @keyframes fadeInUp {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+}

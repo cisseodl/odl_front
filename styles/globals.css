@@ -1,0 +1,419 @@
+@import 'tailwindcss';
+@import 'tw-animate-css';
+
+@custom-variant dark (&:is(.dark *));
+
+/* Charte Graphique - Palette Orange Mali Stricte */
+/* Couleurs autorisées uniquement : Noir, Blanc, Orange, Gris */
+/* Le noir et le blanc sont les couleurs primaires */
+/* L'orange doit maximiser son impact */
+/* Le gris doit être utilisé modérément */
+
+:root {
+  /* Background & Surface - Blanc (Couleur Primaire) */
+  --background: oklch(1 0 0); /* #FFFFFF - Blanc pur */
+  --foreground: oklch(0 0 0); /* #000000 - Noir pur */
+  --card: oklch(1 0 0); /* #FFFFFF - Blanc pur */
+  --card-foreground: oklch(0 0 0); /* #000000 - Noir pur */
+  --popover: oklch(1 0 0); /* #FFFFFF - Blanc pur */
+  --popover-foreground: oklch(0 0 0); /* #000000 - Noir pur */
+  
+  /* Primary - Orange Digital (Couleur d'Impact) - Maximiser l'impact */
+  --primary: oklch(0.65 0.18 55); /* #FF7900 - Orange Digital 1 */
+  --primary-foreground: oklch(1 0 0); /* #FFFFFF - Blanc */
+  
+  /* Secondary - Noir (Couleur Primaire) pour éléments secondaires */
+  --secondary: oklch(0.15 0 0); /* #1A1A1A - Noir 900 */
+  --secondary-foreground: oklch(1 0 0); /* #FFFFFF - Blanc */
+  
+  /* Accent - Orange variante pour accents */
+  --accent: oklch(0.58 0.18 55); /* #F16E00 - Orange Digital 2 */
+  --accent-foreground: oklch(1 0 0); /* #FFFFFF - Blanc */
+  
+  /* Muted - Gris modéré uniquement */
+  --muted: oklch(0.96 0.002 260); /* #F5F5F5 - Gris 100 */
+  --muted-foreground: oklch(0.45 0.002 260); /* #525252 - Gris 600 */
+  
+  /* Semantic Colors - Utiliser uniquement la palette stricte */
+  /* Destructive - Noir pour erreurs */
+  --destructive: oklch(0 0 0); /* #000000 - Noir pur */
+  --destructive-foreground: oklch(1 0 0); /* #FFFFFF - Blanc */
+  
+  /* Success - Orange pour succès (maximiser l'impact) */
+  --success: oklch(0.65 0.18 55); /* #FF7900 - Orange Digital 1 */
+  --success-foreground: oklch(1 0 0); /* #FFFFFF - Blanc */
+  
+  /* Warning - Orange pour attention (maximiser l'impact) */
+  --warning: oklch(0.65 0.18 55); /* #FF7900 - Orange Digital 1 */
+  --warning-foreground: oklch(0 0 0); /* #000000 - Noir */
+  
+  /* Borders & Inputs - Gris modéré */
+  --border: oklch(0.92 0.002 260); /* #E5E5E5 - Gris 200 */
+  --input: oklch(0.92 0.002 260); /* #E5E5E5 - Gris 200 */
+  --ring: oklch(0.65 0.18 55); /* #FF7900 - Orange pour focus (maximiser l'impact) */
+  
+  /* Radius */
+  --radius: 0.75rem;
+  
+  /* Chart Colors - Uniquement palette stricte */
+  --chart-1: oklch(0.65 0.18 55); /* Orange Digital 1 */
+  --chart-2: oklch(0.58 0.18 55); /* Orange Digital 2 */
+  --chart-3: oklch(0.73 0.15 55); /* Orange clair */
+  --chart-4: oklch(0.50 0.18 55); /* Orange foncé */
+  --chart-5: oklch(0.45 0.002 260); /* Gris 600 */
+  
+  /* Sidebar */
+  --sidebar: oklch(0.98 0 0); /* #FAFAFA - Blanc cassé */
+  --sidebar-foreground: oklch(0 0 0); /* #000000 - Noir */
+  --sidebar-primary: oklch(0.65 0.18 55); /* #FF7900 - Orange */
+  --sidebar-primary-foreground: oklch(1 0 0); /* #FFFFFF - Blanc */
+  --sidebar-accent: oklch(0.96 0.002 260); /* #F5F5F5 - Gris 100 */
+  --sidebar-accent-foreground: oklch(0 0 0); /* #000000 - Noir */
+  --sidebar-border: oklch(0.92 0.002 260); /* #E5E5E5 - Gris 200 */
+  --sidebar-ring: oklch(0.65 0.18 55); /* #FF7900 - Orange */
+}
+
+.dark {
+  /* Background & Surface - Noir (Couleur Primaire) */
+  --background: oklch(0 0 0); /* #000000 - Noir pur */
+  --foreground: oklch(1 0 0); /* #FFFFFF - Blanc pur */
+  --card: oklch(0.15 0 0); /* #1A1A1A - Noir 900 */
+  --card-foreground: oklch(1 0 0); /* #FFFFFF - Blanc */
+  --popover: oklch(0.15 0 0); /* #1A1A1A - Noir 900 */
+  --popover-foreground: oklch(1 0 0); /* #FFFFFF - Blanc */
+  
+  /* Primary - Orange (légèrement plus clair pour dark mode) */
+  --primary: oklch(0.73 0.18 55); /* Orange clair pour meilleur contraste */
+  --primary-foreground: oklch(0 0 0); /* #000000 - Noir */
+  
+  /* Secondary - Blanc pour éléments secondaires */
+  --secondary: oklch(0.98 0 0); /* #FAFAFA - Blanc cassé */
+  --secondary-foreground: oklch(0 0 0); /* #000000 - Noir */
+  
+  /* Accent - Orange variante */
+  --accent: oklch(0.70 0.18 55); /* Orange moyen */
+  --accent-foreground: oklch(0 0 0); /* #000000 - Noir */
+  
+  /* Muted - Gris modéré */
+  --muted: oklch(0.25 0.002 260); /* Gris foncé */
+  --muted-foreground: oklch(0.70 0.002 260); /* Gris clair */
+  
+  /* Semantic Colors */
+  --destructive: oklch(0.98 0 0); /* Blanc pour erreurs sur fond noir */
+  --destructive-foreground: oklch(0 0 0); /* Noir */
+  --success: oklch(0.73 0.18 55); /* Orange clair */
+  --success-foreground: oklch(0 0 0); /* Noir */
+  --warning: oklch(0.73 0.18 55); /* Orange clair */
+  --warning-foreground: oklch(0 0 0); /* Noir */
+  
+  /* Borders & Inputs */
+  --border: oklch(0.35 0.002 260); /* Gris moyen */
+  --input: oklch(0.35 0.002 260); /* Gris moyen */
+  --ring: oklch(0.73 0.18 55); /* Orange clair */
+  
+  /* Chart Colors */
+  --chart-1: oklch(0.73 0.18 55); /* Orange clair */
+  --chart-2: oklch(0.70 0.18 55); /* Orange moyen */
+  --chart-3: oklch(0.65 0.18 55); /* Orange Digital 1 */
+  --chart-4: oklch(0.58 0.18 55); /* Orange Digital 2 */
+  --chart-5: oklch(0.70 0.002 260); /* Gris clair */
+  
+  /* Sidebar */
+  --sidebar: oklch(0.15 0 0); /* #1A1A1A - Noir 900 */
+  --sidebar-foreground: oklch(1 0 0); /* #FFFFFF - Blanc */
+  --sidebar-primary: oklch(0.73 0.18 55); /* Orange clair */
+  --sidebar-primary-foreground: oklch(0 0 0); /* Noir */
+  --sidebar-accent: oklch(0.25 0.002 260); /* Gris foncé */
+  --sidebar-accent-foreground: oklch(1 0 0); /* Blanc */
+  --sidebar-border: oklch(0.35 0.002 260); /* Gris moyen */
+  --sidebar-ring: oklch(0.73 0.18 55); /* Orange clair */
+}
+
+@theme inline {
+  /* ============================================
+     TYPOGRAPHY - Design System Tokens
+     ============================================ */
+  /* Font Families */
+  --font-sans: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+  --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+  
+  /* Display Sizes - Titres de pages principales */
+  --text-display-lg: 3.75rem;    /* 60px */
+  --text-display-md: 3rem;       /* 48px */
+  --text-display-sm: 2.25rem;    /* 36px */
+  
+  /* Heading Sizes */
+  --text-h1: 2rem;               /* 32px */
+  --text-h2: 1.5rem;             /* 24px */
+  --text-h3: 1.25rem;            /* 20px */
+  --text-h4: 1.125rem;           /* 18px */
+  
+  /* Body Sizes */
+  --text-lg: 1.125rem;           /* 18px */
+  --text-base: 1rem;             /* 16px */
+  --text-sm: 0.875rem;           /* 14px */
+  --text-xs: 0.75rem;            /* 12px */
+  
+  /* Line Heights */
+  --leading-tight: 1.25;
+  --leading-normal: 1.5;
+  --leading-relaxed: 1.75;
+  
+  /* Font Weights */
+  --font-normal: 400;
+  --font-medium: 500;
+  --font-semibold: 600;
+  --font-bold: 700;
+  
+  /* ============================================
+     SPACING - Design System Tokens (8px base)
+     ============================================ */
+  --space-0: 0;
+  --space-1: 0.25rem;    /* 4px */
+  --space-2: 0.5rem;     /* 8px */
+  --space-3: 0.75rem;    /* 12px */
+  --space-4: 1rem;       /* 16px */
+  --space-5: 1.25rem;    /* 20px */
+  --space-6: 1.5rem;     /* 24px */
+  --space-8: 2rem;       /* 32px */
+  --space-10: 2.5rem;    /* 40px */
+  --space-12: 3rem;      /* 48px */
+  --space-16: 4rem;      /* 64px */
+  --space-20: 5rem;      /* 80px */
+  --space-24: 6rem;      /* 96px */
+  
+  /* ============================================
+     ANIMATIONS & TRANSITIONS
+     ============================================ */
+  --duration-instant: 100ms;
+  --duration-fast: 200ms;
+  --duration-normal: 300ms;
+  --duration-slow: 500ms;
+  
+  /* Easing Functions */
+  --ease-in: cubic-bezier(0.4, 0, 1, 1);
+  --ease-out: cubic-bezier(0, 0, 0.2, 1);
+  --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  
+  /* ============================================
+     ICON SIZES
+     ============================================ */
+  --icon-xs: 16px;
+  --icon-sm: 20px;
+  --icon-md: 24px;       /* Défaut */
+  --icon-lg: 32px;
+  --icon-xl: 48px;
+  
+  /* ============================================
+     BREAKPOINTS - Responsive Design
+     ============================================ */
+  --breakpoint-sm: 640px;   /* Tablette portrait */
+  --breakpoint-md: 768px;   /* Tablette landscape */
+  --breakpoint-lg: 1024px;  /* Desktop */
+  --breakpoint-xl: 1280px;  /* Large desktop */
+  --breakpoint-2xl: 1536px; /* Extra large */
+  
+  /* ============================================
+     COLOR TOKENS - Palette Orange Mali
+     ============================================ */
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  
+  /* ============================================
+     BORDER RADIUS
+     ============================================ */
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  
+  /* ============================================
+     SIDEBAR TOKENS
+     ============================================ */
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  
+  html {
+    font-family: var(--font-sans);
+  }
+  
+  body {
+    @apply bg-background text-foreground;
+    font-family: var(--font-sans);
+    font-size: var(--text-base);
+    line-height: var(--leading-relaxed);
+    color: var(--foreground);
+  }
+  
+  /* ============================================
+     TYPOGRAPHY STYLES
+     ============================================ */
+  h1 {
+    font-size: var(--text-h1);
+    font-weight: var(--font-bold);
+    line-height: var(--leading-tight);
+    letter-spacing: -0.02em;
+    color: var(--foreground);
+  }
+  
+  h2 {
+    font-size: var(--text-h2);
+    font-weight: var(--font-bold);
+    line-height: var(--leading-tight);
+    letter-spacing: -0.01em;
+    color: var(--foreground);
+  }
+  
+  h3 {
+    font-size: var(--text-h3);
+    font-weight: var(--font-semibold);
+    line-height: var(--leading-normal);
+    color: var(--foreground);
+  }
+  
+  h4 {
+    font-size: var(--text-h4);
+    font-weight: var(--font-semibold);
+    line-height: var(--leading-normal);
+    color: var(--foreground);
+  }
+  
+  p, body {
+    font-size: var(--text-base);
+    font-weight: var(--font-normal);
+    line-height: var(--leading-relaxed);
+    color: var(--foreground);
+  }
+  
+  /* ============================================
+     ACCESSIBILITY - Focus Styles
+     ============================================ */
+  *:focus-visible {
+    outline: 3px solid var(--ring);
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+  
+  *:focus:not(:focus-visible) {
+    outline: none;
+  }
+  
+  /* Screen Reader Only */
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border-width: 0;
+  }
+  
+  /* ============================================
+     REDUCED MOTION - Accessibility
+     ============================================ */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+  
+  /* ============================================
+     ANIMATIONS - E-Learning Patterns
+     ============================================ */
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  
+  @keyframes slideUp {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.7; }
+  }
+  
+  .fade-in {
+    animation: fadeIn var(--duration-normal) var(--ease-out);
+  }
+  
+  .slide-up {
+    animation: slideUp var(--duration-normal) var(--ease-out);
+  }
+  
+  /* ============================================
+     TOUCH TARGETS - Mobile Accessibility
+     ============================================ */
+  button,
+  a,
+  input[type="checkbox"],
+  input[type="radio"],
+  [role="button"] {
+    min-height: 44px; /* iOS minimum */
+    min-width: 44px;
+  }
+  
+  @media (min-width: 768px) {
+    button,
+    a,
+    [role="button"] {
+      min-height: 24px; /* Desktop can be smaller */
+      min-width: 24px;
+    }
+  }
+}

@@ -1,0 +1,739 @@
+"use client"
+
+import Link from "next/link"
+import { useState, useEffect } from "react"
+import { Share2, Bookmark, MoreVertical, Play, Plus, Star, Clock, Users, Award, CheckCircle2, FileText, Video, BookOpen, HelpCircle, ArrowLeft, Globe, BarChart3, Infinity } from "lucide-react"
+import { Button } from "@/components/ui/button"
+import { Badge } from "@/components/ui/badge"
+import { Separator } from "@/components/ui/separator"
+import { VideoPlayer } from "@/components/video-player"
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import { toast } from "sonner"
+import { RatingStars } from "@/components/rating-stars"
+import { FadeInView } from "@/components/fade-in-view"
+import { useScrollSpy } from "@/hooks/use-scroll-spy"
+import type { Course } from "@/lib/types"
+
+interface CourseDetailClientProps {
+  course: Course
+}
+
+// Helper function to get difficulty badge color
+const getDifficultyColor = (level: string) => {
+  switch (level) {
+    case "Débutant":
+      return "bg-primary/10 text-primary border-primary/20"
+    case "Intermédiaire":
+      return "bg-primary/15 text-primary border-primary/30"
+    case "Avancé":
+      return "bg-primary/20 text-primary border-primary/40"
+    default:
+      return "bg-muted text-muted-foreground border-border"
+  }
+}
+
+// Helper function to calculate total lectures
+const getTotalLectures = (curriculum: Course["curriculum"]) => {
+  return curriculum.reduce((total, module) => total + module.lessons.length, 0)
+}
+
+export function CourseDetailClient({ course }: CourseDetailClientProps) {
+  const [showFullDescription, setShowFullDescription] = useState(false)
+  const [activeTab, setActiveTab] = useState("overview")
+
+  const totalLectures = getTotalLectures(course.curriculum)
+
+  // Scroll spy for tabs
+  const sectionIds = ["overview", "content", "instructor", "reviews", "faq"]
+  const activeSection = useScrollSpy({ sectionIds, offset: 150 })
+
+  // Update active tab based on scroll position
+  useEffect(() => {
+    if (activeSection) {
+      setActiveTab(activeSection)
+    }
+  }, [activeSection])
+
+  // Handle tab click with smooth scroll
+  const handleTabClick = (value: string) => {
+    setActiveTab(value)
+    const element = document.getElementById(value)
+    if (element) {
+      const offset = 120 // Account for sticky header
+      const elementPosition = element.getBoundingClientRect().top
+      const offsetPosition = elementPosition + window.pageYOffset - offset
+
+      window.scrollTo({
+        top: offsetPosition,
+        behavior: "smooth",
+      })
+    }
+  }
+
+  // Extended description
+  const fullDescription = `${course.description}\n\nCe cours vous guidera à travers tous les concepts essentiels et avancés. Vous travaillerez sur des projets réels et obtiendrez les compétences nécessaires pour exceller dans votre domaine. Notre approche pratique vous permettra de mettre immédiatement en application ce que vous apprenez.`
+
+  // Mock reviews data
+  const reviews = [
+    {
+      id: "1",
+      user: "Kadiatou Traoré",
+      avatar: "/woman-developer-smiling.jpg",
+      rating: 5,
+      date: "Il y a 2 jours",
+      comment: "Excellent cours ! Les explications sont très claires et les projets pratiques sont vraiment utiles. Je recommande vivement.",
+      helpful: 12,
+    },
+    {
+      id: "2",
+      user: "Amadou Keita",
+      avatar: "/man-data-scientist-portrait.jpg",
+      rating: 5,
+      date: "Il y a 5 jours",
+      comment: "Le meilleur cours que j'ai suivi sur ce sujet. L'instructeur est très pédagogue et le contenu est à jour.",
+      helpful: 8,
+    },
+    {
+      id: "3",
+      user: "Mariam Sangaré",
+      avatar: "/woman-designer-happy.jpg",
+      rating: 4,
+      date: "Il y a 1 semaine",
+      comment: "Très bon cours dans l'ensemble. Quelques sections pourraient être plus détaillées, mais globalement c'est excellent.",
+      helpful: 5,
+    },
+  ]
+
+  // Mock FAQ data
+  const faqs = [
+    {
+      question: "Quels sont les prérequis pour ce cours ?",
+      answer: "Ce cours est conçu pour les développeurs ayant une connaissance de base en JavaScript. Aucune expérience préalable avec React n'est nécessaire.",
+    },
+    {
+      question: "Puis-je accéder au cours à vie ?",
+      answer: "Oui, une fois inscrit, vous avez un accès à vie au contenu du cours, y compris toutes les mises à jour futures.",
+    },
+    {
+      question: "Y a-t-il un certificat à la fin du cours ?",
+      answer: "Oui, vous recevrez un certificat de complétion une fois que vous aurez terminé tous les modules et les projets pratiques.",
+    },
+    {
+      question: "Puis-je poser des questions à l'instructeur ?",
+      answer: "Oui, vous pouvez poser des questions dans la section Q&A du cours et l'instructeur répondra dans les 24-48 heures.",
+    },
+  ]
+
+  return (
+    <div className="min-h-screen bg-background">
+      <div className="container mx-auto px-4 py-6 lg:py-8">
+        {/* Breadcrumb Navigation */}
+        <FadeInView>
+          <nav className="flex items-center gap-2 text-sm mb-6">
+            <Link href="/" className="text-muted-foreground hover:text-primary transition-colors">
+              Accueil
+            </Link>
+            <span className="text-muted-foreground">/</span>
+            <Link href="/courses" className="text-muted-foreground hover:text-primary transition-colors">
+              Cours
+            </Link>
+            <span className="text-muted-foreground">/</span>
+            <span className="text-foreground font-medium line-clamp-1">{course.title}</span>
+          </nav>
+        </FadeInView>
+
+        {/* Main Content - Two Column Layout */}
+        <div className="flex flex-col lg:flex-row gap-6 lg:gap-8">
+          {/* Left Column - Main Content (70%) */}
+          <div className="flex-1 min-w-0 space-y-6">
+            {/* Header Section */}
+            <FadeInView>
+              <div className="space-y-4">
+                {/* Category Badge */}
+                <Badge className="bg-primary/10 text-primary border-primary/20 font-semibold">
+                  {course.category}
+                </Badge>
+
+                {/* Title & Subtitle */}
+                <div>
+                  <h1 className="text-3xl md:text-4xl font-bold mb-3 text-foreground leading-tight">
+                    {course.title}
+                  </h1>
+                  <p className="text-lg md:text-xl text-muted-foreground leading-relaxed">
+                    {course.subtitle}
+                  </p>
+                </div>
+
+                {/* Rating & Stats */}
+                <div className="flex flex-wrap items-center gap-4">
+                  <div className="flex items-center gap-2">
+                    <span className="text-2xl font-bold text-foreground">{course.rating.toFixed(1)}</span>
+                    <RatingStars rating={course.rating} size="md" />
+                    <span className="text-sm text-muted-foreground">
+                      ({course.reviewCount.toLocaleString()} avis)
+                    </span>
+                  </div>
+                  <Separator orientation="vertical" className="h-6" />
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <Users className="h-4 w-4" />
+                    <span>{course.enrolledCount.toLocaleString()} étudiants inscrits</span>
+                  </div>
+                  <Separator orientation="vertical" className="h-6" />
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <Clock className="h-4 w-4" />
+                    <span>Dernière mise à jour : {course.lastUpdated}</span>
+                  </div>
+                </div>
+
+                {/* Action Buttons */}
+                <div className="flex items-center gap-3">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="text-foreground/80 hover:bg-primary/10 hover:text-primary transition-all"
+                    onClick={() => {
+                      navigator.clipboard.writeText(window.location.href)
+                      toast.success("Lien copié", {
+                        description: "Le lien du cours a été copié dans le presse-papier",
+                      })
+                    }}
+                    aria-label="Partager"
+                  >
+                    <Share2 className="h-5 w-5" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="text-foreground/80 hover:bg-primary/10 hover:text-primary transition-all"
+                    aria-label="Favoris"
+                  >
+                    <Bookmark className="h-5 w-5" />
+                  </Button>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="icon" className="text-foreground/80 hover:bg-primary/10" aria-label="Plus d'options">
+                        <MoreVertical className="h-5 w-5" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem>Signaler un problème</DropdownMenuItem>
+                      <DropdownMenuItem>Partager sur les réseaux sociaux</DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
+              </div>
+            </FadeInView>
+
+            {/* Video Preview */}
+            <FadeInView delay={0.1}>
+              <Card className="border-2 hover:border-primary/20 transition-all duration-300 overflow-hidden">
+                <VideoPlayer
+                  thumbnail={course.imageUrl}
+                  title={course.title}
+                  className="w-full"
+                />
+              </Card>
+            </FadeInView>
+
+            {/* Tabs Section */}
+            <FadeInView delay={0.2}>
+              <Tabs value={activeTab} onValueChange={handleTabClick} className="w-full">
+                <div className="course-detail-tabs sticky top-0 md:top-16 z-30 bg-white border-b border-gray-200 shadow-sm">
+                  <TabsList className="bg-transparent border-0 h-auto p-0 w-full justify-start gap-0 overflow-x-auto">
+                    <TabsTrigger 
+                      value="overview" 
+                      className="px-6 py-4 text-sm font-medium text-gray-600 hover:text-black transition-all duration-200 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:text-primary data-[state=active]:font-semibold data-[state=active]:bg-transparent min-w-fit whitespace-nowrap"
+                    >
+                    Aperçu
+                  </TabsTrigger>
+                    <TabsTrigger 
+                      value="content" 
+                      className="px-6 py-4 text-sm font-medium text-gray-600 hover:text-black transition-all duration-200 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:text-primary data-[state=active]:font-semibold data-[state=active]:bg-transparent min-w-fit whitespace-nowrap"
+                    >
+                    Contenu
+                  </TabsTrigger>
+                    <TabsTrigger 
+                      value="instructor" 
+                      className="px-6 py-4 text-sm font-medium text-gray-600 hover:text-black transition-all duration-200 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:text-primary data-[state=active]:font-semibold data-[state=active]:bg-transparent min-w-fit whitespace-nowrap"
+                    >
+                    Instructeur
+                  </TabsTrigger>
+                    <TabsTrigger 
+                      value="reviews" 
+                      className="px-6 py-4 text-sm font-medium text-gray-600 hover:text-black transition-all duration-200 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:text-primary data-[state=active]:font-semibold data-[state=active]:bg-transparent min-w-fit whitespace-nowrap"
+                    >
+                      <span className="flex items-center gap-2">
+                        Avis
+                        <span className="text-xs font-normal text-gray-500 data-[state=active]:text-primary/70">
+                          ({course.reviewCount.toLocaleString()})
+                        </span>
+                      </span>
+                  </TabsTrigger>
+                    <TabsTrigger 
+                      value="faq" 
+                      className="px-6 py-4 text-sm font-medium text-gray-600 hover:text-black transition-all duration-200 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:text-primary data-[state=active]:font-semibold data-[state=active]:bg-transparent min-w-fit whitespace-nowrap"
+                    >
+                    FAQ
+                  </TabsTrigger>
+                </TabsList>
+                </div>
+
+                {/* Overview Tab */}
+                <TabsContent value="overview" className="space-y-6 mt-6">
+                  <div id="overview" className="scroll-mt-24">
+                  {/* Description */}
+                  <div>
+                    <h3 className="text-xl font-bold mb-4 text-foreground">À propos de ce cours</h3>
+                    <div className="text-muted-foreground leading-relaxed space-y-4">
+                      {showFullDescription ? (
+                        <div className="whitespace-pre-line">{fullDescription}</div>
+                      ) : (
+                        <p>{course.description}</p>
+                      )}
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="mt-4 text-primary hover:text-primary/80 hover:bg-primary/10"
+                      onClick={() => setShowFullDescription(!showFullDescription)}
+                    >
+                      <Plus className={`h-4 w-4 mr-1 transition-transform duration-200 ${showFullDescription ? "rotate-45" : ""}`} />
+                      {showFullDescription ? "Voir moins" : "Voir plus"}
+                    </Button>
+                  </div>
+
+                  {/* Objectives */}
+                  {course.objectives && course.objectives.length > 0 && (
+                    <div>
+                      <h3 className="text-xl font-bold mb-4 text-foreground">Ce que vous apprendrez</h3>
+                      <div className="grid md:grid-cols-2 gap-3">
+                        {course.objectives.map((objective, index) => (
+                          <div key={index} className="flex items-start gap-3">
+                            <CheckCircle2 className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
+                            <span className="text-muted-foreground">{objective}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Course Features */}
+                  <div>
+                    <h3 className="text-xl font-bold mb-4 text-foreground">Ce que vous obtenez</h3>
+                    <div className="grid md:grid-cols-2 gap-4">
+                      {course.features.map((feature, index) => (
+                        <div key={index} className="flex items-center gap-3 p-3 border-2 rounded-lg hover:border-primary/40 hover:bg-primary/5 transition-all">
+                          <div className="rounded-lg bg-primary/10 p-2 border border-primary/20">
+                            <CheckCircle2 className="h-4 w-4 text-primary" />
+                          </div>
+                          <span className="text-sm font-medium text-foreground">{feature}</span>
+                        </div>
+                      ))}
+                    </div>
+                    </div>
+                  </div>
+                </TabsContent>
+
+                {/* Content Tab */}
+                <TabsContent value="content" className="mt-6">
+                  <div id="content" className="scroll-mt-24">
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between mb-4">
+                      <h3 className="text-xl font-bold text-foreground">Contenu du cours</h3>
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                        <span>{course.curriculum.length} sections</span>
+                        <span>•</span>
+                        <span>{totalLectures || 398} leçons</span>
+                        <span>•</span>
+                        <span>{course.duration}h de contenu</span>
+                      </div>
+                    </div>
+                    <Accordion type="multiple" className="w-full" defaultValue={course.curriculum.length > 0 ? [course.curriculum[0]?.id] : []}>
+                      {course.curriculum.length > 0 ? (
+                        course.curriculum.map((module, moduleIndex) => (
+                          <AccordionItem key={module.id} value={module.id} className="border-2 rounded-lg mb-3 px-4 hover:border-primary/40 transition-all">
+                            <AccordionTrigger className="hover:no-underline py-4">
+                              <div className="flex items-start justify-between w-full pr-4">
+                                <div className="flex-1 text-left">
+                                  <div className="font-bold text-base text-foreground mb-2">
+                                    Section {moduleIndex + 1}: {module.title}
+                                  </div>
+                                  <div className="flex items-center gap-3 text-sm text-muted-foreground">
+                                    <span>{module.lessons.length} leçon{module.lessons.length > 1 ? "s" : ""}</span>
+                                    <span>•</span>
+                                    <span>{module.duration}</span>
+                                  </div>
+                                </div>
+                              </div>
+                            </AccordionTrigger>
+                            <AccordionContent className="pb-4">
+                              <div className="space-y-2 mt-2">
+                                {module.lessons.map((lesson, lessonIndex) => (
+                                  <Link
+                                    key={lesson.id}
+                                    href={`/learn/${course.id}?lesson=${lesson.id}`}
+                                    className="flex items-center justify-between p-3 rounded-lg hover:bg-primary/10 hover:border-l-4 hover:border-primary transition-all group"
+                                  >
+                                    <div className="flex items-center gap-3 flex-1 min-w-0">
+                                      <span className="text-sm text-muted-foreground font-medium w-6 flex-shrink-0">
+                                        {lessonIndex + 1}.
+                                      </span>
+                                      <div className="flex items-center gap-2">
+                                        {lesson.type === "video" && <Video className="h-4 w-4 text-muted-foreground" />}
+                                        {lesson.type === "quiz" && <FileText className="h-4 w-4 text-primary" />}
+                                        <span className="text-sm text-foreground/80 group-hover:text-foreground truncate">
+                                          {lesson.title}
+                                        </span>
+                                      </div>
+                                      {lesson.type === "quiz" && (
+                                        <Badge className="bg-primary/10 text-primary text-xs border-primary/20">
+                                          Quiz
+                                        </Badge>
+                                      )}
+                                    </div>
+                                    <div className="flex items-center gap-3 flex-shrink-0">
+                                      <span className="text-xs text-muted-foreground">{lesson.duration}</span>
+                                      <Play className="h-4 w-4 text-muted-foreground/60 group-hover:text-primary transition-colors" />
+                                    </div>
+                                  </Link>
+                                ))}
+                              </div>
+                            </AccordionContent>
+                          </AccordionItem>
+                        ))
+                      ) : (
+                        // Fallback mock content
+                        [...Array(5)].map((_, moduleIndex) => (
+                          <AccordionItem key={`mock-${moduleIndex}`} value={`mock-${moduleIndex}`} className="border-2 rounded-lg mb-3 px-4">
+                            <AccordionTrigger className="hover:no-underline py-4">
+                              <div className="flex items-start justify-between w-full pr-4">
+                                <div className="flex-1 text-left">
+                                  <div className="font-bold text-base text-foreground mb-2">
+                                    Section {moduleIndex + 1}: {moduleIndex === 0 ? "Introduction" : `Module ${moduleIndex + 1}`}
+                                  </div>
+                                  <div className="flex items-center gap-3 text-sm text-muted-foreground">
+                                    <span>5 leçons</span>
+                                    <span>•</span>
+                                    <span>{Math.floor(Math.random() * 60) + 30} min</span>
+                                  </div>
+                                </div>
+                              </div>
+                            </AccordionTrigger>
+                            <AccordionContent className="pb-4">
+                              <div className="space-y-2 mt-2">
+                                {[...Array(5)].map((_, lessonIndex) => (
+                                  <div
+                                    key={lessonIndex}
+                                    className="flex items-center justify-between p-3 rounded-lg hover:bg-muted transition-colors"
+                                  >
+                                    <div className="flex items-center gap-3">
+                                      <span className="text-sm text-muted-foreground w-6">{lessonIndex + 1}.</span>
+                                      <span className="text-sm text-foreground/80">Leçon {lessonIndex + 1}</span>
+                                    </div>
+                                    <Play className="h-4 w-4 text-muted-foreground/60" />
+                                  </div>
+                                ))}
+                              </div>
+                            </AccordionContent>
+                          </AccordionItem>
+                        ))
+                      )}
+                    </Accordion>
+                  </div>
+                  </div>
+                </TabsContent>
+
+                {/* Instructor Tab */}
+                <TabsContent value="instructor" className="mt-6">
+                  <div id="instructor" className="scroll-mt-24">
+                  <Card className="border-2 hover:border-primary/20 transition-all">
+                    <CardContent className="p-6">
+                      <div className="flex flex-col md:flex-row gap-6">
+                        <Avatar className="h-24 w-24 border-2 border-primary/30">
+                          <AvatarImage src={course.instructor.avatar} alt={course.instructor.name} />
+                          <AvatarFallback className="bg-primary text-white font-bold text-xl">
+                            {course.instructor.name[0]}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="flex-1 space-y-4">
+                          <div>
+                            <h3 className="text-2xl font-bold mb-2 text-foreground">{course.instructor.name}</h3>
+                            <p className="text-muted-foreground font-medium">{course.instructor.title}</p>
+                          </div>
+                          <p className="text-muted-foreground leading-relaxed">{course.instructor.bio}</p>
+                          <div className="flex flex-wrap items-center gap-6 pt-4 border-t border-border">
+                            <div className="flex items-center gap-2">
+                              <BarChart3 className="h-5 w-5 text-primary" />
+                              <div>
+                                <p className="text-sm font-bold text-foreground">{course.instructor.rating.toFixed(1)}</p>
+                                <p className="text-xs text-muted-foreground">Note moyenne</p>
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <Users className="h-5 w-5 text-primary" />
+                              <div>
+                                <p className="text-sm font-bold text-foreground">{course.instructor.studentCount.toLocaleString()}</p>
+                                <p className="text-xs text-muted-foreground">Étudiants</p>
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <BookOpen className="h-5 w-5 text-primary" />
+                              <div>
+                                <p className="text-sm font-bold text-foreground">{course.instructor.courseCount}</p>
+                                <p className="text-xs text-muted-foreground">Cours</p>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                  </div>
+                </TabsContent>
+
+                {/* Reviews Tab */}
+                <TabsContent value="reviews" className="mt-6">
+                  <div id="reviews" className="scroll-mt-24">
+                  <div className="space-y-6">
+                    {/* Review Summary */}
+                    <Card className="border-2">
+                      <CardContent className="p-6">
+                        <div className="flex flex-col md:flex-row items-center gap-6">
+                          <div className="text-center">
+                            <p className="text-5xl font-bold text-foreground mb-2">{course.rating.toFixed(1)}</p>
+                            <RatingStars rating={course.rating} size="lg" />
+                            <p className="text-sm text-muted-foreground mt-2">
+                              Basé sur {course.reviewCount.toLocaleString()} avis
+                            </p>
+                          </div>
+                          <Separator orientation="vertical" className="hidden md:block h-20" />
+                          <div className="flex-1 grid grid-cols-5 gap-2">
+                            {[5, 4, 3, 2, 1].map((rating) => (
+                              <div key={rating} className="flex items-center gap-2">
+                                <span className="text-sm text-muted-foreground">{rating}</span>
+                                <Star className="h-4 w-4 fill-primary text-primary" />
+                                <div className="flex-1 h-2 bg-muted rounded-full overflow-hidden">
+                                  <div
+                                    className="h-full bg-primary"
+                                    style={{ width: `${Math.random() * 30 + 50}%` }}
+                                  />
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+
+                    {/* Reviews List */}
+                    <div className="space-y-4">
+                      {reviews.map((review) => (
+                        <Card key={review.id} className="border-2 hover:border-primary/20 transition-all">
+                          <CardContent className="p-6">
+                            <div className="flex items-start gap-4">
+                              <Avatar className="h-12 w-12 border-2 border-primary/30">
+                                <AvatarImage src={review.avatar} alt={review.user} />
+                                <AvatarFallback className="bg-primary text-white font-bold">
+                                  {review.user[0]}
+                                </AvatarFallback>
+                              </Avatar>
+                              <div className="flex-1 space-y-2">
+                                <div className="flex items-start justify-between gap-4">
+                                  <div>
+                                    <p className="font-bold text-sm text-foreground">{review.user}</p>
+                                    <div className="flex items-center gap-2 mt-1">
+                                      <RatingStars rating={review.rating} size="sm" />
+                                      <span className="text-xs text-muted-foreground">{review.date}</span>
+                                    </div>
+                                  </div>
+                                </div>
+                                <p className="text-sm text-muted-foreground leading-relaxed">{review.comment}</p>
+                                <div className="flex items-center gap-4 pt-2">
+                                  <Button variant="ghost" size="sm" className="text-xs h-7">
+                                    Utile ({review.helpful})
+                                  </Button>
+                                </div>
+                              </div>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      ))}
+                    </div>
+                    </div>
+                  </div>
+                </TabsContent>
+
+                {/* FAQ Tab */}
+                <TabsContent value="faq" className="mt-6">
+                  <div id="faq" className="scroll-mt-24">
+                  <div className="space-y-4">
+                    <h3 className="text-xl font-bold mb-4 text-foreground">Questions fréquemment posées</h3>
+                    <Accordion type="single" collapsible className="w-full">
+                      {faqs.map((faq, index) => (
+                        <AccordionItem key={index} value={`faq-${index}`} className="border-2 rounded-lg mb-3 px-4 hover:border-primary/40 transition-all">
+                          <AccordionTrigger className="hover:no-underline py-4">
+                            <div className="flex items-center gap-3 text-left">
+                              <HelpCircle className="h-5 w-5 text-primary flex-shrink-0" />
+                              <span className="font-semibold text-foreground">{faq.question}</span>
+                            </div>
+                          </AccordionTrigger>
+                          <AccordionContent className="pb-4 pl-8">
+                            <p className="text-muted-foreground leading-relaxed">{faq.answer}</p>
+                          </AccordionContent>
+                        </AccordionItem>
+                      ))}
+                    </Accordion>
+                  </div>
+                  </div>
+                </TabsContent>
+              </Tabs>
+            </FadeInView>
+          </div>
+
+          {/* Right Column - Sticky Sidebar (30%) */}
+          <div className="lg:w-80 lg:sticky lg:top-20 lg:self-start">
+            <FadeInView delay={0.3}>
+              <Card className="border-2 border-primary/40 bg-gradient-to-br from-primary/5 via-transparent to-transparent shadow-xl">
+                <CardHeader className="pb-4 border-b border-border">
+                  <CardTitle className="text-xl flex items-center gap-2">
+                    <Award className="h-5 w-5 text-primary" />
+                    Accéder au cours
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="p-6 space-y-6">
+                  {/* CTA Button */}
+                  <Button
+                    size="lg"
+                    className="w-full bg-primary text-white hover:bg-primary/90 font-bold text-lg h-14 shadow-lg hover:shadow-xl transition-all duration-300"
+                    asChild
+                  >
+                    <Link href={`/learn/${course.id}`}>
+                      S'inscrire gratuitement
+                      <ArrowLeft className="h-5 w-5 ml-2 rotate-180" />
+                    </Link>
+                  </Button>
+
+                  {/* Course Info */}
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between py-2 border-b border-border">
+                      <span className="text-sm text-muted-foreground">Niveau</span>
+                      <Badge className={getDifficultyColor(course.level)}>
+                        {course.level}
+                      </Badge>
+                    </div>
+                    <div className="flex items-center justify-between py-2 border-b border-border">
+                      <span className="text-sm text-muted-foreground">Langue</span>
+                      <div className="flex items-center gap-2">
+                        <Globe className="h-4 w-4 text-muted-foreground" />
+                        <span className="text-sm font-medium text-foreground">{course.language}</span>
+                      </div>
+                    </div>
+                    <div className="flex items-center justify-between py-2 border-b border-border">
+                      <span className="text-sm text-muted-foreground">Durée</span>
+                      <span className="text-sm font-medium text-foreground">{course.duration}h</span>
+                    </div>
+                    <div className="flex items-center justify-between py-2 border-b border-border">
+                      <span className="text-sm text-muted-foreground">Leçons</span>
+                      <span className="text-sm font-medium text-foreground">{totalLectures || 398}</span>
+                    </div>
+                  </div>
+
+                  {/* Trust Badges */}
+                  <div className="pt-4 border-t border-border">
+                    <h4 className="font-bold text-sm mb-3 text-foreground">Garanties</h4>
+                    <div className="space-y-3">
+                      <div className="flex items-center gap-3 p-3 bg-green-50 border border-green-200 rounded-lg">
+                        <div className="rounded-full bg-green-500 p-1.5">
+                          <CheckCircle2 className="h-4 w-4 text-white" />
+                        </div>
+                        <div className="flex-1">
+                          <p className="text-sm font-semibold text-green-900">100% Gratuit</p>
+                          <p className="text-xs text-green-700">Accès complet sans frais</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-3 p-3 bg-primary/5 border border-primary/20 rounded-lg">
+                        <div className="rounded-full bg-primary p-1.5">
+                          <Infinity className="h-4 w-4 text-white" />
+                        </div>
+                        <div className="flex-1">
+                          <p className="text-sm font-semibold text-foreground">Accès à vie</p>
+                          <p className="text-xs text-muted-foreground">Mises à jour incluses</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-3 p-3 bg-orange-50 border border-orange-200 rounded-lg">
+                        <div className="rounded-full bg-orange-500 p-1.5">
+                          <Award className="h-4 w-4 text-white" />
+                        </div>
+                        <div className="flex-1">
+                          <p className="text-sm font-semibold text-orange-900">Certificat inclus</p>
+                          <p className="text-xs text-orange-700">Reconnu professionnellement</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* What You Get */}
+                  <div className="pt-4 border-t border-border">
+                    <h4 className="font-bold text-sm mb-3 text-foreground">Ce que vous obtenez :</h4>
+                    <div className="space-y-2">
+                      {course.features.slice(0, 4).map((feature, index) => (
+                        <div key={index} className="flex items-center gap-2">
+                          <CheckCircle2 className="h-4 w-4 text-primary flex-shrink-0" />
+                          <span className="text-sm text-muted-foreground">{feature}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Share Section */}
+                  <div className="pt-4 border-t border-border">
+                    <h4 className="font-bold text-sm mb-3 text-foreground">Partager ce cours</h4>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="flex-1 border-primary/20 hover:bg-primary/10 hover:text-primary"
+                        onClick={() => {
+                          navigator.clipboard.writeText(window.location.href)
+                          toast.success("Lien copié")
+                        }}
+                      >
+                        <Share2 className="h-4 w-4 mr-2" />
+                        Copier le lien
+                      </Button>
+                    </div>
+                  </div>
+
+                  {/* Instructor Preview */}
+                  <div className="pt-4 border-t border-border">
+                    <div className="flex items-center gap-3">
+                      <Avatar className="h-12 w-12 border-2 border-primary/30">
+                        <AvatarImage src={course.instructor.avatar} alt={course.instructor.name} />
+                        <AvatarFallback className="bg-primary text-white font-bold">
+                          {course.instructor.name[0]}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-bold text-sm text-foreground truncate">{course.instructor.name}</p>
+                        <p className="text-xs text-muted-foreground truncate">{course.instructor.title}</p>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </FadeInView>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
