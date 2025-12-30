@@ -99,7 +99,7 @@ export function CourseDetailClient({ course }: CourseDetailClientProps) {
       avatar: "/man-data-scientist-portrait.jpg",
       rating: 5,
       date: "Il y a 5 jours",
-      comment: "Le meilleur cours que j'ai suivi sur ce sujet. L'instructeur est très pédagogue et le contenu est à jour.",
+      comment: "Le meilleur cours que j'ai suivi sur ce sujet. Le formateur est très pédagogue et le contenu est à jour.",
       helpful: 8,
     },
     {
@@ -128,8 +128,8 @@ export function CourseDetailClient({ course }: CourseDetailClientProps) {
       answer: "Oui, vous recevrez un certificat de complétion une fois que vous aurez terminé tous les modules et les projets pratiques.",
     },
     {
-      question: "Puis-je poser des questions à l'instructeur ?",
-      answer: "Oui, vous pouvez poser des questions dans la section Q&A du cours et l'instructeur répondra dans les 24-48 heures.",
+      question: "Puis-je poser des questions au formateur ?",
+      answer: "Oui, vous pouvez poser des questions dans la section Q&A du cours et le formateur répondra dans les 24-48 heures.",
     },
   ]
 
@@ -265,7 +265,7 @@ export function CourseDetailClient({ course }: CourseDetailClientProps) {
                       value="instructor" 
                       className="px-6 py-4 text-sm font-medium text-gray-600 hover:text-black transition-all duration-200 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:text-primary data-[state=active]:font-semibold data-[state=active]:bg-transparent min-w-fit whitespace-nowrap"
                     >
-                    Instructeur
+                    Formateur
                   </TabsTrigger>
                     <TabsTrigger 
                       value="reviews" 

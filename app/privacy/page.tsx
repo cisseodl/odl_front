@@ -46,7 +46,7 @@ export default function PrivacyPage() {
                 les cas suivants :
               </p>
               <ul className="list-disc list-inside space-y-2 text-muted-foreground">
-                <li>Avec les instructeurs des cours que vous suivez (statistiques anonymisées)</li>
+                <li>Avec les formateurs des cours que vous suivez (statistiques anonymisées)</li>
                 <li>Avec nos prestataires de services (hébergement, paiement, analytics)</li>
                 <li>Si requis par la loi ou dans le cadre d'une procédure judiciaire</li>
               </ul>

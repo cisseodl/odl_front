@@ -39,7 +39,7 @@ export default function TermsPage() {
               <h2 className="text-2xl font-bold">3. Contenu des cours</h2>
               <p className="text-muted-foreground leading-relaxed">
                 Tout le contenu disponible sur Orange Digital Learning, y compris les vidéos, textes, images et autres matériaux, est
-                protégé par les droits d'auteur et appartient à Orange Digital Learning ou à ses instructeurs.
+                protégé par les droits d'auteur et appartient à Orange Digital Learning ou à ses formateurs.
               </p>
             </CardContent>
           </Card>

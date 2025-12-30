@@ -131,7 +131,7 @@ export default function CategoriesPage() {
               </Link>
               <Link href="/instructor/dashboard">
                 <Button size="lg" variant="outline" className="min-w-[200px] bg-transparent">
-                  Devenir instructeur
+                  Devenir formateur
                 </Button>
               </Link>
             </div>

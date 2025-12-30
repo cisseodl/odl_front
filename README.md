@@ -1,6 +1,8 @@
-# Orange Digital Learning - Plateforme de Formation en Ligne
+# 🎓 Orange Digital Learning - Plateforme de Formation en Ligne
 
-Une plateforme moderne de formation en ligne (LMS) construite avec Next.js, TypeScript et Tailwind CSS, inspirée de Udemy et StudyRaid.
+Une plateforme moderne de formation en ligne (LMS) développée pour **Orange Digital Center Mali**, construite avec Next.js, TypeScript et Tailwind CSS.
+
+> 📚 **Pour une documentation complète et détaillée, consultez [DOCUMENTATION.md](./DOCUMENTATION.md)**
 
 ## 🚀 Fonctionnalités
 
@@ -194,6 +196,17 @@ Le projet peut être déployé sur n'importe quelle plateforme supportant Next.j
 - Railway
 - DigitalOcean App Platform
 
+## 📚 Documentation Complète
+
+Pour une documentation détaillée incluant :
+- Architecture complète du projet
+- Guide de développement approfondi
+- Documentation des composants
+- Guide de déploiement
+- Troubleshooting
+
+👉 **Consultez [DOCUMENTATION.md](./DOCUMENTATION.md)**
+
 ## 📝 Notes Importantes
 
 ### Server vs Client Components
@@ -204,6 +217,12 @@ Le projet peut être déployé sur n'importe quelle plateforme supportant Next.j
 ### Mock Data
 
 Le projet utilise des données mock pour le développement. Pour la production, remplacez par des appels API réels.
+
+### Authentification
+
+- Les routes protégées nécessitent une authentification
+- Page d'authentification : `/auth`
+- Routes protégées : `/dashboard`, `/profile`, `/learn/*`
 
 ## 🤝 Contribution
 

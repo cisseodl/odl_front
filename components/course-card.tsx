@@ -99,7 +99,7 @@ export function CourseCard({ course, showPreview = true }: CourseCardProps) {
             {course.title}
           </h3>
 
-          {/* Nom instructeur avec avatar */}
+          {/* Nom formateur avec avatar */}
           <div className="flex items-center gap-2">
             <Avatar className="h-7 w-7 border-2 border-white shadow-sm">
               <AvatarImage src={course.instructor.avatar || "/placeholder.svg"} alt={course.instructor.name} />

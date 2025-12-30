@@ -20,14 +20,14 @@ export default function AboutPage() {
               <strong> Orange Fab</strong> (accélérateur de start-up), 
               <strong> FabLab Solidaire</strong> (atelier de fabrication numérique) et 
               <strong> Multimédias</strong> (centre de production et formation). 
-              Tous nos programmes sont gratuits, ouverts à tous, et visent à booster l'employabilité et l'entrepreneuriat des jeunes maliens.
+              Tous nos programmes sont gratuits et ouverts à tous.
             </p>
             <div className="flex flex-wrap gap-4 justify-center">
               <Button size="lg" asChild>
                 <Link href="/courses">Explorer les cours</Link>
               </Button>
               <Button size="lg" variant="outline" asChild>
-                <Link href="/instructor/dashboard">Devenir instructeur</Link>
+                <Link href="/instructor/dashboard">Devenir formateur</Link>
               </Button>
             </div>
           </div>
@@ -48,7 +48,7 @@ export default function AboutPage() {
             </div>
             <div className="text-center">
               <div className="text-4xl md:text-5xl font-bold text-primary mb-2">12,000+</div>
-              <div className="text-muted-foreground">Instructeurs experts</div>
+              <div className="text-muted-foreground">Formateurs experts</div>
             </div>
             <div className="text-center">
               <div className="text-4xl md:text-5xl font-bold text-primary mb-2">150+</div>
@@ -67,12 +67,9 @@ export default function AboutPage() {
               <strong>Notre raison d'être est de booster l'employabilité et l'entrepreneuriat des jeunes maliens à travers nos programmes spéciaux.</strong>
             </p>
             <p className="text-lg text-muted-foreground text-pretty mt-4">
-              Orange Digital Center Mali réunit quatre programmes complémentaires et gratuits : 
-              <strong> Orange Digital Kalanso</strong> pour la formation au code, 
-              <strong> Orange Fab</strong> pour l'accélération de start-up, 
-              <strong> FabLab Solidaire</strong> pour la fabrication numérique, et 
-              <strong> Multimédias</strong> pour la création de contenu. 
-              Ensemble, ces programmes forment un écosystème complet qui transforme les jeunes en acteurs du numérique et de l'innovation au Mali.
+              Nous offrons un écosystème complet qui transforme les jeunes en acteurs du numérique et de l'innovation au Mali, 
+              en leur donnant accès à des formations gratuites, un accompagnement personnalisé et les outils nécessaires pour réussir 
+              dans le monde numérique.
             </p>
           </div>
 
@@ -137,7 +134,7 @@ export default function AboutPage() {
                 <div>
                   <h3 className="text-xl font-semibold mb-2">Communauté</h3>
                   <p className="text-muted-foreground">
-                    Nous créons une communauté d'apprenants et d'instructeurs qui se soutiennent mutuellement dans leur
+                    Nous créons une communauté d'apprenants et de formateurs qui se soutiennent mutuellement dans leur
                     parcours éducatif.
                   </p>
                 </div>
@@ -177,7 +174,7 @@ export default function AboutPage() {
                   <h3 className="text-xl font-semibold mb-2">Impact</h3>
                   <p className="text-muted-foreground">
                     Nous mesurons notre succès par l'impact positif que nous avons sur la vie de nos étudiants et
-                    instructeurs.
+                    formateurs.
                   </p>
                 </div>
               </div>
@@ -192,7 +189,6 @@ export default function AboutPage() {
           <div className="max-w-4xl mx-auto text-center mb-16">
             <h2 className="text-3xl md:text-4xl font-bold mb-6">Les 4 Piliers d'Orange Digital Center</h2>
             <p className="text-lg text-muted-foreground text-pretty">
-              Notre raison d'être est de booster l'employabilité et l'entrepreneuriat des jeunes maliens à travers nos programmes spéciaux. 
               Découvrez les quatre programmes complémentaires qui font d'ODC un écosystème numérique complet.
             </p>
           </div>
@@ -364,7 +360,7 @@ export default function AboutPage() {
           <div className="max-w-3xl mx-auto text-center">
             <h2 className="text-3xl md:text-4xl font-bold mb-6">Rejoignez Notre Communauté</h2>
             <p className="text-lg mb-8 opacity-90">
-              Que vous soyez étudiant ou instructeur, rejoignez des milliers de personnes qui transforment leur avenir
+              Que vous soyez étudiant ou formateur, rejoignez des milliers de personnes qui transforment leur avenir
               grâce à l'apprentissage en ligne.
             </p>
             <div className="flex flex-wrap gap-4 justify-center">

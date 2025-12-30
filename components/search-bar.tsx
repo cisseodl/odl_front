@@ -123,7 +123,7 @@ export function SearchBar({ onSearch }: SearchBarProps) {
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground pointer-events-none z-10" />
         <Input
           ref={inputRef}
-          placeholder="Rechercher un cours, un sujet, un instructeur..."
+          placeholder="Rechercher un cours, un sujet, un formateur..."
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           onKeyDown={(e) => {

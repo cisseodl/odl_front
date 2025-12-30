@@ -151,13 +151,13 @@ export function Header() {
               <Button
                 variant="ghost"
                 size="icon"
-                className="text-white hover:text-primary hover:bg-white/10 h-9 w-9"
+                className="text-white hover:text-primary hover:bg-white/10 h-9 w-9 ml-2"
                 aria-label="Profil"
                 asChild
               >
                 <Link href={isAuthenticated ? "/profile" : "/auth"}>
-                  <div className="h-9 w-9 rounded-full bg-primary flex items-center justify-center border-2 border-black shadow-lg">
-                    <User className="h-4 w-4 text-white" />
+                  <div className="h-9 w-9 rounded-full bg-white flex items-center justify-center border-2 border-white/20 shadow-lg">
+                    <User className="h-4 w-4 text-primary" />
                   </div>
                 </Link>
               </Button>

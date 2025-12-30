@@ -136,7 +136,7 @@ export default function DashboardPage() {
 
   return (
     <ProtectedRoute>
-      <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background">
       <div className="container mx-auto px-4 py-6 space-y-6">
         {/* Header avec salutation dynamique */}
         <FadeInView>
@@ -600,10 +600,10 @@ export default function DashboardPage() {
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                 {[
-                  { title: "React & TypeScript", date: "Mars 2024", instructor: "Aissata Traoré" },
-                  { title: "Next.js 15", date: "Février 2024", instructor: "Amadou Keita" },
-                  { title: "UI/UX Design", date: "Janvier 2024", instructor: "Fatoumata Sangaré" },
-                  { title: "Python Data Science", date: "Décembre 2023", instructor: "Moussa Diarra" },
+                  { title: "React & TypeScript", date: "Mars 2024", instructor: "Aissata Traoré", formateur: "Aissata Traoré" },
+                  { title: "Next.js 15", date: "Février 2024", instructor: "Amadou Keita", formateur: "Amadou Keita" },
+                  { title: "UI/UX Design", date: "Janvier 2024", instructor: "Fatoumata Sangaré", formateur: "Fatoumata Sangaré" },
+                  { title: "Python Data Science", date: "Décembre 2023", instructor: "Moussa Diarra", formateur: "Moussa Diarra" },
                 ].map((cert, index) => (
                   <FadeInView key={index} delay={0.9 + index * 0.1}>
                     <div className="group p-4 border-2 rounded-xl hover:border-primary/40 hover:bg-primary/5 transition-all duration-300 hover:shadow-lg cursor-pointer">
@@ -616,7 +616,7 @@ export default function DashboardPage() {
                       <h4 className="font-bold text-sm mb-1 line-clamp-2 group-hover:text-primary transition-colors">
                         {cert.title}
                       </h4>
-                      <p className="text-xs text-muted-foreground mb-2">{cert.instructor}</p>
+                      <p className="text-xs text-muted-foreground mb-2">Formateur: {cert.instructor}</p>
                       <div className="flex items-center justify-between">
                         <Badge className="bg-primary/10 text-primary text-xs border-0">
                           {cert.date}
@@ -914,7 +914,7 @@ export default function DashboardPage() {
           onClose={() => setShowMiniPlayer(false)}
         />
       )}
-      </div>
+    </div>
     </ProtectedRoute>
   )
 }

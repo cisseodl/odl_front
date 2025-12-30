@@ -43,7 +43,7 @@ export default function HomePage() {
     {
       name: "Kadiatou Traoré",
       role: "Développeuse Front-End",
-      content: "J'ai transformé ma carrière grâce aux cours d'Orange Digital Learning. Les instructeurs sont exceptionnels !",
+      content: "J'ai transformé ma carrière grâce aux cours d'Orange Digital Learning. Les formateurs sont exceptionnels !",
       avatar: "/woman-developer-smiling.jpg",
     },
     {
@@ -67,7 +67,7 @@ export default function HomePage() {
       title: "Devenez Expert Cloud & Data",
       description: "Maîtrisez AWS, Azure et la Data Science avec nos nouveaux parcours certifiants.",
       image: "/7.jpeg", // Updated to new Cloud background
-      buttonText: "Explorer Cloud & Data",
+      buttonText: "Explorer les cours",
       link: "/courses?category=Cloud+Computing",
     },
     {
@@ -75,7 +75,7 @@ export default function HomePage() {
       title: "L'Intelligence Artificielle à portée de main",
       description: "Formez-vous aux dernières avancées en IA générative et Machine Learning.",
       image: "/3.jpeg", // Updated to new AI background
-      buttonText: "Découvrir l'IA",
+      buttonText: "Explorer les cours",
       link: "/courses?category=Intelligence+Artificielle",
     },
     {
@@ -83,7 +83,7 @@ export default function HomePage() {
       title: "Développez vos compétences Tech",
       description: "Des milliers de cours en Développement Web, Mobile et DevOps vous attendent.",
       image: "/desola-lanre-ologun-kwzWjTnDPLk-unsplash.jpg",
-      buttonText: "Voir tout le catalogue",
+      buttonText: "Explorer les cours",
       link: "/courses",
     },
   ]
@@ -121,15 +121,19 @@ export default function HomePage() {
                       priority={slide.id === 1}
                       quality={90}
                     />
-                    {/* Overlay avec accent orange */}
-                    <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/70 to-black/60" />
-                    <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-transparent to-transparent" />
+                    {/* Overlay avec accent orange - Opacité réduite */}
+                    <div className="absolute inset-0 bg-gradient-to-r from-black/50 via-black/40 to-black/30" />
+                    <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-transparent" />
                   </div>
 
                   {/* Content - Style Orange Mali */}
                   <div className="relative z-10 h-full flex items-center text-white py-20 md:py-24">
                     <div className="container mx-auto px-4 lg:px-8">
                       <div className="max-w-4xl mx-auto text-center space-y-8">
+                        {/* Welcome Message */}
+                        <p className="text-lg md:text-xl text-white/90 font-medium drop-shadow-md">
+                          Orange Digital Center vous souhaite la bienvenue sur sa plateforme d'autoformation
+                        </p>
                         {/* Title */}
                         <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold leading-tight text-white drop-shadow-lg">
                           {slide.title}
@@ -189,7 +193,7 @@ export default function HomePage() {
               stats={[
                 { value: 250000, label: "Étudiants actifs", useFormat: true },
                 { value: 5000, label: "Cours disponibles", useFormat: true },
-                { value: 1200, label: "Instructeurs experts", useFormat: true },
+                { value: 1200, label: "Les cours les plus consultés", useFormat: true },
                 { value: 98, label: "Taux de satisfaction", suffix: "%" },
               ]}
             />
@@ -257,7 +261,7 @@ export default function HomePage() {
       <section className="py-16 lg:py-20 bg-white">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-black mb-12 text-center tracking-tight">
-            Comment les apprenants comme vous atteignent leurs objectifs
+            Témoignages
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8 max-w-5xl mx-auto">
             {testimonials.map((testimonial, index) => (
@@ -297,7 +301,7 @@ export default function HomePage() {
                 <CheckCircle2 className="h-9 w-9 text-primary" />
               </div>
               <h3 className="font-bold text-lg text-black">Choisissez des cours enseignés par des experts</h3>
-              <p className="text-sm text-muted-foreground leading-relaxed">Des instructeurs du monde réel</p>
+              <p className="text-sm text-muted-foreground leading-relaxed">Des formateurs du monde réel</p>
             </div>
             <div className="space-y-4">
               <div className="mx-auto w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center border border-primary/20">

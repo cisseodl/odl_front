@@ -166,7 +166,7 @@ export default function QuizPage({ params }: QuizPageProps) {
 
     return (
       <ProtectedRoute>
-        <div className="min-h-screen bg-muted/30 py-8">
+      <div className="min-h-screen bg-muted/30 py-8">
         <div className="container max-w-3xl mx-auto px-4">
           <Card className="border-2">
             <CardHeader className="text-center space-y-4 pb-8">
@@ -249,14 +249,13 @@ export default function QuizPage({ params }: QuizPageProps) {
           </Card>
         </div>
       </div>
-      </div>
     </ProtectedRoute>
     )
   }
 
   return (
     <ProtectedRoute>
-      <div className="min-h-screen bg-muted/30">
+    <div className="min-h-screen bg-muted/30">
       {/* Header */}
       <div className="border-b bg-background sticky top-0 z-10">
         <div className="container max-w-6xl mx-auto px-4 py-4">
@@ -458,7 +457,7 @@ export default function QuizPage({ params }: QuizPageProps) {
           </div>
         </div>
       </div>
-      </div>
+    </div>
     </ProtectedRoute>
   )
 }

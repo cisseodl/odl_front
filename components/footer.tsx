@@ -32,7 +32,7 @@ export function Footer() {
     ],
     Ressources: [
       { label: "Centre d'Aide", href: "/help" },
-      { label: "Devenir Instructeur", href: "/teach" },
+      { label: "Devenir Formateur", href: "/teach" },
       { label: "Témoignages", href: "/testimonials" },
       { label: "Partenaires", href: "/partners" },
     ],

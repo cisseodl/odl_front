@@ -39,7 +39,7 @@ export default function LearningPage() {
 
   return (
     <ProtectedRoute>
-      <div className="min-h-screen bg-muted/30">
+    <div className="min-h-screen bg-muted/30">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-12 max-w-7xl">
         {/* Header Section */}
         <div className="mb-8">
@@ -92,30 +92,57 @@ export default function LearningPage() {
                 <TabsTrigger
                   value="all"
                   className="data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:text-primary data-[state=active]:font-semibold rounded-none pb-3 px-4 text-sm text-muted-foreground hover:text-foreground transition-all duration-200 whitespace-nowrap"
+                  title="Tous les cours auxquels vous êtes inscrit"
                 >
                   Tous les cours
                 </TabsTrigger>
                 <TabsTrigger
                   value="collections"
                   className="data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:text-primary data-[state=active]:font-semibold rounded-none pb-3 px-4 text-sm text-muted-foreground hover:text-foreground transition-all duration-200 whitespace-nowrap"
+                  title="Vos collections personnalisées de cours organisés par thème"
                 >
                   Collections
                 </TabsTrigger>
                 <TabsTrigger
                   value="wishlist"
                   className="data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:text-primary data-[state=active]:font-semibold rounded-none pb-3 px-4 text-sm text-muted-foreground hover:text-foreground transition-all duration-200 whitespace-nowrap"
+                  title="Cours que vous avez marqués comme favoris pour les consulter plus tard"
                 >
                   Liste de souhaits
                 </TabsTrigger>
                 <TabsTrigger
                   value="archived"
                   className="data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:text-primary data-[state=active]:font-semibold rounded-none pb-3 px-4 text-sm text-muted-foreground hover:text-foreground transition-all duration-200 whitespace-nowrap"
+                  title="Cours que vous avez archivés pour les retrouver facilement"
                 >
                   Archivés
                 </TabsTrigger>
               </TabsList>
             </Tabs>
           </div>
+          
+          {/* Tab Descriptions */}
+          {activeTab === "collections" && (
+            <div className="mb-4 p-3 bg-primary/5 border border-primary/20 rounded-lg">
+              <p className="text-sm text-muted-foreground">
+                <strong className="text-foreground">Collections :</strong> Organisez vos cours en collections personnalisées par thème ou projet pour un accès rapide.
+              </p>
+            </div>
+          )}
+          {activeTab === "wishlist" && (
+            <div className="mb-4 p-3 bg-primary/5 border border-primary/20 rounded-lg">
+              <p className="text-sm text-muted-foreground">
+                <strong className="text-foreground">Liste de souhaits :</strong> Retrouvez tous les cours que vous avez marqués comme favoris pour les consulter plus tard.
+              </p>
+            </div>
+          )}
+          {activeTab === "archived" && (
+            <div className="mb-4 p-3 bg-primary/5 border border-primary/20 rounded-lg">
+              <p className="text-sm text-muted-foreground">
+                <strong className="text-foreground">Archivés :</strong> Accédez aux cours que vous avez archivés pour les retrouver facilement sans encombrer votre liste principale.
+              </p>
+            </div>
+          )}
 
           {/* Search Bar */}
           <div className="relative w-full lg:w-64 flex-shrink-0">
@@ -184,7 +211,7 @@ export default function LearningPage() {
                   </h3>
                 </Link>
 
-                {/* Instructor */}
+                {/* Formateur */}
                 <div className="flex items-center gap-2">
                   <Avatar className="h-5 w-5">
                     <AvatarImage src={course.instructor.avatar} alt={course.instructor.name} />
@@ -260,7 +287,7 @@ export default function LearningPage() {
           </div>
         )}
       </div>
-      </div>
+    </div>
     </ProtectedRoute>
   )
 }

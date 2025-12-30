@@ -193,7 +193,7 @@ export default function LearnPage({ params }: LearnPageProps) {
 
   return (
     <ProtectedRoute>
-      <div className="flex h-screen">
+    <div className="flex h-screen">
       {/* Desktop Sidebar */}
       <aside
         className={cn(
@@ -345,10 +345,14 @@ export default function LearnPage({ params }: LearnPageProps) {
                   </div>
                   <div>
                     <h2 className="text-xl font-bold">{currentLessonData.title}</h2>
-                    <p className="text-sm text-muted-foreground">Ressource téléchargeable</p>
+                    <p className="text-sm text-muted-foreground">Ressource consultable</p>
                   </div>
                 </div>
-                <Button size="lg">Télécharger le Document</Button>
+                <div className="bg-muted/50 rounded-lg p-6 border border-border">
+                  <p className="text-muted-foreground text-center">
+                    Ce document est disponible uniquement en lecture. Vous pouvez le consulter directement dans cette section.
+                  </p>
+                </div>
               </Card>
             )}
 
@@ -436,7 +440,8 @@ export default function LearnPage({ params }: LearnPageProps) {
           onClose={() => setShowMiniPlayer(false)}
         />
       )}
-      </div>
+    </div>
     </ProtectedRoute>
   )
 }
+

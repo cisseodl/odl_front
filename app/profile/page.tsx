@@ -53,7 +53,7 @@ export default function ProfilePage() {
 
   return (
     <ProtectedRoute>
-      <div className="container mx-auto px-4 py-8">
+    <div className="container mx-auto px-4 py-8">
       <div className="mb-8">
         <h1 className="text-3xl md:text-4xl font-bold mb-2">Mon Profil</h1>
         <p className="text-muted-foreground text-lg">Gérez vos informations et préférences</p>
@@ -210,7 +210,7 @@ export default function ProfilePage() {
                     <div className="flex items-start justify-between gap-4">
                       <div className="flex-1 space-y-1">
                         <h4 className="font-semibold text-black">{cert.course}</h4>
-                        <p className="text-sm text-muted-foreground">Instructeur: {cert.instructor}</p>
+                        <p className="text-sm text-muted-foreground">Formateur: {cert.instructor}</p>
                         <p className="text-xs text-muted-foreground">Obtenu le {cert.date}</p>
                       </div>
                       <div className="flex gap-2">
@@ -295,7 +295,7 @@ export default function ProfilePage() {
           </Card>
         </TabsContent>
       </Tabs>
-      </div>
+    </div>
     </ProtectedRoute>
   )
 }

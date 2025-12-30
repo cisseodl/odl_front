@@ -102,9 +102,9 @@ export default function HelpPage() {
                 </AccordionItem>
 
                 <AccordionItem value="item-6">
-                  <AccordionTrigger>Puis-je devenir instructeur sur Orange Digital Learning ?</AccordionTrigger>
+                  <AccordionTrigger>Puis-je devenir formateur sur Orange Digital Learning ?</AccordionTrigger>
                   <AccordionContent>
-                    Oui ! Cliquez sur "Devenir Instructeur" dans le menu principal. Vous devrez remplir un formulaire de
+                    Oui ! Cliquez sur "Devenir Formateur" dans le menu principal. Vous devrez remplir un formulaire de
                     candidature et notre équipe vous contactera dans les 48 heures.
                   </AccordionContent>
                 </AccordionItem>
