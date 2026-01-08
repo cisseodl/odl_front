@@ -1,6 +1,9 @@
 import { create } from "zustand"
 import { persist } from "zustand/middleware"
 import type { User } from "../types"
+import { authService } from "../api/services"
+import { adaptUser } from "../api/adapters"
+import { apiClient } from "../api/client"
 
 interface AuthStore {
   user: User | null
@@ -15,19 +18,6 @@ interface AuthStore {
   checkAuth: () => Promise<void>
 }
 
-// Mock user data for frontend-only implementation
-const mockUser: User = {
-  id: "user-1",
-  name: "Mody Saidou Barry",
-  email: "mody.saidou.barry@example.com",
-  avatar: "/male-student-avatar.jpg",
-  enrolledCourses: ["course-1", "course-2", "course-3"],
-  completedCourses: ["course-1"],
-  certificates: ["cert-1"],
-  achievements: [],
-  userProgress: [],
-}
-
 export const useAuthStore = create<AuthStore>()(
   persist(
     (set, get) => ({
@@ -38,45 +28,60 @@ export const useAuthStore = create<AuthStore>()(
       login: async (email: string, password: string) => {
         set({ isLoading: true })
         
-        // Simulate API call delay
-        await new Promise((resolve) => setTimeout(resolve, 500))
-        
-        // Mock authentication - accept any email/password for demo
-        if (email && password) {
-          set({
-            user: {
-              ...mockUser,
-              email,
-              name: email.split("@")[0] || "Utilisateur",
-            },
-            isAuthenticated: true,
-            isLoading: false,
-          })
-        } else {
+        try {
+          const response = await authService.signin(email, password)
+          
+          if (response.ok && response.data?.user) {
+            const frontendUser = adaptUser(response.data.user)
+            set({
+              user: frontendUser,
+              isAuthenticated: true,
+              isLoading: false,
+            })
+          } else {
+            set({ isLoading: false })
+            throw new Error(response.message || "Email ou mot de passe incorrect")
+          }
+        } catch (error) {
           set({ isLoading: false })
-          throw new Error("Email et mot de passe requis")
+          throw error instanceof Error ? error : new Error("Erreur lors de la connexion")
         }
       },
 
-      register: async (name: string, email: string, _password: string) => {
+      register: async (name: string, email: string, password: string) => {
         set({ isLoading: true })
         
-        // Simulate API call delay
-        await new Promise((resolve) => setTimeout(resolve, 500))
-        
-        // Mock registration
-        set({
-          user: {
-            ...mockUser,
-            name,
-            email,
-          },
-          isAuthenticated: true,
-          isLoading: false,
-        })
+        try {
+          // Créer l'objet utilisateur selon le format attendu par l'API
+          const userData = {
+            fullName: name,
+            email: email,
+            password: password,
+            username: email, // Utiliser l'email comme username
+            role: "USER",
+          }
+          
+          const response = await authService.signup(JSON.stringify(userData))
+          
+          if (response.ok && response.data?.user) {
+            const frontendUser = adaptUser(response.data.user)
+            set({
+              user: frontendUser,
+              isAuthenticated: true,
+              isLoading: false,
+            })
+          } else {
+            set({ isLoading: false })
+            throw new Error(response.message || "Erreur lors de l'inscription")
+          }
+        } catch (error) {
+          set({ isLoading: false })
+          throw error instanceof Error ? error : new Error("Erreur lors de l'inscription")
+        }
       },
 
       logout: () => {
+        authService.logout()
         set({
           user: null,
           isAuthenticated: false,
@@ -93,14 +98,30 @@ export const useAuthStore = create<AuthStore>()(
       checkAuth: async () => {
         set({ isLoading: true })
         
-        // Simulate checking auth status
-        await new Promise((resolve) => setTimeout(resolve, 200))
-        
-        const storedUser = get().user
-        set({
-          isAuthenticated: !!storedUser,
-          isLoading: false,
-        })
+        try {
+          // Vérifier si un token existe
+          const token = apiClient.getToken()
+          
+          if (token) {
+            // Le token existe, on considère l'utilisateur comme authentifié
+            // Si nécessaire, on peut faire un appel API pour vérifier la validité du token
+            const storedUser = get().user
+            set({
+              isAuthenticated: !!storedUser,
+              isLoading: false,
+            })
+          } else {
+            set({
+              isAuthenticated: false,
+              isLoading: false,
+            })
+          }
+        } catch (error) {
+          set({
+            isAuthenticated: false,
+            isLoading: false,
+          })
+        }
       },
     }),
     {

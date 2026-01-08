@@ -17,11 +17,11 @@ export function Header() {
 
   return (
     <>
-      {/* Main Navbar - Design Orange Mali Moderne - Fond Noir */}
+      {/* Main Navbar - Design Orange Mali Moderne - Fond Blanc */}
       <header
         id="main-navigation"
         role="banner"
-        className="sticky top-0 z-50 w-full bg-black border-b border-white/10 backdrop-blur-sm"
+        className="sticky top-0 z-50 w-full bg-white border-b border-gray-200 backdrop-blur-sm"
         aria-label="Navigation principale"
       >
         <div className="container mx-auto px-4 lg:px-8">
@@ -47,7 +47,7 @@ export function Header() {
                   href="/courses"
                   className={`px-4 py-2 text-sm font-medium transition-all duration-200 relative group ${pathname === "/courses" || pathname.startsWith("/courses/")
                     ? "text-primary font-semibold"
-                    : "text-white hover:text-primary"
+                    : "text-muted-foreground hover:text-primary"
                     }`}
                 >
                   <span className="flex items-center gap-2">
@@ -62,7 +62,7 @@ export function Header() {
                   href="/dashboard"
                   className={`px-4 py-2 text-sm font-medium transition-all duration-200 relative group ${pathname === "/dashboard" || pathname.startsWith("/dashboard")
                     ? "text-primary font-semibold"
-                    : "text-white hover:text-primary"
+                    : "text-muted-foreground hover:text-primary"
                     }`}
                 >
                   <span className="flex items-center gap-2">
@@ -77,7 +77,7 @@ export function Header() {
                   href="/learning"
                   className={`px-4 py-2 text-sm font-medium transition-all duration-200 relative group ${pathname === "/learning" || pathname.startsWith("/learn")
                     ? "text-primary font-semibold"
-                    : "text-white hover:text-primary"
+                    : "text-muted-foreground hover:text-primary"
                     }`}
                 >
                   <span className="flex items-center gap-2">
@@ -92,7 +92,7 @@ export function Header() {
                   href="/about"
                   className={`px-4 py-2 text-sm font-medium transition-all duration-200 relative group ${pathname === "/about"
                     ? "text-primary font-semibold"
-                    : "text-white hover:text-primary"
+                    : "text-muted-foreground hover:text-primary"
                     }`}
                 >
                   <span className="flex items-center gap-2">
@@ -109,13 +109,13 @@ export function Header() {
             {/* Center: Search Bar - Design Orange Mali */}
             <div className="hidden md:flex flex-1 max-w-lg mx-6" role="search" aria-label="Recherche de cours">
               <div className="relative w-full group">
-                <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-white/60 transition-colors group-focus-within:text-primary" aria-hidden="true" />
+                <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground transition-colors group-focus-within:text-primary" aria-hidden="true" />
                 <Input
                   type="search"
                   placeholder="Rechercher des cours..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-10 h-10 bg-white/10 border border-white/20 text-white placeholder:text-white/50 focus:bg-white/15 focus:border-primary focus:ring-2 focus:ring-primary/30 transition-all duration-200 text-sm rounded-md"
+                  className="pl-10 h-10 bg-gray-100 border border-gray-200 text-foreground placeholder:text-muted-foreground focus:bg-white focus:border-primary focus:ring-2 focus:ring-primary/30 transition-all duration-200 text-sm rounded-md"
                   aria-label="Rechercher des cours"
                   aria-describedby="search-description"
                 />
@@ -131,7 +131,7 @@ export function Header() {
               <Button
                 variant="ghost"
                 size="icon"
-                className="md:hidden text-white hover:text-primary hover:bg-white/10 h-9 w-9"
+                className="md:hidden text-foreground hover:text-primary hover:bg-gray-100 h-9 w-9"
                 aria-label="Rechercher"
               >
                 <Search className="h-5 w-5" />
@@ -151,12 +151,12 @@ export function Header() {
               <Button
                 variant="ghost"
                 size="icon"
-                className="text-white hover:text-primary hover:bg-white/10 h-9 w-9 ml-2"
+                className="text-foreground hover:text-primary hover:bg-gray-100 h-9 w-9 ml-2"
                 aria-label="Profil"
                 asChild
               >
                 <Link href={isAuthenticated ? "/profile" : "/auth"}>
-                  <div className="h-9 w-9 rounded-full bg-white flex items-center justify-center border-2 border-white/20 shadow-lg">
+                  <div className="h-9 w-9 rounded-full bg-gray-100 flex items-center justify-center border-2 border-gray-200 shadow-sm">
                     <User className="h-4 w-4 text-primary" />
                   </div>
                 </Link>
@@ -166,7 +166,7 @@ export function Header() {
               <Button
                 variant="ghost"
                 size="icon"
-                className="lg:hidden text-white hover:text-primary hover:bg-white/10 h-9 w-9"
+                className="lg:hidden text-foreground hover:text-primary hover:bg-gray-100 h-9 w-9"
                 onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
                 aria-label="Menu mobile"
               >
@@ -175,19 +175,19 @@ export function Header() {
             </div>
           </div>
 
-          {/* Mobile Navigation - Style Orange Mali - Fond Noir - Conforme agent.md (sans panier/vente) */}
+          {/* Mobile Navigation - Style Orange Mali - Fond Blanc - Conforme agent.md (sans panier/vente) */}
           {mobileMenuOpen && (
             <nav
               role="navigation"
               aria-label="Menu mobile"
-              className="lg:hidden py-4 border-t border-white/10 bg-black"
+              className="lg:hidden py-4 border-t border-gray-200 bg-white"
             >
               <div className="flex flex-col gap-1">
                 <Link
                   href="/courses"
                   className={`flex items-center gap-3 px-4 py-2.5 text-sm font-medium transition-colors ${pathname === "/courses" || pathname.startsWith("/courses/")
-                    ? "text-primary bg-primary/20 font-semibold"
-                    : "text-white hover:text-primary hover:bg-white/10"
+                    ? "text-primary bg-primary/10 font-semibold"
+                    : "text-muted-foreground hover:text-primary hover:bg-gray-100"
                     }`}
                   onClick={() => setMobileMenuOpen(false)}
                 >
@@ -197,8 +197,8 @@ export function Header() {
                 <Link
                   href="/dashboard"
                   className={`flex items-center gap-3 px-4 py-2.5 text-sm font-medium transition-colors ${pathname === "/dashboard" || pathname.startsWith("/dashboard")
-                    ? "text-primary bg-primary/20 font-semibold"
-                    : "text-white hover:text-primary hover:bg-white/10"
+                    ? "text-primary bg-primary/10 font-semibold"
+                    : "text-muted-foreground hover:text-primary hover:bg-gray-100"
                     }`}
                   onClick={() => setMobileMenuOpen(false)}
                 >
@@ -208,8 +208,8 @@ export function Header() {
                 <Link
                   href="/learning"
                   className={`flex items-center gap-3 px-4 py-2.5 text-sm font-medium transition-colors ${pathname === "/learning" || pathname.startsWith("/learn")
-                    ? "text-primary bg-primary/20 font-semibold"
-                    : "text-white hover:text-primary hover:bg-white/10"
+                    ? "text-primary bg-primary/10 font-semibold"
+                    : "text-muted-foreground hover:text-primary hover:bg-gray-100"
                     }`}
                   onClick={() => setMobileMenuOpen(false)}
                 >
@@ -219,8 +219,8 @@ export function Header() {
                 <Link
                   href="/about"
                   className={`flex items-center gap-3 px-4 py-2.5 text-sm font-medium transition-colors ${pathname === "/about"
-                    ? "text-primary bg-primary/20 font-semibold"
-                    : "text-white hover:text-primary hover:bg-white/10"
+                    ? "text-primary bg-primary/10 font-semibold"
+                    : "text-muted-foreground hover:text-primary hover:bg-gray-100"
                     }`}
                   onClick={() => setMobileMenuOpen(false)}
                 >
@@ -230,15 +230,15 @@ export function Header() {
                 <Link
                   href="/profile"
                   className={`flex items-center gap-3 px-4 py-2.5 text-sm font-medium transition-colors ${pathname === "/profile" || pathname.startsWith("/profile")
-                    ? "text-primary bg-primary/20 font-semibold"
-                    : "text-white hover:text-primary hover:bg-white/10"
+                    ? "text-primary bg-primary/10 font-semibold"
+                    : "text-muted-foreground hover:text-primary hover:bg-gray-100"
                     }`}
                   onClick={() => setMobileMenuOpen(false)}
                 >
                   <UserCircle className="h-4 w-4" />
                   Mon Profil
                 </Link>
-                <div className="px-4 pt-2 mt-2 border-t border-white/10">
+                <div className="px-4 pt-2 mt-2 border-t border-gray-200">
                   <Button
                     className="w-full bg-primary text-white hover:bg-primary/95 font-semibold rounded-md"
                     asChild

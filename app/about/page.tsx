@@ -9,26 +9,24 @@ export default function AboutPage() {
       {/* Hero Section */}
       <section className="bg-gradient-to-br from-primary/10 via-background to-accent/10 py-20">
         <div className="container mx-auto px-4">
-          <div className="max-width-4xl mx-auto text-center">
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6 text-balance">
-              À propos d'Orange Digital Center Mali
+          <div className="max-w-4xl mx-auto text-left">
+            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6 text-balance text-center">
+              À propos
             </h1>
-            <p className="text-lg md:text-xl text-muted-foreground mb-8 max-w-3xl mx-auto text-pretty">
-              Orange Digital Center Mali est un écosystème numérique complet dédié à l'accompagnement et à l'innovation pour tous. 
-              Il réunit dans un même lieu quatre programmes complémentaires et gratuits : 
-              <strong> Orange Digital Kalanso</strong> (école de code), 
-              <strong> Orange Fab</strong> (accélérateur de start-up), 
-              <strong> FabLab Solidaire</strong> (atelier de fabrication numérique) et 
-              <strong> Multimédias</strong> (centre de production et formation). 
-              Tous nos programmes sont gratuits et ouverts à tous.
+            <p className="text-lg md:text-xl text-muted-foreground mb-8 max-w-3xl text-pretty">
+              Orange Digital Learning (ODL) est une initiative de Orange Digital Center Mali (ODC-Mali) qui est un écosystème numérique complet dédié à l'accompagnement et à l'innovation pour tous.
+              ODC-Mali réunit quatre programmes complémentaires et gratuits :
+              <strong> Orange Digital Kalanso</strong> (école du code),
+              <strong> FabLab Solidaire</strong> (atelier de fabrication numérique),
+              <strong> Multimédia</strong> (centre de production et formation) et
+              <strong> Orange Fab</strong> (accélérateur de start-up).
+              Tous ces programmes sont gratuits et sont ouverts à tous.
             </p>
             <div className="flex flex-wrap gap-4 justify-center">
               <Button size="lg" asChild>
                 <Link href="/courses">Explorer les cours</Link>
               </Button>
-              <Button size="lg" variant="outline" asChild>
-                <Link href="/instructor/dashboard">Devenir formateur</Link>
-              </Button>
+
             </div>
           </div>
         </div>
@@ -67,8 +65,8 @@ export default function AboutPage() {
               <strong>Notre raison d'être est de booster l'employabilité et l'entrepreneuriat des jeunes maliens à travers nos programmes spéciaux.</strong>
             </p>
             <p className="text-lg text-muted-foreground text-pretty mt-4">
-              Nous offrons un écosystème complet qui transforme les jeunes en acteurs du numérique et de l'innovation au Mali, 
-              en leur donnant accès à des formations gratuites, un accompagnement personnalisé et les outils nécessaires pour réussir 
+              Nous offrons un écosystème complet qui transforme les jeunes en acteurs du numérique et de l'innovation au Mali,
+              en leur donnant accès à des formations gratuites, un accompagnement personnalisé et les outils nécessaires pour réussir
               dans le monde numérique.
             </p>
           </div>
@@ -204,8 +202,8 @@ export default function AboutPage() {
                   <h3 className="text-2xl font-bold mb-3 text-green-700">Orange Digital Kalanso</h3>
                   <p className="text-sm font-semibold text-green-600 mb-4">École de code</p>
                   <p className="text-muted-foreground mb-4 text-pretty">
-                    Orange Digital Kalanso est notre école de programmation qui forme les jeunes aux métiers du numérique. 
-                    Nous proposons des formations intensives et gratuites en développement web et mobile, couvrant les technologies 
+                    Orange Digital Kalanso est notre école de programmation qui forme les jeunes aux métiers du numérique.
+                    Nous proposons des formations intensives et gratuites en développement web et mobile, couvrant les technologies
                     les plus demandées sur le marché.
                   </p>
                   <div className="space-y-2">
@@ -232,8 +230,8 @@ export default function AboutPage() {
                   <h3 className="text-2xl font-bold mb-3 text-purple-700">Orange Fab</h3>
                   <p className="text-sm font-semibold text-purple-600 mb-4">Accélérateur de start-up</p>
                   <p className="text-muted-foreground mb-4 text-pretty">
-                    Orange Fab est notre programme d'accélération dédié aux start-up innovantes. Nous accompagnons les entrepreneurs 
-                    dans le développement de leur projet, de l'idée initiale jusqu'à la mise sur le marché, en leur offrant des ressources, 
+                    Orange Fab est notre programme d'accélération dédié aux start-up innovantes. Nous accompagnons les entrepreneurs
+                    dans le développement de leur projet, de l'idée initiale jusqu'à la mise sur le marché, en leur offrant des ressources,
                     un mentorat expert et un réseau de partenaires.
                   </p>
                   <div className="space-y-2">
@@ -260,8 +258,8 @@ export default function AboutPage() {
                   <h3 className="text-2xl font-bold mb-3 text-gray-700">FabLab Solidaire</h3>
                   <p className="text-sm font-semibold text-gray-600 mb-4">Atelier de fabrication numérique</p>
                   <p className="text-muted-foreground mb-4 text-pretty">
-                    Le FabLab Solidaire est un espace de fabrication numérique ouvert à tous, où les jeunes peuvent donner vie à leurs 
-                    idées créatives. Équipé d'imprimantes 3D, de découpeuses laser et d'autres outils numériques, c'est le lieu idéal 
+                    Le FabLab Solidaire est un espace de fabrication numérique ouvert à tous, où les jeunes peuvent donner vie à leurs
+                    idées créatives. Équipé d'imprimantes 3D, de découpeuses laser et d'autres outils numériques, c'est le lieu idéal
                     pour prototyper, créer et innover.
                   </p>
                   <div className="space-y-2">
@@ -288,8 +286,8 @@ export default function AboutPage() {
                   <h3 className="text-2xl font-bold mb-3 text-blue-700">Multimédias</h3>
                   <p className="text-sm font-semibold text-blue-600 mb-4">Centre de production et formation multimédia</p>
                   <p className="text-muted-foreground mb-4 text-pretty">
-                    Le programme Multimédias d'Orange Digital Center offre des formations et des ressources pour la création de contenu 
-                    numérique. Que ce soit pour la vidéo, le design graphique, le montage ou la photographie, nous formons les jeunes 
+                    Le programme Multimédias d'Orange Digital Center offre des formations et des ressources pour la création de contenu
+                    numérique. Que ce soit pour la vidéo, le design graphique, le montage ou la photographie, nous formons les jeunes
                     aux compétences multimédias essentielles pour l'ère digitale.
                   </p>
                   <div className="space-y-2">
@@ -313,9 +311,9 @@ export default function AboutPage() {
               <div className="text-center">
                 <h3 className="text-2xl font-bold mb-4">Un Écosystème Complet</h3>
                 <p className="text-lg text-muted-foreground text-pretty mb-6">
-                  Ces quatre programmes travaillent en synergie pour offrir un parcours complet aux jeunes maliens : 
-                  de la formation technique (Kalanso) à la création de contenu (Multimédias), en passant par le prototypage 
-                  (FabLab) et l'entrepreneuriat (Orange Fab). Ensemble, ils forment un écosystème numérique solide qui 
+                  Ces quatre programmes travaillent en synergie pour offrir un parcours complet aux jeunes maliens :
+                  de la formation technique (Kalanso) à la création de contenu (Multimédias), en passant par le prototypage
+                  (FabLab) et l'entrepreneuriat (Orange Fab). Ensemble, ils forment un écosystème numérique solide qui
                   transforme les idées en réalité et les compétences en opportunités professionnelles.
                 </p>
                 <div className="flex flex-wrap gap-4 justify-center">

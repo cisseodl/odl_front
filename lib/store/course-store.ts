@@ -1,15 +1,17 @@
 import { create } from "zustand"
 import { persist } from "zustand/middleware"
 import type { Course, UserProgress } from "../types"
+import { courseService } from "../api/services"
 
 interface CourseStore {
   enrolled: string[] // Course IDs
   favorites: string[] // Course IDs
   progress: Record<string, UserProgress>
   recentlyViewed: string[] // Course IDs
+  isLoading: boolean
   
   // Actions
-  enroll: (courseId: string) => void
+  enroll: (courseId: string) => Promise<void>
   unenroll: (courseId: string) => void
   toggleFavorite: (courseId: string) => void
   updateProgress: (courseId: string, progress: Partial<UserProgress>) => void
@@ -28,27 +30,48 @@ export const useCourseStore = create<CourseStore>()(
       favorites: [],
       progress: {},
       recentlyViewed: [],
+      isLoading: false,
 
-      enroll: (courseId: string) => {
-        set((state) => {
-          if (state.enrolled.includes(courseId)) {
-            return state // Already enrolled
-          }
+      enroll: async (courseId: string) => {
+        const courseIdNum = parseInt(courseId, 10)
+        
+        if (isNaN(courseIdNum)) {
+          throw new Error("ID de cours invalide")
+        }
+
+        // Vérifier si déjà inscrit
+        if (get().enrolled.includes(courseId)) {
+          return // Already enrolled
+        }
+
+        set({ isLoading: true })
+
+        try {
+          const response = await courseService.enrollInCourse(courseIdNum)
           
-          return {
-            enrolled: [...state.enrolled, courseId],
-            progress: {
-              ...state.progress,
-              [courseId]: {
-                courseId,
-                completedLessons: [],
-                progressPercentage: 0,
-                lastAccessedAt: new Date(),
-                quizScores: {},
+          if (response.ok) {
+            set((state) => ({
+              enrolled: [...state.enrolled, courseId],
+              progress: {
+                ...state.progress,
+                [courseId]: {
+                  courseId,
+                  completedLessons: [],
+                  progressPercentage: 0,
+                  lastAccessedAt: new Date(),
+                  quizScores: {},
+                },
               },
-            },
+              isLoading: false,
+            }))
+          } else {
+            set({ isLoading: false })
+            throw new Error(response.message || "Erreur lors de l'inscription au cours")
           }
-        })
+        } catch (error) {
+          set({ isLoading: false })
+          throw error instanceof Error ? error : new Error("Erreur lors de l'inscription au cours")
+        }
       },
 
       unenroll: (courseId: string) => {
