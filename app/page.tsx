@@ -91,7 +91,7 @@ export default function HomePage() {
   return (
     <div className="flex flex-col bg-white">
       {/* Hero Section - Style Orange Mali Impactant */}
-      <section className="relative overflow-hidden bg-gradient-to-br from-white via-white to-muted/30">
+      <section className="relative overflow-hidden bg-black">
         <Carousel
           opts={{
             align: "start",
@@ -122,7 +122,7 @@ export default function HomePage() {
                       quality={90}
                     />
                     {/* Overlay avec accent orange - Opacité réduite */}
-                    <div className="absolute inset-0 bg-gradient-to-r from-black/50 via-black/40 to-black/30" />
+                    <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/60 to-black/40" />
                     <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-transparent" />
                   </div>
 
