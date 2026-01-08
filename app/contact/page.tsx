@@ -49,7 +49,7 @@ export default function ContactPage() {
               <CardContent className="p-6 text-center">
                 <Mail className="h-8 w-8 mx-auto mb-4 text-primary" />
                 <h3 className="font-bold mb-2">Email</h3>
-                <p className="text-sm text-muted-foreground">support@orangedigitallearning.com</p>
+                <p className="text-sm text-muted-foreground">cisseodl@gmail.com</p>
               </CardContent>
             </Card>
           </FadeInView>
@@ -59,7 +59,7 @@ export default function ContactPage() {
               <CardContent className="p-6 text-center">
                 <Phone className="h-8 w-8 mx-auto mb-4 text-primary" />
                 <h3 className="font-bold mb-2">Téléphone</h3>
-                <p className="text-sm text-muted-foreground">+33 1 23 45 67 89</p>
+                <p className="text-sm text-muted-foreground">+223 70662114</p>
               </CardContent>
             </Card>
           </FadeInView>
@@ -69,7 +69,7 @@ export default function ContactPage() {
               <CardContent className="p-6 text-center">
                 <MapPin className="h-8 w-8 mx-auto mb-4 text-primary" />
                 <h3 className="font-bold mb-2">Adresse</h3>
-                <p className="text-sm text-muted-foreground">123 Rue de l'Éducation, Paris</p>
+                <p className="text-sm text-muted-foreground">Bamako, Mali</p>
               </CardContent>
             </Card>
           </FadeInView>
@@ -84,60 +84,60 @@ export default function ContactPage() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-6">
-              <div className="grid md:grid-cols-2 gap-4">
+              <form onSubmit={handleSubmit} className="space-y-6">
+                <div className="grid md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="name">Nom complet</Label>
+                    <Input
+                      id="name"
+                      placeholder="Jean Dupont"
+                      value={formData.name}
+                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="email">Email</Label>
+                    <Input
+                      id="email"
+                      type="email"
+                      placeholder="jean@exemple.com"
+                      value={formData.email}
+                      onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                      required
+                    />
+                  </div>
+                </div>
+
                 <div className="space-y-2">
-                  <Label htmlFor="name">Nom complet</Label>
+                  <Label htmlFor="subject">Sujet</Label>
                   <Input
-                    id="name"
-                    placeholder="Jean Dupont"
-                    value={formData.name}
-                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                    id="subject"
+                    placeholder="Comment pouvons-nous vous aider ?"
+                    value={formData.subject}
+                    onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
                     required
                   />
                 </div>
+
                 <div className="space-y-2">
-                  <Label htmlFor="email">Email</Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    placeholder="jean@exemple.com"
-                    value={formData.email}
-                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                  <Label htmlFor="message">Message</Label>
+                  <Textarea
+                    id="message"
+                    placeholder="Décrivez votre question ou problème en détail..."
+                    rows={6}
+                    value={formData.message}
+                    onChange={(e) => setFormData({ ...formData, message: e.target.value })}
                     required
                   />
                 </div>
-              </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="subject">Sujet</Label>
-                <Input
-                  id="subject"
-                  placeholder="Comment pouvons-nous vous aider ?"
-                  value={formData.subject}
-                  onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
-                  required
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="message">Message</Label>
-                <Textarea
-                  id="message"
-                  placeholder="Décrivez votre question ou problème en détail..."
-                  rows={6}
-                  value={formData.message}
-                  onChange={(e) => setFormData({ ...formData, message: e.target.value })}
-                  required
-                />
-              </div>
-
-              <Button type="submit" size="lg" className="w-full">
-                Envoyer le message
-              </Button>
-            </form>
-          </CardContent>
-        </Card>
+                <Button type="submit" size="lg" className="w-full">
+                  Envoyer le message
+                </Button>
+              </form>
+            </CardContent>
+          </Card>
         </FadeInView>
       </div>
     </div>

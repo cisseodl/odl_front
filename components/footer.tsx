@@ -26,13 +26,10 @@ export function Footer() {
   const footerLinks = {
     "À Propos": [
       { label: "Notre Mission", href: "/about" },
-      { label: "Carrières", href: "/careers" },
-      { label: "Blog", href: "/blog" },
-      { label: "Presse", href: "/press" },
     ],
     Ressources: [
       { label: "Centre d'Aide", href: "/help" },
-      { label: "Devenir Formateur", href: "/teach" },
+      { label: "Cours", href: "/courses" },
       { label: "Témoignages", href: "/testimonials" },
       { label: "Partenaires", href: "/partners" },
     ],
@@ -40,12 +37,11 @@ export function Footer() {
       { label: "Conditions d'Utilisation", href: "/terms" },
       { label: "Politique de Confidentialité", href: "/privacy" },
       { label: "Politique de Cookies", href: "/cookies" },
-      { label: "Accessibilité", href: "/accessibility" },
     ],
   }
 
   return (
-    <footer 
+    <footer
       role="contentinfo"
       aria-label="Pied de page"
       className="bg-black border-t border-white/10 mt-20"
@@ -113,17 +109,25 @@ export function Footer() {
 
           {/* Social Media */}
           <div className="flex items-center gap-1">
-            <Button variant="ghost" size="icon" className="h-9 w-9 text-white/70 hover:text-primary hover:bg-white/10 rounded-md">
-              <Facebook className="h-4 w-4" />
+            <Button variant="ghost" size="icon" className="h-9 w-9 text-white/70 hover:text-primary hover:bg-white/10 rounded-md" asChild>
+              <a href="https://www.facebook.com/ODCMali" target="_blank" rel="noopener noreferrer" aria-label="Facebook">
+                <Facebook className="h-4 w-4" />
+              </a>
             </Button>
-            <Button variant="ghost" size="icon" className="h-9 w-9 text-white/70 hover:text-primary hover:bg-white/10 rounded-md">
-              <Twitter className="h-4 w-4" />
+            <Button variant="ghost" size="icon" className="h-9 w-9 text-white/70 hover:text-primary hover:bg-white/10 rounded-md" asChild>
+              <a href="https://x.com/ODC_Mali?s=20" target="_blank" rel="noopener noreferrer" aria-label="Twitter">
+                <Twitter className="h-4 w-4" />
+              </a>
             </Button>
-            <Button variant="ghost" size="icon" className="h-9 w-9 text-white/70 hover:text-primary hover:bg-white/10 rounded-md">
-              <Linkedin className="h-4 w-4" />
+            <Button variant="ghost" size="icon" className="h-9 w-9 text-white/70 hover:text-primary hover:bg-white/10 rounded-md" asChild>
+              <a href="https://www.linkedin.com/company/orange-digital-center-mali/" target="_blank" rel="noopener noreferrer" aria-label="LinkedIn">
+                <Linkedin className="h-4 w-4" />
+              </a>
             </Button>
-            <Button variant="ghost" size="icon" className="h-9 w-9 text-white/70 hover:text-primary hover:bg-white/10 rounded-md">
-              <Instagram className="h-4 w-4" />
+            <Button variant="ghost" size="icon" className="h-9 w-9 text-white/70 hover:text-primary hover:bg-white/10 rounded-md" asChild>
+              <a href="https://www.instagram.com/odc_mali/?hl=en" target="_blank" rel="noopener noreferrer" aria-label="Instagram">
+                <Instagram className="h-4 w-4" />
+              </a>
             </Button>
           </div>
         </div>

@@ -1,20 +1,21 @@
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
-import { BookOpen, Users, Award, Globe, Target, Heart, Lightbulb, TrendingUp, GraduationCap, Rocket, Wrench, Video } from "lucide-react"
+import { BookOpen, Users, Award, Globe, Target, Heart, Lightbulb, TrendingUp, GraduationCap, Rocket, Wrench, Video, Facebook, Twitter, Linkedin, Instagram } from "lucide-react"
 import Link from "next/link"
 
 export default function AboutPage() {
   return (
     <div className="min-h-screen">
       {/* Hero Section */}
-      <section className="bg-gradient-to-br from-primary/10 via-background to-accent/10 py-20">
+      <section className="bg-black py-20 text-white">
         <div className="container mx-auto px-4">
           <div className="max-w-4xl mx-auto text-left">
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6 text-balance text-center">
-              À propos
+            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-2 text-balance text-white">
+              <strong className="text-primary">Orange</strong> <strong>Digital Learning</strong>
             </h1>
-            <p className="text-lg md:text-xl text-muted-foreground mb-8 max-w-3xl text-pretty">
-              Orange Digital Learning (ODL) est une initiative de Orange Digital Center Mali (ODC-Mali) qui est un écosystème numérique complet dédié à l'accompagnement et à l'innovation pour tous.
+            <p className="text-xl text-gray-400 mb-8 text-center">Plateforme E-learning</p>
+            <p className="text-lg md:text-xl text-gray-300 mb-8 max-w-3xl text-justify">
+              une initiative de <strong className="text-primary">Orange Digital Center Mali (ODC-Mali)</strong> qui est un écosystème numérique complet dédié à l'accompagnement et à l'innovation pour tous.
               ODC-Mali réunit quatre programmes complémentaires et gratuits :
               <strong> Orange Digital Kalanso</strong> (école du code),
               <strong> FabLab Solidaire</strong> (atelier de fabrication numérique),
@@ -23,7 +24,7 @@ export default function AboutPage() {
               Tous ces programmes sont gratuits et sont ouverts à tous.
             </p>
             <div className="flex flex-wrap gap-4 justify-center">
-              <Button size="lg" asChild>
+              <Button size="lg" asChild className="bg-primary text-white hover:bg-primary/90">
                 <Link href="/courses">Explorer les cours</Link>
               </Button>
 
@@ -338,7 +339,7 @@ export default function AboutPage() {
             <p className="text-lg text-muted-foreground mb-8">
               Orange Digital Center Mali - Bamako, Mali
             </p>
-            <div className="flex flex-wrap gap-4 justify-center">
+            <div className="flex flex-wrap gap-4 justify-center mb-8">
               <Button size="lg" asChild>
                 <a href="https://ml.linkedin.com/company/orange-digital-center-mali" target="_blank" rel="noopener noreferrer">
                   Suivez-nous sur LinkedIn
@@ -346,6 +347,30 @@ export default function AboutPage() {
               </Button>
               <Button size="lg" variant="outline" asChild>
                 <Link href="/courses">Découvrir nos cours</Link>
+              </Button>
+            </div>
+
+            {/* Social Media Links */}
+            <div className="flex flex-wrap gap-4 justify-center">
+              <Button variant="outline" size="icon" asChild className="h-12 w-12 rounded-full border-2 hover:border-primary hover:text-primary transition-colors">
+                <a href="https://www.facebook.com/ODCMali" target="_blank" rel="noopener noreferrer" aria-label="Facebook">
+                  <Facebook className="h-6 w-6" />
+                </a>
+              </Button>
+              <Button variant="outline" size="icon" asChild className="h-12 w-12 rounded-full border-2 hover:border-primary hover:text-primary transition-colors">
+                <a href="https://www.linkedin.com/company/orange-digital-center-mali/" target="_blank" rel="noopener noreferrer" aria-label="LinkedIn">
+                  <Linkedin className="h-6 w-6" />
+                </a>
+              </Button>
+              <Button variant="outline" size="icon" asChild className="h-12 w-12 rounded-full border-2 hover:border-primary hover:text-primary transition-colors">
+                <a href="https://x.com/ODC_Mali?s=20" target="_blank" rel="noopener noreferrer" aria-label="Twitter">
+                  <Twitter className="h-6 w-6" />
+                </a>
+              </Button>
+              <Button variant="outline" size="icon" asChild className="h-12 w-12 rounded-full border-2 hover:border-primary hover:text-primary transition-colors">
+                <a href="https://www.instagram.com/odc_mali/?hl=en" target="_blank" rel="noopener noreferrer" aria-label="Instagram">
+                  <Instagram className="h-6 w-6" />
+                </a>
               </Button>
             </div>
           </div>
