@@ -9,6 +9,7 @@ import { AriaLiveRegion } from "@/components/aria-live-region"
 import { ReactQueryProvider } from "@/lib/react-query-provider"
 import { ThemeProvider } from "@/components/theme-provider"
 import { StoreProvider } from "@/components/store-provider"
+import { LanguageProvider } from "@/lib/contexts/language-context"
 import "./globals.css"
 
 // Using CSS variables for fonts to avoid Turbopack issues
@@ -37,17 +38,18 @@ export default function RootLayout({
   return (
     <html lang="fr" suppressHydrationWarning>
       <body className={`font-sans antialiased`}>
-        <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false}>
-          <StoreProvider>
-            <ReactQueryProvider>
-              <SkipToContent />
-              <AriaLiveRegion />
-              <Header />
+        <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false}>
+          <LanguageProvider>
+            <StoreProvider>
+              <ReactQueryProvider>
+                <SkipToContent />
+                <AriaLiveRegion />
+                <Header />
               <main
                 id="main-content"
                 role="main"
                 aria-label="Contenu principal"
-                className="min-h-screen"
+                className="min-h-screen pt-20"
                 tabIndex={-1}
               >
                 {children}
@@ -56,6 +58,7 @@ export default function RootLayout({
               <Toaster />
             </ReactQueryProvider>
           </StoreProvider>
+          </LanguageProvider>
         </ThemeProvider>
         <Analytics />
       </body>

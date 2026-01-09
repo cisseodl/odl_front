@@ -12,6 +12,7 @@ import { mockCourses } from "@/lib/data"
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"
 import { AnimatedStats } from "@/components/animated-stats"
 import { FadeInView } from "@/components/fade-in-view"
+import { useLanguage } from "@/lib/contexts/language-context"
 import type { UseEmblaCarouselType } from "embla-carousel-react"
 
 type CarouselApi = UseEmblaCarouselType[1]
@@ -19,6 +20,7 @@ type CarouselApi = UseEmblaCarouselType[1]
 export default function HomePage() {
   const [api, setApi] = useState<CarouselApi | null>(null)
   const [current, setCurrent] = useState(0)
+  const { t } = useLanguage()
 
   // Organize courses by category
   // Organize courses by category
@@ -64,26 +66,26 @@ export default function HomePage() {
   const heroSlides = [
     {
       id: 1,
-      title: "Devenez Expert Cloud & Data",
-      description: "Maîtrisez AWS, Azure et la Data Science avec nos nouveaux parcours certifiants.",
+      title: t("home.becomeExpert"),
+      description: t("home.masterAWS"),
       image: "/7.jpeg", // Updated to new Cloud background
-      buttonText: "Explorer les cours",
+      buttonText: t("common.exploreCourses"),
       link: "/courses?category=Cloud+Computing",
     },
     {
       id: 2,
-      title: "L'Intelligence Artificielle à portée de main",
-      description: "Formez-vous aux dernières avancées en IA générative et Machine Learning.",
+      title: t("home.aiTitle"),
+      description: t("home.aiDescription"),
       image: "/3.jpeg", // Updated to new AI background
-      buttonText: "Explorer les cours",
+      buttonText: t("common.exploreCourses"),
       link: "/courses?category=Intelligence+Artificielle",
     },
     {
       id: 3,
-      title: "Développez vos compétences Tech",
-      description: "Des milliers de cours en Développement Web, Mobile et DevOps vous attendent.",
+      title: t("home.developSkills"),
+      description: t("home.thousandsCourses"),
       image: "/desola-lanre-ologun-kwzWjTnDPLk-unsplash.jpg",
-      buttonText: "Explorer les cours",
+      buttonText: t("common.exploreCourses"),
       link: "/courses",
     },
   ]
@@ -91,7 +93,7 @@ export default function HomePage() {
   return (
     <div className="flex flex-col bg-white">
       {/* Hero Section - Style Orange Mali Impactant */}
-      <section className="relative overflow-hidden bg-black">
+      <section className="relative overflow-hidden bg-black -mt-20 pt-20">
         <Carousel
           opts={{
             align: "start",
@@ -127,20 +129,24 @@ export default function HomePage() {
                   </div>
 
                   {/* Content - Style Orange Mali */}
-                  <div className="relative z-10 h-full flex items-center text-white py-20 md:py-24">
+                  <div className="relative z-10 h-full flex items-center text-white pt-16 pb-20 md:pt-4 md:pb-24">
                     <div className="container mx-auto px-4 lg:px-8">
-                      <div className="max-w-4xl mx-auto text-center space-y-8">
+                      <div className="max-w-6xl mx-auto text-center space-y-6">
                         {/* Welcome Message */}
-                        <p className="text-lg md:text-xl text-white/90 font-medium drop-shadow-md">
-                          <span className="text-primary">Orange </span>Digital Center  vous souhaite la bienvenue sur sa plateforme e-learning
+                        <p className="text-4xl md:text-5xl lg:text-6xl text-white/90 font-medium drop-shadow-md">
+                        {t("common.welcome")} <span className="text-primary">Orange</span> Digital Center Mali <br />
+                         {t("home.eLearningPlatform")}
+                          
                         </p>
+                        <br />
                         {/* Title */}
                         <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold leading-tight text-white drop-shadow-lg">
                           {slide.title}
                         </h1>
+                        
 
                         {/* Description */}
-                        <p className="text-lg md:text-xl text-white/90 max-w-2xl mx-auto leading-relaxed">
+                        <p className="text-lg md:text-xl text-white/90 max-w-2xl mx-auto leading-relaxed -mt-2">
                           {slide.description}
                         </p>
 
@@ -191,10 +197,10 @@ export default function HomePage() {
           <FadeInView delay={0.1}>
             <AnimatedStats
               stats={[
-                { value: 250000, label: "Étudiants actifs", useFormat: true },
-                { value: 5000, label: "Cours disponibles", useFormat: true },
-                { value: 1200, label: "Les cours les plus consultés", useFormat: true },
-                { value: 98, label: "Taux de satisfaction", suffix: "%" },
+                { value: 250000, label: t("stats.activeStudents"), useFormat: true },
+                { value: 5000, label: t("stats.availableCourses"), useFormat: true },
+                { value: 1200, label: t("stats.mostViewed"), useFormat: true },
+                { value: 98, label: t("stats.satisfactionRate"), suffix: "%" },
               ]}
             />
           </FadeInView>
@@ -204,7 +210,7 @@ export default function HomePage() {
       {/* Welcome Section */}
       <section className="py-8 lg:py-12 bg-white">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-          <h2 className="text-2xl sm:text-3xl font-bold text-foreground mb-6 tracking-tight">Bienvenue, continuez d'apprendre !</h2>
+          <h2 className="text-2xl sm:text-3xl font-bold text-foreground mb-6 tracking-tight">{t("home.continueLearning")}</h2>
 
           {/* Keep on Learning - Courses in Progress */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12">
@@ -245,14 +251,14 @@ export default function HomePage() {
 
       {/* What to Learn Next / Suggested for You */}
       <CourseSection
-        title="Que souhaitez-vous apprendre ensuite"
-        subtitle="Suggéré pour vous"
+        title={t("home.whatToLearnNext")}
+        subtitle={t("home.suggestedForYou")}
         courses={suggestedCourses}
       />
 
       {/* Trending */}
       <CourseSection
-        title="Tendances"
+        title={t("home.trending")}
         courses={trendingCourses}
         bgGray
       />
@@ -261,7 +267,7 @@ export default function HomePage() {
       <section className="py-16 lg:py-20 bg-white">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-black mb-12 text-center tracking-tight">
-            Témoignages
+            {t("home.testimonials")}
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8 max-w-5xl mx-auto">
             {testimonials.map((testimonial, index) => (
@@ -293,22 +299,22 @@ export default function HomePage() {
               <div className="mx-auto w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center border border-primary/20">
                 <CheckCircle2 className="h-9 w-9 text-primary" />
               </div>
-              <h3 className="font-bold text-lg text-black">Apprenez des compétences recherchées</h3>
-              <p className="text-sm text-muted-foreground leading-relaxed">Avec plus de 200 000 contenus vidéo</p>
+              <h3 className="font-bold text-lg text-black">{t("home.learnSkills")}</h3>
+              <p className="text-sm text-muted-foreground leading-relaxed">{t("home.learnSkillsDesc")}</p>
             </div>
             <div className="space-y-4">
               <div className="mx-auto w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center border border-primary/20">
                 <CheckCircle2 className="h-9 w-9 text-primary" />
               </div>
-              <h3 className="font-bold text-lg text-black">Choisissez des cours enseignés par des experts</h3>
-              <p className="text-sm text-muted-foreground leading-relaxed">Des formateurs du monde réel</p>
+              <h3 className="font-bold text-lg text-black">{t("home.expertCourses")}</h3>
+              <p className="text-sm text-muted-foreground leading-relaxed">{t("home.expertCoursesDesc")}</p>
             </div>
             <div className="space-y-4">
               <div className="mx-auto w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center border border-primary/20">
                 <CheckCircle2 className="h-9 w-9 text-primary" />
               </div>
-              <h3 className="font-bold text-lg text-black">Apprenez à votre rythme</h3>
-              <p className="text-sm text-muted-foreground leading-relaxed">Avec un accès à vie sur mobile et desktop</p>
+              <h3 className="font-bold text-lg text-black">{t("home.learnAtPace")}</h3>
+              <p className="text-sm text-muted-foreground leading-relaxed">{t("home.learnAtPaceDesc")}</p>
             </div>
           </div>
         </div>
@@ -316,28 +322,28 @@ export default function HomePage() {
 
       {/* Featured: Cloud & Data */}
       <CourseSection
-        title="À la une : Cloud, Data & IA"
-        subtitle="Les compétences les plus recherchées du moment"
+        title={t("home.featured")}
+        subtitle={t("home.featuredSubtitle")}
         courses={cloudDataCourses}
         bgGray
       />
 
       {/* Top Courses in Development */}
       <CourseSection
-        title="Développement Web & Mobile"
+        title={t("home.webMobile")}
         courses={developmentCourses}
       />
 
       {/* Top Courses in Business & DevOps */}
       <CourseSection
-        title="Business & DevOps"
+        title={t("home.businessDevOps")}
         courses={otherCourses}
         bgGray
       />
 
       {/* Top Courses in Design */}
       <CourseSection
-        title="Design Créatif"
+        title={t("home.creativeDesign")}
         courses={designCourses}
       />
     </div>

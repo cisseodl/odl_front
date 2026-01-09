@@ -1,0 +1,46 @@
+{
+  "common": {
+    "welcome": "Welcome",
+    "search": "Search",
+    "courses": "Courses",
+    "dashboard": "Dashboard",
+    "myLearning": "My Learning",
+    "about": "About",
+    "profile": "My Profile",
+    "exploreCourses": "Explore courses",
+    "searchPlaceholder": "Search for courses..."
+  },
+  "home": {
+    "welcomeMessage": "Welcome Orange Digital Center Mali",
+    "eLearningPlatform": "e-Learning platform",
+    "becomeExpert": "Become a Cloud & Data Expert",
+    "masterAWS": "Master AWS, Azure and Data Science with our new certified courses.",
+    "developSkills": "Develop your Tech skills",
+    "thousandsCourses": "Thousands of courses in Web Development, Mobile and DevOps await you.",
+    "aiTitle": "Artificial Intelligence within reach",
+    "aiDescription": "Train yourself in the latest advances in generative AI and Machine Learning.",
+    "continueLearning": "Welcome, keep learning!",
+    "whatToLearnNext": "What would you like to learn next",
+    "suggestedForYou": "Suggested for you",
+    "trending": "Trending",
+    "featured": "Featured: Cloud, Data & AI",
+    "featuredSubtitle": "The most in-demand skills right now",
+    "webMobile": "Web & Mobile Development",
+    "businessDevOps": "Business & DevOps",
+    "creativeDesign": "Creative Design",
+    "testimonials": "Testimonials",
+    "learnSkills": "Learn in-demand skills",
+    "learnSkillsDesc": "With over 200,000 video content",
+    "expertCourses": "Choose courses taught by experts",
+    "expertCoursesDesc": "Real-world instructors",
+    "learnAtPace": "Learn at your own pace",
+    "learnAtPaceDesc": "With lifetime access on mobile and desktop"
+  },
+  "stats": {
+    "activeStudents": "Active students",
+    "availableCourses": "Available courses",
+    "mostViewed": "Most viewed courses",
+    "satisfactionRate": "Satisfaction rate"
+  }
+}
+
