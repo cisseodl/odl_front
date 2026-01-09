@@ -132,7 +132,7 @@ export default function HomePage() {
                       <div className="max-w-4xl mx-auto text-center space-y-8">
                         {/* Welcome Message */}
                         <p className="text-lg md:text-xl text-white/90 font-medium drop-shadow-md">
-                          Orange Digital Center vous souhaite la bienvenue sur sa plateforme d'autoformation
+                          <span className="text-primary">Orange </span>Digital Center  vous souhaite la bienvenue sur sa plateforme e-learning
                         </p>
                         {/* Title */}
                         <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold leading-tight text-white drop-shadow-lg">
