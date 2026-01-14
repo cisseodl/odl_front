@@ -57,7 +57,7 @@ export function Header() {
         "fixed top-0 left-0 z-50 w-full transition-all duration-300 ease-in-out",
         isScrolled
           ? isDarkMode
-            ? "bg-gray-900/95 backdrop-blur-md shadow-md border-b border-gray-700/50"
+            ? "bg-gray-800/95 backdrop-blur-md shadow-md border-b border-gray-600/50"
             : "bg-white/95 backdrop-blur-md shadow-md border-b border-gray-200/50"
           : "bg-transparent shadow-none border-transparent"
       )}

@@ -176,9 +176,7 @@ export default function HomePage() {
                       <div className="max-w-6xl mx-auto text-center space-y-6">
                         {/* Welcome Message */}
                         <p className="text-4xl md:text-5xl lg:text-6xl text-white/90 font-medium drop-shadow-md">
-                        {t("common.welcome")} <span className="text-primary">Orange</span> Digital Center Mali <br />
-                         {t("home.eLearningPlatform")}
-                          
+                          Welcome <span className="text-primary">Orange</span> Digital Center's<br /> Self-Learning Platform
                         </p>
                         <br />
                         {/* Title */}
