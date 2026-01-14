@@ -3,7 +3,7 @@
 import { use, useState, useRef, useMemo } from "react"
 import { notFound } from "next/navigation"
 import Link from "next/link"
-import { ChevronLeft, ChevronRight, CheckCircle2, Circle, Play, FileText, Code, FlaskConical, Menu } from "lucide-react"
+import { ChevronLeft, ChevronRight, CheckCircle2, Circle, Play, FileText, Code, FlaskConical, Menu, Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
@@ -15,9 +15,11 @@ import { MiniPlayer } from "@/components/mini-player"
 import { ContentSearch } from "@/components/content-search"
 import { BookmarkButton } from "@/components/bookmark-button"
 import { TranscriptWithTimestamps } from "@/components/transcript-with-timestamps"
-import { mockCourses } from "@/lib/data"
 import { cn } from "@/lib/utils"
 import { ProtectedRoute } from "@/components/protected-route"
+import { useQuery } from "@tanstack/react-query"
+import { courseService, chapterService } from "@/lib/api/services"
+import type { Lesson } from "@/lib/types"
 
 interface LearnPageProps {
   params: Promise<{ courseId: string }>
@@ -25,7 +27,28 @@ interface LearnPageProps {
 
 export default function LearnPage({ params }: LearnPageProps) {
   const { courseId } = use(params)
-  const course = mockCourses.find((c) => c.id === courseId)
+  const courseIdNum = Number.parseInt(courseId)
+
+  // Charger le cours depuis l'API
+  const {
+    data: course,
+    isLoading: courseLoading,
+    error: courseError,
+  } = useQuery({
+    queryKey: ["course", courseIdNum],
+    queryFn: () => courseService.getCourseById(courseIdNum),
+    enabled: !Number.isNaN(courseIdNum),
+  })
+
+  // Charger les chapitres depuis l'API
+  const {
+    data: chapters = [],
+    isLoading: chaptersLoading,
+  } = useQuery({
+    queryKey: ["chapters", courseIdNum],
+    queryFn: () => chapterService.getChaptersByCourse(courseIdNum),
+    enabled: !Number.isNaN(courseIdNum) && !!course,
+  })
 
   const [currentLesson, setCurrentLesson] = useState(0)
   const [sidebarOpen, setSidebarOpen] = useState(true)
@@ -35,33 +58,44 @@ export default function LearnPage({ params }: LearnPageProps) {
   const [showMiniPlayer, setShowMiniPlayer] = useState(true)
   const videoRef = useRef<HTMLVideoElement>(null)
 
-  if (!course) {
+  // Convertir les modules du cours en leçons pour l'affichage
+  const lessons = useMemo(() => {
+    if (!course?.curriculum) return []
+    
+    const allLessons: Array<Lesson & { moduleTitle: string; moduleId: string }> = []
+    
+    course.curriculum.forEach((module) => {
+      module.lessons.forEach((lesson) => {
+        allLessons.push({
+          ...lesson,
+          moduleTitle: module.title,
+          moduleId: module.id,
+        })
+      })
+    })
+    
+    return allLessons
+  }, [course])
+
+  if (Number.isNaN(courseIdNum)) {
     notFound()
   }
 
-  // Mock lessons data
-  const lessons = [
-    ...Array(30)
-      .fill(null)
-      .map((_, i) => ({
-        id: i,
-        title: `Leçon ${i + 1}: ${
-          i % 4 === 0
-            ? "Introduction"
-            : i % 4 === 1
-              ? "Concepts de base"
-              : i % 4 === 2
-                ? "Pratique"
-                : "Quiz de validation"
-        }`,
-        type: i % 4 === 3 ? "quiz" : i % 5 === 0 ? "document" : i % 7 === 0 ? "lab" : "video",
-        duration: `${Math.floor(Math.random() * 20) + 5}min`,
-        moduleTitle: `Module ${Math.floor(i / 5) + 1}`,
-      })),
-  ]
+  if (courseLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <span className="ml-2 text-muted-foreground">Chargement du cours...</span>
+      </div>
+    )
+  }
+
+  if (courseError || !course) {
+    notFound()
+  }
 
   const currentLessonData = lessons[currentLesson]
-  const progress = (completedLessons.length / lessons.length) * 100
+  const progress = lessons.length > 0 ? (completedLessons.length / lessons.length) * 100 : 0
 
   // Filter lessons based on search query
   const filteredLessons = useMemo(() => {
@@ -77,19 +111,20 @@ export default function LearnPage({ params }: LearnPageProps) {
 
   // Group lessons by module for display
   const groupedLessons = useMemo(() => {
-    return filteredLessons.reduce(
-      (acc, lesson) => {
-        const last = acc[acc.length - 1]
-        if (!last || last.module !== lesson.moduleTitle) {
-          acc.push({ module: lesson.moduleTitle, lessons: [lesson] })
-        } else {
-          last.lessons.push(lesson)
-        }
-        return acc
-      },
-      [] as { module: string; lessons: typeof lessons }[]
-    )
-  }, [filteredLessons])
+    if (!course?.curriculum) return []
+    
+    return course.curriculum.map((module) => ({
+      module: module.title,
+      lessons: module.lessons.filter((lesson) => {
+        if (!searchQuery.trim()) return true
+        const query = searchQuery.toLowerCase()
+        return (
+          lesson.title.toLowerCase().includes(query) ||
+          module.title.toLowerCase().includes(query)
+        )
+      }),
+    }))
+  }, [course, searchQuery])
 
   const handleMarkComplete = () => {
     if (!completedLessons.includes(currentLesson)) {

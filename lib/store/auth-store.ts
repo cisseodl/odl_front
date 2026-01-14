@@ -31,16 +31,25 @@ export const useAuthStore = create<AuthStore>()(
         try {
           const response = await authService.signin(email, password)
           
-          if (response.ok && response.data?.user) {
-            const frontendUser = adaptUser(response.data.user)
+          // Le backend retourne CResponse<JwtAuthenticationResponse>
+          // Donc response.data est CResponse, et response.data.data est JwtAuthenticationResponse
+          const authData = response.data as any
+          const jwtResponse = authData?.data || authData // Support des deux formats
+          
+          if (response.ok && jwtResponse?.token && jwtResponse?.user) {
+            const frontendUser = adaptUser(jwtResponse.user)
             set({
               user: frontendUser,
               isAuthenticated: true,
               isLoading: false,
             })
+            // Sauvegarder le token
+            if (jwtResponse.token) {
+              apiClient.setToken(jwtResponse.token)
+            }
           } else {
             set({ isLoading: false })
-            throw new Error(response.message || "Email ou mot de passe incorrect")
+            throw new Error(response.message || authData?.message || "Email ou mot de passe incorrect")
           }
         } catch (error) {
           set({ isLoading: false })
@@ -53,26 +62,48 @@ export const useAuthStore = create<AuthStore>()(
         
         try {
           // Créer l'objet utilisateur selon le format attendu par l'API
+          // Le backend attend seulement: fullName, email, password, phone (optionnel), avatar (optionnel)
           const userData = {
             fullName: name,
             email: email,
             password: password,
-            username: email, // Utiliser l'email comme username
-            role: "USER",
+            // phone et avatar sont optionnels, on ne les envoie pas si non fournis
           }
           
           const response = await authService.signup(JSON.stringify(userData))
           
-          if (response.ok && response.data?.user) {
-            const frontendUser = adaptUser(response.data.user)
+          console.log("DEBUG - Signup response:", response)
+          
+          // Le backend retourne CResponse<JwtAuthenticationResponse>
+          // Donc response.data est CResponse, et response.data.data est JwtAuthenticationResponse
+          const authData = response.data as any
+          console.log("DEBUG - Auth data:", authData)
+          
+          const jwtResponse = authData?.data || authData // Support des deux formats
+          console.log("DEBUG - JWT Response:", jwtResponse)
+          
+          if (response.ok && jwtResponse?.token && jwtResponse?.user) {
+            const frontendUser = adaptUser(jwtResponse.user)
+            console.log("DEBUG - Frontend user:", frontendUser)
             set({
               user: frontendUser,
               isAuthenticated: true,
               isLoading: false,
             })
+            // Sauvegarder le token
+            if (jwtResponse.token) {
+              apiClient.setToken(jwtResponse.token)
+              console.log("DEBUG - Token saved")
+            }
           } else {
+            console.error("DEBUG - Signup failed:", {
+              ok: response.ok,
+              hasToken: !!jwtResponse?.token,
+              hasUser: !!jwtResponse?.user,
+              message: response.message || authData?.message
+            })
             set({ isLoading: false })
-            throw new Error(response.message || "Erreur lors de l'inscription")
+            throw new Error(response.message || authData?.message || "Erreur lors de l'inscription")
           }
         } catch (error) {
           set({ isLoading: false })

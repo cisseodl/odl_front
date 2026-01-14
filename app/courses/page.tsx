@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useMemo, useEffect } from "react"
-import { SlidersHorizontal, X } from "lucide-react"
+import { SlidersHorizontal, X, Loader2 } from "lucide-react"
 import { CourseCard } from "@/components/course-card"
 import { CourseCardList } from "@/components/course-card-list"
 import { Button } from "@/components/ui/button"
@@ -12,7 +12,9 @@ import { CourseSortSelect } from "@/components/course-sort-select"
 import { ViewToggle } from "@/components/view-toggle"
 import { EmptyState } from "@/components/empty-state"
 import { Search } from "lucide-react"
-import { mockCourses } from "@/lib/mock-data"
+import { useQuery } from "@tanstack/react-query"
+import { courseService } from "@/lib/api/services"
+import type { Course } from "@/lib/types"
 
 type SortOption = "popularity" | "rating" | "recent"
 type ViewMode = "grid" | "list"
@@ -25,6 +27,18 @@ export default function CoursesPage() {
   const [selectedLanguage, setSelectedLanguage] = useState<string[]>([])
   const [sortBy, setSortBy] = useState<SortOption>("popularity")
   const [viewMode, setViewMode] = useState<ViewMode>("grid")
+  
+  // Charger les cours depuis l'API
+  const {
+    data: courses = [],
+    isLoading,
+    error,
+    refetch,
+  } = useQuery({
+    queryKey: ["courses"],
+    queryFn: () => courseService.getAllCourses(),
+    staleTime: 5 * 60 * 1000, // 5 minutes
+  })
   
   // Load view preference from localStorage
   useEffect(() => {
@@ -45,7 +59,7 @@ export default function CoursesPage() {
 
   // Filter courses
   const filteredCourses = useMemo(() => {
-    let filtered = mockCourses
+    let filtered = courses
 
     // Category filter
     if (selectedCategory !== "Tous les cours") {
@@ -154,65 +168,92 @@ export default function CoursesPage() {
       <div className="mb-8">
         <h1 className="text-3xl md:text-4xl font-bold mb-2">Catalogue de Cours</h1>
         <p className="text-muted-foreground text-lg">
-          Explorez notre collection de {mockCourses.length} cours pour développer vos compétences
+          Explorez notre collection de cours pour développer vos compétences
         </p>
       </div>
 
-      <div className="flex gap-8">
-        {/* Desktop Sidebar Filters */}
-        <aside className="hidden lg:block w-72 flex-shrink-0">
-          <div className="sticky top-20 space-y-6">
-            <CourseFilters
-              selectedCategory={selectedCategory}
-              onCategoryChange={setSelectedCategory}
-              selectedLevel={selectedLevel}
-              onLevelChange={setSelectedLevel}
-              selectedDuration={selectedDuration}
-              onDurationChange={setSelectedDuration}
-              minRating={minRating}
-              onRatingChange={setMinRating}
-              selectedLanguage={selectedLanguage}
-              onLanguageChange={setSelectedLanguage}
-              onReset={resetFilters}
-              courses={mockCourses}
-            />
-          </div>
-        </aside>
+      {/* Loading State */}
+      {isLoading && (
+        <div className="flex items-center justify-center py-12">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <span className="ml-2 text-muted-foreground">Chargement des cours...</span>
+        </div>
+      )}
 
-        {/* Main Content */}
-        <div className="flex-1 min-w-0">
-          {/* Mobile Filter Button & Sort */}
-          <div className="flex items-center justify-between gap-4 mb-6 flex-wrap">
-            {/* Mobile Filters */}
-            <Sheet>
-              <SheetTrigger asChild>
-                <Button variant="outline" className="lg:hidden bg-transparent">
-                  <SlidersHorizontal className="h-4 w-4 mr-2" />
-                  Filtres
-                </Button>
-              </SheetTrigger>
-              <SheetContent side="left" className="w-80 overflow-y-auto">
-                <SheetHeader>
-                  <SheetTitle>Filtres</SheetTitle>
-                </SheetHeader>
-                <div className="mt-6">
-                  <CourseFilters
-                    selectedCategory={selectedCategory}
-                    onCategoryChange={setSelectedCategory}
-                    selectedLevel={selectedLevel}
-                    onLevelChange={setSelectedLevel}
-                    selectedDuration={selectedDuration}
-                    onDurationChange={setSelectedDuration}
-                    minRating={minRating}
-                    onRatingChange={setMinRating}
-                    selectedLanguage={selectedLanguage}
-                    onLanguageChange={setSelectedLanguage}
-                    onReset={resetFilters}
-                    courses={mockCourses}
-                  />
-                </div>
-              </SheetContent>
-            </Sheet>
+      {/* Error State */}
+      {error && (
+        <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-4 mb-6">
+          <p className="text-destructive font-medium">Erreur lors du chargement des cours</p>
+          <p className="text-sm text-muted-foreground mt-1">
+            {error instanceof Error ? error.message : "Une erreur est survenue"}
+          </p>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => refetch()}
+            className="mt-3"
+          >
+            Réessayer
+          </Button>
+        </div>
+      )}
+
+      {!isLoading && !error && (
+        <div className="flex gap-8">
+          {/* Desktop Sidebar Filters */}
+          <aside className="hidden lg:block w-72 flex-shrink-0">
+            <div className="sticky top-20 space-y-6">
+              <CourseFilters
+                selectedCategory={selectedCategory}
+                onCategoryChange={setSelectedCategory}
+                selectedLevel={selectedLevel}
+                onLevelChange={setSelectedLevel}
+                selectedDuration={selectedDuration}
+                onDurationChange={setSelectedDuration}
+                minRating={minRating}
+                onRatingChange={setMinRating}
+                selectedLanguage={selectedLanguage}
+                onLanguageChange={setSelectedLanguage}
+                onReset={resetFilters}
+                courses={courses}
+              />
+            </div>
+          </aside>
+
+          {/* Main Content */}
+          <div className="flex-1 min-w-0">
+            {/* Mobile Filter Button & Sort */}
+            <div className="flex items-center justify-between gap-4 mb-6 flex-wrap">
+              {/* Mobile Filters */}
+              <Sheet>
+                <SheetTrigger asChild>
+                  <Button variant="outline" className="lg:hidden bg-transparent">
+                    <SlidersHorizontal className="h-4 w-4 mr-2" />
+                    Filtres
+                  </Button>
+                </SheetTrigger>
+                <SheetContent side="left" className="w-80 overflow-y-auto">
+                  <SheetHeader>
+                    <SheetTitle>Filtres</SheetTitle>
+                  </SheetHeader>
+                  <div className="mt-6">
+                    <CourseFilters
+                      selectedCategory={selectedCategory}
+                      onCategoryChange={setSelectedCategory}
+                      selectedLevel={selectedLevel}
+                      onLevelChange={setSelectedLevel}
+                      selectedDuration={selectedDuration}
+                      onDurationChange={setSelectedDuration}
+                      minRating={minRating}
+                      onRatingChange={setMinRating}
+                      selectedLanguage={selectedLanguage}
+                      onLanguageChange={setSelectedLanguage}
+                      onReset={resetFilters}
+                      courses={courses}
+                    />
+                  </div>
+                </SheetContent>
+              </Sheet>
 
             {/* Results Count, Sort & View Toggle */}
             <div className="flex items-center gap-4 flex-1 justify-between">
@@ -295,6 +336,7 @@ export default function CoursesPage() {
           )}
         </div>
       </div>
+      )}
     </div>
   )
 }

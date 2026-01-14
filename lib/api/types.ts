@@ -48,6 +48,25 @@ export interface Apprenant {
   activate?: boolean
   createdAt?: string
   lastModifiedAt?: string
+  attentes?: string
+  satisfaction?: boolean
+}
+
+// Request pour créer un apprenant
+export interface ApprenantCreateRequest {
+  activate?: boolean
+  nom: string
+  prenom: string
+  email?: string
+  numero: string
+  profession?: string
+  niveauEtude?: string
+  filiere?: string
+  attentes?: string
+  satisfaction?: boolean
+  cohorteId?: number
+  userId?: number
+  userEmail?: string
 }
 
 export interface Cohorte {
@@ -64,7 +83,62 @@ export interface Cohorte {
 }
 
 // ============ Courses ============
+// CourseDto du backend - structure exacte retournée par l'API
 export interface BackendCourse {
+  id: number
+  title: string
+  subtitle: string
+  description: string
+  imageUrl: string // ⚠️ Note: backend retourne imageUrl, pas imagePath
+  instructor?: InstructorDto
+  category: string // Nom de la catégorie (string, pas objet)
+  level: "DEBUTANT" | "INTERMEDIAIRE" | "AVANCE" // Enum backend
+  rating: number
+  reviewCount: number
+  duration: string // Format: "23h 45min"
+  language: string
+  lastUpdated: string // Format: "13 janvier 2026"
+  bestseller: boolean
+  objectives: string[] // Set<String> converti en array
+  features: string[] // Set<String> converti en array
+  curriculum?: ModuleDto[] // List<ModuleDto>
+  enrolledCount: number
+  status?: "BROUILLON" | "EN_ATTENTE" | "PUBLIE" | "REJETE"
+  rejectionReason?: string
+}
+
+// InstructorDto du backend
+export interface InstructorDto {
+  id: number
+  name: string
+  avatar?: string
+  title?: string
+  bio?: string
+  studentCount: number
+  courseCount: number
+  rating: number
+}
+
+// ModuleDto du backend
+export interface ModuleDto {
+  id: number
+  title: string
+  duration: string // Format: "1h 30m"
+  lessons?: LessonDto[]
+}
+
+// LessonDto du backend
+export interface LessonDto {
+  id: number
+  title: string
+  type: "VIDEO" | "QUIZ" | "DOCUMENT" | "LAB" // Enum LessonType
+  duration: string // Format: "15 min"
+  completed?: boolean
+  locked?: boolean
+}
+
+// Ancienne interface (conservée pour compatibilité si nécessaire)
+export interface BackendCourseLegacy {
   id: number
   title: string
   description: string
@@ -188,9 +262,63 @@ export interface DashboardStatsDTO {
   totalQuizAttemptsGlobal?: number
   totalCertificatesGlobal?: number
   mode?: string
+  adminStats?: {
+    totalUsers?: number
+    totalCourses?: number
+    publishedCourses?: number
+    totalEnrollments?: number
+    top5CoursesByEnrollment?: Record<string, number>
+  }
 }
 
+// Statistiques publiques pour la page d'accueil
+export interface PublicStats {
+  totalStudents: number
+  totalCourses: number
+  mostViewedCourses: number
+  satisfactionRate: number
+}
 
+// ============ Profile ============
+export interface ProfileDto {
+  id: number
+  fullName: string
+  email: string
+  avatar?: string
+  enrolledCourses: string[]
+  completedCourses: string[]
+  certificates: string[]
+}
 
+export interface CertificateDto {
+  id: number
+  uniqueCode: string
+  studentName: string
+  studentEmail: string
+  course: string
+  courseId: number
+  issuedDate: string
+  validUntil: string
+  status: string
+  certificateUrl: string
+  avatar?: string
+}
 
+// ============ Course Progress ============
+export interface CourseProgressDto {
+  courseId: number
+  courseTitle: string
+  totalLessons: number
+  completedLessons: number
+  progressPercentage: number
+  lessons: LessonProgressDto[]
+}
 
+export interface LessonProgressDto {
+  lessonId: number
+  lessonTitle: string
+  lessonType: string
+  lessonDuration: string
+  completed: boolean
+  completedAt?: string
+}

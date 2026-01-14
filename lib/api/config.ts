@@ -3,7 +3,7 @@
  */
 export const API_CONFIG = {
   baseURL: process.env.NEXT_PUBLIC_API_BASE_URL || 
-    "http://odc-learning-backend-env.eba-ruizssvt.us-east-1.elasticbeanstalk.com/awsodclearning",
+    "http://localhost:8080/awsodclearning",
   timeout: 30000,
 } as const
 
@@ -50,10 +50,6 @@ export const API_ENDPOINTS = {
     create: "/quiz/create",
     submit: "/quiz/submit",
   },
-  // Dashboard
-  dashboard: {
-    summary: "/dashboard/summary",
-  },
   // Labs
   labs: {
     getAll: "/api/labs/",
@@ -61,6 +57,11 @@ export const API_ENDPOINTS = {
     start: "/api/labs/start",
     stop: "/api/labs/stop",
     submit: "/api/labs/submit",
+  },
+  // Learner
+  learner: {
+    getCourseProgress: "/api/learn",
+    completeLesson: "/api/learn",
   },
   // Files
   files: {
@@ -71,8 +72,30 @@ export const API_ENDPOINTS = {
   // Certificates
   certificates: {
     download: "/certificates/download",
+    myCertificates: "/api/profile/me/certificates",
+  },
+  // Profile
+  profile: {
+    me: "/api/profile/me",
+  },
+  // Apprenants
+  apprenants: {
+    create: "/apprenants/create",
+    getAll: "/apprenants/get-all",
+    getById: "/apprenants",
+  },
+  // Cohortes
+  cohortes: {
+    getAll: "/cohorte/read",
+    getById: "/cohorte/read",
+  },
+  // Dashboard
+  dashboard: {
+    student: "/api/dashboard/student",
+    instructor: "/api/dashboard/instructor",
   },
 } as const
+
 
 
 

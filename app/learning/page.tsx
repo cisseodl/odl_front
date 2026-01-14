@@ -1,9 +1,9 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useMemo } from "react"
 import Link from "next/link"
 import Image from "next/image"
-import { Search, Filter, MoreVertical, Star, X, Share2 } from "lucide-react"
+import { Search, Filter, MoreVertical, Star, X, Share2, Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
@@ -16,31 +16,106 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { mockCourses } from "@/lib/data"
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"
 import { ProtectedRoute } from "@/components/protected-route"
-
-// Mock user enrolled courses with progress
-const enrolledCoursesWithProgress = mockCourses.slice(0, 8).map((course, index) => ({
-  ...course,
-  progress: [68, 96, 100, 12, 45, 78, 23, 89][index] || Math.floor(Math.random() * 100),
-  userRating: index % 3 === 0 ? null : [5, 5, 4, null, 5, null, 4, 5][index] || null,
-  lastAccessed: index === 0 ? "Aujourd'hui" : index === 1 ? "Hier" : `Il y a ${index + 1} jours`,
-}))
+import { useQuery } from "@tanstack/react-query"
+import { courseService, profileService, learnerService } from "@/lib/api/services"
+import { useAuthStore } from "@/lib/store/auth-store"
+import type { Course } from "@/lib/types"
 
 export default function LearningPage() {
   const [activeTab, setActiveTab] = useState("all")
   const [searchQuery, setSearchQuery] = useState("")
   const [showShareBanner, setShowShareBanner] = useState(true)
+  const { user } = useAuthStore()
 
-  const filteredCourses = enrolledCoursesWithProgress.filter((course) =>
-    course.title.toLowerCase().includes(searchQuery.toLowerCase())
-  )
+  // Charger tous les cours depuis l'API
+  const {
+    data: allCourses = [],
+    isLoading: isLoadingCourses,
+  } = useQuery({
+    queryKey: ["courses"],
+    queryFn: () => courseService.getAllCourses(),
+    staleTime: 5 * 60 * 1000,
+  })
+
+  // Charger le profil pour obtenir les cours inscrits
+  const {
+    data: profile,
+    isLoading: isLoadingProfile,
+  } = useQuery({
+    queryKey: ["profile", user?.id],
+    queryFn: () => profileService.getMyProfile(),
+    enabled: !!user,
+    staleTime: 5 * 60 * 1000,
+  })
+
+  // Filtrer les cours inscrits
+  const enrolledCourses = useMemo(() => {
+    if (!profile?.enrolledCourses || !allCourses.length) {
+      return []
+    }
+    return allCourses.filter(course => 
+      profile.enrolledCourses.includes(course.title)
+    )
+  }, [profile, allCourses])
+
+  // Récupérer la progression pour chaque cours inscrit
+  // Pour l'instant, on utilise les données du profil (completedCourses)
+  // La progression détaillée peut être récupérée individuellement si nécessaire
+  const enrolledCoursesWithProgress = useMemo(() => {
+    return enrolledCourses.map((course) => {
+      const isCompleted = profile?.completedCourses?.includes(course.title) || false
+      // Utiliser une progression par défaut basée sur le statut de complétion
+      // La progression réelle peut être récupérée depuis l'API si nécessaire
+      const progress = isCompleted ? 100 : 0
+      
+      return {
+        ...course,
+        progress,
+        userRating: null, // TODO: Récupérer depuis les reviews
+        lastAccessed: "Récemment", // TODO: Récupérer depuis les données de progression
+        completed: isCompleted,
+      }
+    })
+  }, [enrolledCourses, profile])
+
+  const isLoading = isLoadingCourses || isLoadingProfile
+
+  const filteredCourses = useMemo(() => {
+    // Filtrer selon l'onglet actif
+    let coursesToFilter = enrolledCoursesWithProgress
+    
+    if (activeTab === "all") {
+      coursesToFilter = enrolledCoursesWithProgress
+    } else if (activeTab === "collections") {
+      // Collections - pour l'instant, retourner tous les cours
+      coursesToFilter = enrolledCoursesWithProgress
+    } else if (activeTab === "wishlist") {
+      // Liste de souhaits - pour l'instant vide (à implémenter)
+      coursesToFilter = []
+    } else if (activeTab === "archived") {
+      // Archivés - pour l'instant vide (à implémenter)
+      coursesToFilter = []
+    }
+
+    // Filtrer par recherche
+    return coursesToFilter.filter((course) =>
+      course.title.toLowerCase().includes(searchQuery.toLowerCase())
+    )
+  }, [enrolledCoursesWithProgress, searchQuery, activeTab])
 
   return (
     <ProtectedRoute>
     <div className="min-h-screen bg-muted/30">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-12 max-w-7xl">
+        {isLoading ? (
+          <div className="flex items-center justify-center py-12">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            <span className="ml-2 text-muted-foreground">Chargement de vos cours...</span>
+          </div>
+        ) : (
+          <>
         {/* Header Section */}
         <div className="mb-8">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
@@ -223,14 +298,14 @@ export default function LearningPage() {
                 {/* Progress Bar */}
                 <div className="space-y-2">
                   <div className="flex items-center justify-between text-xs">
-                    <span className="text-foreground font-semibold">{course.progress}% complété</span>
-                    {course.progress === 100 && (
+                    <span className="text-foreground font-semibold">{course.progress || 0}% complété</span>
+                    {(course.progress || 0) === 100 && (
                       <Badge variant="outline" className="text-xs bg-primary/10 text-primary border-primary/30 font-medium">
                         Complété
                       </Badge>
                     )}
                   </div>
-                  <Progress value={course.progress} className="h-2.5" />
+                  <Progress value={course.progress || 0} className="h-2.5" />
                 </div>
 
                 {/* Rating or Leave Rating */}
@@ -285,6 +360,8 @@ export default function LearningPage() {
               </div>
             </div>
           </div>
+        )}
+          </>
         )}
       </div>
     </div>

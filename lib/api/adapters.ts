@@ -9,6 +9,9 @@ import type {
   QuestionDTO,
   LabDefinition,
   LabSession,
+  InstructorDto,
+  ModuleDto,
+  LessonDto,
 } from "./types"
 import type {
   Course,
@@ -22,16 +25,39 @@ import type {
 } from "../types"
 
 /**
- * Convertir un cours backend en cours frontend
+ * Mapping des niveaux backend vers frontend
  */
-export function adaptCourse(backendCourse: BackendCourse): Course {
-  return {
-    id: String(backendCourse.id),
-    title: backendCourse.title,
-    subtitle: backendCourse.description?.substring(0, 100) || "",
-    description: backendCourse.description || "",
-    imageUrl: backendCourse.imagePath || "/placeholder.jpg",
-    instructor: {
+const levelMapping: Record<string, "Débutant" | "Intermédiaire" | "Avancé"> = {
+  DEBUTANT: "Débutant",
+  INTERMEDIAIRE: "Intermédiaire",
+  AVANCE: "Avancé",
+}
+
+/**
+ * Mapping des types de leçons backend vers frontend
+ */
+const lessonTypeMapping: Record<string, "video" | "quiz" | "document" | "lab"> = {
+  VIDEO: "video",
+  QUIZ: "quiz",
+  DOCUMENT: "document",
+  LAB: "lab",
+}
+
+/**
+ * Parser la durée depuis le format backend "23h 45min" vers "23" (heures)
+ */
+function parseDuration(duration: string): string {
+  if (!duration) return "0"
+  const match = duration.match(/(\d+)h/)
+  return match ? match[1] : "0"
+}
+
+/**
+ * Convertir un InstructorDto backend en Instructor frontend
+ */
+export function adaptInstructor(instructorDto?: InstructorDto): Instructor {
+  if (!instructorDto) {
+    return {
       id: "default",
       name: "Instructeur",
       avatar: "/placeholder-user.jpg",
@@ -40,24 +66,71 @@ export function adaptCourse(backendCourse: BackendCourse): Course {
       studentCount: 0,
       courseCount: 0,
       rating: 0,
-    },
-    category: backendCourse.categorie?.title || "Non catégorisé",
-    level: "Intermédiaire", // Par défaut, peut être ajusté selon les données
-    rating: 0,
-    reviewCount: 0,
-    duration: backendCourse.duration ? String(backendCourse.duration / 60) : "0", // Convertir minutes en heures
-    language: "Français",
-    lastUpdated: backendCourse.lastModifiedAt
-      ? new Date(backendCourse.lastModifiedAt).toLocaleDateString("fr-FR", {
-          month: "long",
-          year: "numeric",
-        })
-      : "Date inconnue",
-    bestseller: false,
-    objectives: [],
-    curriculum: [],
-    enrolledCount: 0,
-    features: [],
+    }
+  }
+
+  return {
+    id: String(instructorDto.id),
+    name: instructorDto.name || "Instructeur",
+    avatar: instructorDto.avatar || "/placeholder-user.jpg",
+    title: instructorDto.title || "Formateur",
+    bio: instructorDto.bio || "",
+    studentCount: instructorDto.studentCount || 0,
+    courseCount: instructorDto.courseCount || 0,
+    rating: instructorDto.rating || 0,
+  }
+}
+
+/**
+ * Convertir un LessonDto backend en Lesson frontend
+ */
+export function adaptLesson(lessonDto: LessonDto): Lesson {
+  return {
+    id: String(lessonDto.id),
+    title: lessonDto.title,
+    type: lessonTypeMapping[lessonDto.type] || "video",
+    duration: lessonDto.duration || "0 min",
+    completed: lessonDto.completed || false,
+    locked: lessonDto.locked || false,
+  }
+}
+
+/**
+ * Convertir un ModuleDto backend en Module frontend
+ */
+export function adaptModule(moduleDto: ModuleDto): Module {
+  return {
+    id: String(moduleDto.id),
+    title: moduleDto.title,
+    duration: moduleDto.duration || "0h 0m",
+    lessons: moduleDto.lessons?.map(adaptLesson) || [],
+  }
+}
+
+/**
+ * Convertir un cours backend en cours frontend
+ * Utilise maintenant la structure complète du CourseDto
+ */
+export function adaptCourse(backendCourse: BackendCourse): Course {
+  return {
+    id: String(backendCourse.id),
+    title: backendCourse.title,
+    subtitle: backendCourse.subtitle || backendCourse.description?.substring(0, 100) || "",
+    description: backendCourse.description || "",
+    imageUrl: backendCourse.imageUrl || "/placeholder.jpg",
+    instructor: adaptInstructor(backendCourse.instructor),
+    category: backendCourse.category || "Non catégorisé",
+    level: levelMapping[backendCourse.level] || "Intermédiaire",
+    rating: backendCourse.rating || 0,
+    reviewCount: backendCourse.reviewCount || 0,
+    duration: parseDuration(backendCourse.duration),
+    language: backendCourse.language || "Français",
+    lastUpdated: backendCourse.lastUpdated || "Date inconnue",
+    bestseller: backendCourse.bestseller || false,
+    objectives: backendCourse.objectives || [],
+    curriculum: backendCourse.curriculum?.map(adaptModule) || [],
+    enrolledCount: backendCourse.enrolledCount || 0,
+    features: backendCourse.features || [],
   }
 }
 
@@ -70,8 +143,9 @@ export function adaptCourses(backendCourses: BackendCourse[]): Course[] {
 
 /**
  * Convertir un utilisateur backend en utilisateur frontend
+ * Note: Les données de l'apprenant (learner) sont préservées dans l'objet user
  */
-export function adaptUser(backendUser: BackendUser): User {
+export function adaptUser(backendUser: BackendUser): User & { learner?: any } {
   return {
     id: String(backendUser.id),
     name: backendUser.fullName || backendUser.username || "Utilisateur",
@@ -82,7 +156,9 @@ export function adaptUser(backendUser: BackendUser): User {
     certificates: [],
     achievements: [],
     userProgress: [],
-  }
+    // Préserver les données de l'apprenant si présentes
+    learner: backendUser.learner,
+  } as User & { learner?: any }
 }
 
 /**
@@ -166,6 +242,7 @@ export function adaptLabSession(labSession: LabSession): {
     reportUrl: labSession.reportUrl,
   }
 }
+
 
 
 

@@ -1,29 +1,58 @@
+"use client"
+
 import type React from "react"
 import Link from "next/link"
+import { useMemo } from "react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { mockCourses } from "@/lib/data"
 import { categories } from "@/lib/constants"
-import { ArrowRight, BookOpen, Users, TrendingUp } from "lucide-react"
+import { ArrowRight, BookOpen, Users, TrendingUp, Loader2 } from "lucide-react"
+import { useQuery } from "@tanstack/react-query"
+import { courseService } from "@/lib/api/services"
 
 export default function CategoriesPage() {
-  // Calculate stats for each category
-  const categoryStats = categories.slice(1).map((category) => {
-    const coursesInCategory = mockCourses.filter((course) => course.category === category)
-    const totalStudents = coursesInCategory.reduce((acc, course) => acc + course.enrolledCount, 0)
-    const avgRating = coursesInCategory.reduce((acc, course) => acc + course.rating, 0) / coursesInCategory.length || 0
-
-    return {
-      name: category,
-      courseCount: coursesInCategory.length,
-      studentCount: totalStudents,
-      avgRating: avgRating.toFixed(1),
-      description: getCategoryDescription(category),
-      icon: getCategoryIcon(category),
-      color: getCategoryColor(category),
-    }
+  // Charger les cours depuis l'API
+  const {
+    data: courses = [],
+    isLoading,
+  } = useQuery({
+    queryKey: ["courses"],
+    queryFn: () => courseService.getAllCourses(),
+    staleTime: 5 * 60 * 1000,
   })
+
+  // Calculate stats for each category
+  const categoryStats = useMemo(() => {
+    return categories.slice(1).map((category) => {
+      const coursesInCategory = courses.filter((course) => course.category === category)
+      const totalStudents = coursesInCategory.reduce((acc, course) => acc + course.enrolledCount, 0)
+      const avgRating = coursesInCategory.length > 0
+        ? coursesInCategory.reduce((acc, course) => acc + course.rating, 0) / coursesInCategory.length
+        : 0
+
+      return {
+        name: category,
+        courseCount: coursesInCategory.length,
+        studentCount: totalStudents,
+        avgRating: avgRating.toFixed(1),
+        description: getCategoryDescription(category),
+        icon: getCategoryIcon(category),
+        color: getCategoryColor(category),
+      }
+    })
+  }, [courses])
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-background to-muted/20 flex items-center justify-center">
+        <div className="flex items-center gap-3">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <span className="text-muted-foreground">Chargement des catégories...</span>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-background to-muted/20">

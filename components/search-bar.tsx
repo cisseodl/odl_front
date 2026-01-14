@@ -6,7 +6,8 @@ import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { categories } from "@/lib/constants"
-import { mockCourses } from "@/lib/data"
+import { useQuery } from "@tanstack/react-query"
+import { courseService } from "@/lib/api/services"
 
 interface SearchBarProps {
   onSearch?: (query: string, category: string) => void
@@ -23,6 +24,15 @@ export function SearchBar({ onSearch }: SearchBarProps) {
   const [searchHistory, setSearchHistory] = useState<string[]>([])
   const inputRef = useRef<HTMLInputElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
+
+  // Charger les cours depuis l'API pour les suggestions
+  const {
+    data: courses = [],
+  } = useQuery({
+    queryKey: ["courses"],
+    queryFn: () => courseService.getAllCourses(),
+    staleTime: 5 * 60 * 1000,
+  })
 
   // Load search history from localStorage
   useEffect(() => {
@@ -45,8 +55,8 @@ export function SearchBar({ onSearch }: SearchBarProps) {
       
       if (query.length >= 2) {
         // Generate suggestions from courses
-        const courseTitles = mockCourses.map(c => c.title.toLowerCase())
-        const courseCategories = mockCourses.map(c => c.category.toLowerCase())
+        const courseTitles = courses.map(c => c.title.toLowerCase())
+        const courseCategories = courses.map(c => c.category.toLowerCase())
         const allTerms = [...courseTitles, ...courseCategories]
         
         const matches = allTerms

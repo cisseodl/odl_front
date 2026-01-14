@@ -2,18 +2,20 @@
 
 import Link from "next/link"
 import Image from "next/image"
-import { useState, useEffect } from "react"
-import { Star, Play, CheckCircle2, ChevronRight } from "lucide-react"
+import { useState, useEffect, useMemo } from "react"
+import { Star, Play, CheckCircle2, ChevronRight, Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Carousel, CarouselContent, CarouselItem, CarouselPrevious, CarouselNext } from "@/components/ui/carousel"
 import Autoplay from "embla-carousel-autoplay"
-import { mockCourses } from "@/lib/data"
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"
 import { AnimatedStats } from "@/components/animated-stats"
 import { FadeInView } from "@/components/fade-in-view"
 import { useLanguage } from "@/lib/contexts/language-context"
 import type { UseEmblaCarouselType } from "embla-carousel-react"
+import { useQuery } from "@tanstack/react-query"
+import { courseService, dashboardService } from "@/lib/api/services"
+import type { Course } from "@/lib/types"
 
 type CarouselApi = UseEmblaCarouselType[1]
 
@@ -22,14 +24,54 @@ export default function HomePage() {
   const [current, setCurrent] = useState(0)
   const { t } = useLanguage()
 
+  // Charger les cours depuis l'API
+  const {
+    data: courses = [],
+    isLoading,
+  } = useQuery({
+    queryKey: ["courses"],
+    queryFn: () => courseService.getAllCourses(),
+    staleTime: 5 * 60 * 1000, // 5 minutes
+  })
+
+  // Charger les statistiques publiques
+  const {
+    data: publicStats,
+    isLoading: isLoadingStats,
+  } = useQuery({
+    queryKey: ["publicStats"],
+    queryFn: () => dashboardService.getPublicStats(),
+    staleTime: 10 * 60 * 1000, // 10 minutes - les stats changent moins souvent
+  })
+
   // Organize courses by category
-  // Organize courses by category
-  const cloudDataCourses = mockCourses.filter((c) => c.category === "Cloud Computing" || c.category === "Data Science" || c.category === "Intelligence Artificielle").slice(0, 6)
-  const developmentCourses = mockCourses.filter((c) => c.category.includes("Développement")).slice(0, 6)
-  const designCourses = mockCourses.filter((c) => c.category.includes("Design")).slice(0, 6)
-  const otherCourses = mockCourses.filter((c) => c.category === "Business" || c.category === "DevOps").slice(0, 6)
-  const trendingCourses = mockCourses.filter((c) => c.bestseller).slice(0, 6)
-  const suggestedCourses = [...mockCourses].slice(0, 6)
+  const cloudDataCourses = useMemo(() => {
+    return courses.filter((c) => 
+      c.category === "Cloud Computing" || 
+      c.category === "Data Science" || 
+      c.category === "Intelligence Artificielle"
+    ).slice(0, 6)
+  }, [courses])
+
+  const developmentCourses = useMemo(() => {
+    return courses.filter((c) => c.category.includes("Développement")).slice(0, 6)
+  }, [courses])
+
+  const designCourses = useMemo(() => {
+    return courses.filter((c) => c.category.includes("Design")).slice(0, 6)
+  }, [courses])
+
+  const otherCourses = useMemo(() => {
+    return courses.filter((c) => c.category === "Business" || c.category === "DevOps").slice(0, 6)
+  }, [courses])
+
+  const trendingCourses = useMemo(() => {
+    return courses.filter((c) => c.bestseller).slice(0, 6)
+  }, [courses])
+
+  const suggestedCourses = useMemo(() => {
+    return [...courses].slice(0, 6)
+  }, [courses])
 
   useEffect(() => {
     if (!api) return
@@ -195,14 +237,36 @@ export default function HomePage() {
       <section className="py-12 lg:py-16 bg-white border-b border-border">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <FadeInView delay={0.1}>
-            <AnimatedStats
-              stats={[
-                { value: 250000, label: t("stats.activeStudents"), useFormat: true },
-                { value: 5000, label: t("stats.availableCourses"), useFormat: true },
-                { value: 1200, label: t("stats.mostViewed"), useFormat: true },
-                { value: 98, label: t("stats.satisfactionRate"), suffix: "%" },
-              ]}
-            />
+            {isLoadingStats ? (
+              <div className="flex justify-center items-center py-12">
+                <Loader2 className="h-6 w-6 animate-spin text-primary" />
+              </div>
+            ) : (
+              <AnimatedStats
+                stats={[
+                  { 
+                    value: publicStats?.totalStudents || 250000, 
+                    label: t("stats.activeStudents"), 
+                    useFormat: true 
+                  },
+                  { 
+                    value: publicStats?.totalCourses || 5000, 
+                    label: t("stats.availableCourses"), 
+                    useFormat: true 
+                  },
+                  { 
+                    value: publicStats?.mostViewedCourses || 1200, 
+                    label: t("stats.mostViewed"), 
+                    useFormat: true 
+                  },
+                  { 
+                    value: publicStats?.satisfactionRate || 98, 
+                    label: t("stats.satisfactionRate"), 
+                    suffix: "%" 
+                  },
+                ]}
+              />
+            )}
           </FadeInView>
         </div>
       </section>
@@ -214,7 +278,13 @@ export default function HomePage() {
 
           {/* Keep on Learning - Courses in Progress */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12">
-            {mockCourses.slice(0, 2).map((course) => (
+            {isLoading ? (
+              <div className="col-span-2 flex items-center justify-center py-12">
+                <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                <span className="ml-2 text-muted-foreground">Chargement...</span>
+              </div>
+            ) : (
+              courses.slice(0, 2).map((course) => (
               <Card key={course.id} className="border border-border hover:shadow-xl hover:border-primary transition-all duration-300 hover:-translate-y-1 bg-white">
                 <CardContent className="p-5">
                   <div className="flex gap-4">
@@ -244,7 +314,8 @@ export default function HomePage() {
                   </div>
                 </CardContent>
               </Card>
-            ))}
+              ))
+            )}
           </div>
         </div>
       </section>
@@ -359,9 +430,13 @@ function CourseSection({
 }: {
   title: string
   subtitle?: string
-  courses: typeof mockCourses
+  courses: Course[]
   bgGray?: boolean
 }) {
+  if (courses.length === 0) {
+    return null
+  }
+
   return (
     <section className={`py-12 lg:py-16 ${bgGray ? "bg-muted/30" : "bg-white"}`}>
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">

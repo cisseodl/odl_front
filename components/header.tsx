@@ -21,6 +21,7 @@ import { useLanguage } from "@/lib/contexts/language-context"
 import { LanguageSelector } from "@/components/language-selector"
 import { ThemeSelector } from "@/components/theme-selector"
 import { useTheme } from "next-themes"
+import { cn } from "@/lib/utils"
 
 export function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
@@ -52,17 +53,14 @@ export function Header() {
       id="main-navigation"
       role="banner"
       aria-label="Navigation principale"
-      className={`
-        fixed top-0 left-0 z-50 w-full
-        transition-all duration-300 ease-in-out
-        ${
-          isScrolled
-            ? isDarkMode
-              ? "bg-gray-900/95 backdrop-blur-md shadow-md border-b border-gray-700/50"
-              : "bg-white/95 backdrop-blur-md shadow-md border-b border-gray-200/50"
-            : "bg-transparent shadow-none border-transparent"
-        }
-      `}
+      className={cn(
+        "fixed top-0 left-0 z-50 w-full transition-all duration-300 ease-in-out",
+        isScrolled
+          ? isDarkMode
+            ? "bg-gray-900/95 backdrop-blur-md shadow-md border-b border-gray-700/50"
+            : "bg-white/95 backdrop-blur-md shadow-md border-b border-gray-200/50"
+          : "bg-transparent shadow-none border-transparent"
+      )}
     >
       <div className="container mx-auto px-4 lg:px-8">
         <div className="flex h-16 items-center justify-between gap-4">
@@ -93,12 +91,14 @@ export function Header() {
                   <Link
                     key={href}
                     href={href}
-                    className={`
-                      px-4 py-2 text-sm font-medium flex items-center gap-2 transition
-                      ${active ? "text-primary font-semibold" :
-                        shouldUseWhiteText ? "text-white hover:text-white/80" :
-                        "text-black hover:text-primary"}
-                    `}
+                    className={cn(
+                      "px-4 py-2 text-sm font-medium flex items-center gap-2 transition",
+                      active
+                        ? "text-primary font-semibold"
+                        : shouldUseWhiteText
+                        ? "text-white hover:text-white/80"
+                        : "text-black hover:text-primary"
+                    )}
                   >
                     <Icon className="h-4 w-4" />
                     {label}
@@ -117,15 +117,14 @@ export function Header() {
                 placeholder={t("common.searchPlaceholder")}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className={`
-                  pl-10 h-10 rounded-md transition
-                  ${isScrolled
+                className={cn(
+                  "pl-10 h-10 rounded-md transition",
+                  isScrolled
                     ? isDarkMode
                       ? "bg-gray-800 border-gray-700 text-white"
                       : "bg-white border-gray-200"
                     : "bg-white/10 border-white/20 text-white placeholder:text-white/70"
-                  }
-                `}
+                )}
               />
             </div>
           </div>

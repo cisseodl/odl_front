@@ -1,67 +1,125 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useMemo } from "react"
 import Link from "next/link"
-import { BookOpen, Clock, Award, TrendingUp, Play, Calendar, Trophy, Target, Sparkles, Zap, Flame, ArrowUpRight, FileText, Users, Star, CheckCircle2, BarChart3, MessageSquare, Share2, Download, Eye } from "lucide-react"
+import { BookOpen, Clock, Award, TrendingUp, Play, Calendar, Trophy, Target, Sparkles, Zap, Flame, ArrowUpRight, FileText, Users, Star, CheckCircle2, BarChart3, MessageSquare, Share2, Download, Eye, Loader2 } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
 import { Badge } from "@/components/ui/badge"
 import { ChartContainer, ChartTooltip } from "@/components/ui/chart"
 import { AreaChart, Area, Line, XAxis, YAxis, CartesianGrid, BarChart, Bar } from "recharts"
-import { mockCourses } from "@/lib/data"
 import { FadeInView } from "@/components/fade-in-view"
 import { StatCardWithComparison } from "@/components/stat-card-with-comparison"
 import { MiniPlayer } from "@/components/mini-player"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { ProtectedRoute } from "@/components/protected-route"
+import { useQuery } from "@tanstack/react-query"
+import { dashboardService, courseService, profileService, certificateService } from "@/lib/api/services"
+import { useAuthStore } from "@/lib/store/auth-store"
 
 export default function DashboardPage() {
   const [selectedPeriod, setSelectedPeriod] = useState<"week" | "month" | "year">("week")
-  
-  // Mock user data
-  const enrolledCourses = mockCourses.slice(0, 3)
-  const completedCourses = 12
-  const totalHours = 148
-  const certificates = 8
+  const { user } = useAuthStore()
 
-  // Previous period values for comparison
-  const previousStats = {
-    enrolledCourses: enrolledCourses.length - 2,
-    completedCourses: 9,
-    totalHours: 136,
-    certificates: 6,
-  }
+  // Récupérer les statistiques du dashboard
+  const { data: dashboardStats, isLoading: isLoadingStats } = useQuery({
+    queryKey: ["dashboardStats", user?.id],
+    queryFn: () => dashboardService.getStudentDashboard(),
+    enabled: !!user,
+    staleTime: 5 * 60 * 1000,
+  })
+
+  // Récupérer le profil pour les cours inscrits
+  const { data: profile, isLoading: isLoadingProfile } = useQuery({
+    queryKey: ["profile", user?.id],
+    queryFn: () => profileService.getMyProfile(),
+    enabled: !!user,
+    staleTime: 5 * 60 * 1000,
+  })
+
+  // Récupérer tous les cours
+  const { data: allCourses = [], isLoading: isLoadingCourses } = useQuery({
+    queryKey: ["courses"],
+    queryFn: () => courseService.getAllCourses(),
+    staleTime: 5 * 60 * 1000,
+  })
+
+  // Récupérer les certificats
+  const { data: certificates = [], isLoading: isLoadingCertificates } = useQuery({
+    queryKey: ["certificates", user?.id],
+    queryFn: () => certificateService.getMyCertificates(),
+    enabled: !!user,
+    staleTime: 5 * 60 * 1000,
+  })
+
+  // Filtrer les cours inscrits
+  const enrolledCourses = useMemo(() => {
+    if (!profile?.enrolledCourses || !allCourses.length) {
+      return []
+    }
+    return allCourses.filter(course => 
+      profile.enrolledCourses.includes(course.title)
+    ).slice(0, 3) // Limiter à 3 pour l'affichage
+  }, [profile, allCourses])
+
+  // Calculer les statistiques
+  const statsData = useMemo(() => {
+    const coursesJoined = dashboardStats?.studentStats?.coursesJoined || enrolledCourses.length || 0
+    const certificatesObtained = dashboardStats?.studentStats?.certificatesObtained || certificates.length || 0
+    const completedCourses = profile?.completedCourses?.length || 0
+    
+    // Calculer les heures totales (approximation basée sur la durée des cours)
+    const totalHours = enrolledCourses.reduce((sum, course) => sum + (course.duration || 0), 0)
+
+    // Valeurs précédentes (pour l'instant, on utilise des valeurs par défaut)
+    const previousStats = {
+      enrolledCourses: Math.max(0, coursesJoined - 1),
+      completedCourses: Math.max(0, completedCourses - 1),
+      totalHours: Math.max(0, totalHours - 10),
+      certificates: Math.max(0, certificatesObtained - 1),
+    }
+
+    return {
+      enrolledCourses: coursesJoined,
+      completedCourses,
+      totalHours: Math.round(totalHours),
+      certificates: certificatesObtained,
+      previousStats,
+    }
+  }, [dashboardStats, enrolledCourses, profile, certificates])
+
+  const isLoading = isLoadingStats || isLoadingProfile || isLoadingCourses || isLoadingCertificates
 
   const stats = [
     {
       title: "Cours en Cours",
-      value: enrolledCourses.length,
-      previousValue: previousStats.enrolledCourses,
+      value: statsData.enrolledCourses,
+      previousValue: statsData.previousStats.enrolledCourses,
       icon: BookOpen,
       description: "Cours actifs",
       tooltip: "Nombre de cours auxquels vous êtes actuellement inscrit. Comparez avec la période précédente pour voir votre progression.",
     },
     {
       title: "Cours Complétés",
-      value: completedCourses,
-      previousValue: previousStats.completedCourses,
+      value: statsData.completedCourses,
+      previousValue: statsData.previousStats.completedCourses,
       icon: Trophy,
       description: "Total complété",
       tooltip: "Total des cours que vous avez terminés. Continuez à apprendre pour augmenter ce nombre !",
     },
     {
       title: "Heures d'Apprentissage",
-      value: totalHours,
-      previousValue: previousStats.totalHours,
+      value: statsData.totalHours,
+      previousValue: statsData.previousStats.totalHours,
       icon: Clock,
       description: "Temps total",
       tooltip: "Temps total passé à apprendre. L'objectif est de maintenir une progression constante.",
     },
     {
       title: "Certificats Obtenus",
-      value: certificates,
-      previousValue: previousStats.certificates,
+      value: statsData.certificates,
+      previousValue: statsData.previousStats.certificates,
       icon: Award,
       description: "Certifications",
       tooltip: "Nombre de certificats obtenus après avoir complété des cours. Chaque certificat valide vos compétences.",
@@ -71,6 +129,18 @@ export default function DashboardPage() {
   // Get current course for mini player
   const currentCourse = enrolledCourses[0]
   const [showMiniPlayer, setShowMiniPlayer] = useState(false)
+
+  // Calculer la progression pour chaque cours inscrit
+  const enrolledCoursesWithProgress = useMemo(() => {
+    return enrolledCourses.map((course) => {
+      const isCompleted = profile?.completedCourses?.includes(course.title) || false
+      const progress = isCompleted ? 100 : Math.floor(Math.random() * 40) + 30 // TODO: Récupérer la vraie progression
+      return {
+        ...course,
+        progress,
+      }
+    })
+  }, [enrolledCourses, profile])
 
   const recentActivity = [
     {
@@ -201,9 +271,13 @@ export default function DashboardPage() {
                   </div>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  {enrolledCourses.map((course, index) => {
-                    const progress = Math.floor(Math.random() * 40) + 30
-                    return (
+                  {isLoading ? (
+                    <div className="flex items-center justify-center py-8">
+                      <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                      <span className="ml-2 text-muted-foreground">Chargement des cours...</span>
+                    </div>
+                  ) : enrolledCoursesWithProgress.length > 0 ? (
+                    enrolledCoursesWithProgress.map((course, index) => (
                       <FadeInView key={course.id} delay={0.3 + index * 0.1}>
                         <div className="group p-4 border-2 rounded-xl hover:border-primary/40 hover:bg-primary/5 transition-all duration-300 hover:shadow-lg">
                           <div className="flex items-start justify-between gap-4">
@@ -214,20 +288,20 @@ export default function DashboardPage() {
                                     {course.title}
                                   </h4>
                                   <p className="text-sm text-muted-foreground mt-1">
-                                    Module 3: Concepts avancés
+                                    {course.instructor?.name || "Formateur"}
                                   </p>
                                 </div>
                                 <Badge className="bg-primary text-white font-semibold border-0 shadow-sm">
-                                  {progress}%
+                                  {course.progress || 0}%
                                 </Badge>
                               </div>
                               <div className="space-y-2">
                                 <div className="flex items-center justify-between text-xs text-muted-foreground">
                                   <span>Progression</span>
-                                  <span className="font-semibold">{progress}% complété</span>
+                                  <span className="font-semibold">{course.progress || 0}% complété</span>
                                 </div>
                                 <Progress 
-                                  value={progress} 
+                                  value={course.progress || 0} 
                                   className="h-2.5 bg-muted"
                                 />
                               </div>
@@ -256,8 +330,16 @@ export default function DashboardPage() {
                           </div>
                         </div>
                       </FadeInView>
-                    )
-                  })}
+                    ))
+                  ) : (
+                    <div className="text-center py-8 text-muted-foreground">
+                      <BookOpen className="h-12 w-12 mx-auto mb-3 opacity-50" />
+                      <p className="text-sm">Aucun cours en cours</p>
+                      <Button variant="outline" size="sm" className="mt-4" asChild>
+                        <Link href="/courses">Découvrir des cours</Link>
+                      </Button>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             </FadeInView>
@@ -552,23 +634,49 @@ export default function DashboardPage() {
                   <CardTitle className="text-lg">Cours Recommandés</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="space-y-3">
-                    {mockCourses.slice(3, 5).map((course) => (
-                      <Link key={course.id} href={`/courses/${course.id}`}>
-                        <div className="group p-4 border-2 rounded-xl hover:border-primary/40 hover:bg-primary/5 transition-all duration-300 hover:shadow-lg">
-                          <p className="font-bold text-sm line-clamp-2 mb-2 group-hover:text-primary transition-colors">
-                            {course.title}
-                          </p>
-                          <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                            <Clock className="h-3 w-3" />
-                            <span>{course.duration}h</span>
-                            <span>•</span>
-                            <span>{course.level}</span>
-                          </div>
+                  {isLoadingCourses ? (
+                    <div className="flex items-center justify-center py-8">
+                      <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                      <span className="ml-2 text-muted-foreground">Chargement...</span>
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      {allCourses
+                        .filter(course => {
+                          // Exclure les cours déjà inscrits
+                          const isEnrolled = profile?.enrolledCourses?.includes(course.title) || false
+                          return !isEnrolled
+                        })
+                        .slice(0, 2)
+                        .map((course) => (
+                          <Link key={course.id} href={`/courses/${course.id}`}>
+                            <div className="group p-4 border-2 rounded-xl hover:border-primary/40 hover:bg-primary/5 transition-all duration-300 hover:shadow-lg">
+                              <p className="font-bold text-sm line-clamp-2 mb-2 group-hover:text-primary transition-colors">
+                                {course.title}
+                              </p>
+                              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                                <Clock className="h-3 w-3" />
+                                <span>{course.duration || 0}h</span>
+                                <span>•</span>
+                                <span>{course.level || "Tous niveaux"}</span>
+                              </div>
+                            </div>
+                          </Link>
+                        ))}
+                      {allCourses.filter(course => {
+                        const isEnrolled = profile?.enrolledCourses?.includes(course.title) || false
+                        return !isEnrolled
+                      }).length === 0 && (
+                        <div className="text-center py-8 text-muted-foreground">
+                          <BookOpen className="h-12 w-12 mx-auto mb-3 opacity-50" />
+                          <p className="text-sm">Aucun cours recommandé pour le moment</p>
+                          <Button variant="outline" size="sm" className="mt-4" asChild>
+                            <Link href="/courses">Découvrir tous les cours</Link>
+                          </Button>
                         </div>
-                      </Link>
-                    ))}
-                  </div>
+                      )}
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             </FadeInView>
@@ -598,37 +706,51 @@ export default function DashboardPage() {
               </div>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                {[
-                  { title: "React & TypeScript", date: "Mars 2024", instructor: "Aissata Traoré", formateur: "Aissata Traoré" },
-                  { title: "Next.js 15", date: "Février 2024", instructor: "Amadou Keita", formateur: "Amadou Keita" },
-                  { title: "UI/UX Design", date: "Janvier 2024", instructor: "Fatoumata Sangaré", formateur: "Fatoumata Sangaré" },
-                  { title: "Python Data Science", date: "Décembre 2023", instructor: "Moussa Diarra", formateur: "Moussa Diarra" },
-                ].map((cert, index) => (
-                  <FadeInView key={index} delay={0.9 + index * 0.1}>
-                    <div className="group p-4 border-2 rounded-xl hover:border-primary/40 hover:bg-primary/5 transition-all duration-300 hover:shadow-lg cursor-pointer">
-                      <div className="flex items-start justify-between mb-3">
-                        <div className="rounded-lg bg-primary/10 p-2 border border-primary/20 group-hover:scale-110 transition-transform">
-                          <FileText className="h-5 w-5 text-primary" />
+              {isLoadingCertificates ? (
+                <div className="flex items-center justify-center py-8">
+                  <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                  <span className="ml-2 text-muted-foreground">Chargement des certificats...</span>
+                </div>
+              ) : certificates.length > 0 ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                  {certificates.slice(0, 4).map((cert, index) => {
+                    const issuedDate = new Date(cert.issuedDate)
+                    const formattedDate = issuedDate.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' })
+                    return (
+                      <FadeInView key={cert.id} delay={0.9 + index * 0.1}>
+                        <div className="group p-4 border-2 rounded-xl hover:border-primary/40 hover:bg-primary/5 transition-all duration-300 hover:shadow-lg cursor-pointer">
+                          <div className="flex items-start justify-between mb-3">
+                            <div className="rounded-lg bg-primary/10 p-2 border border-primary/20 group-hover:scale-110 transition-transform">
+                              <FileText className="h-5 w-5 text-primary" />
+                            </div>
+                            <Download className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
+                          </div>
+                          <h4 className="font-bold text-sm mb-1 line-clamp-2 group-hover:text-primary transition-colors">
+                            {cert.course}
+                          </h4>
+                          <p className="text-xs text-muted-foreground mb-2">Étudiant: {cert.studentName}</p>
+                          <div className="flex items-center justify-between">
+                            <Badge className="bg-primary/10 text-primary text-xs border-0">
+                              {formattedDate}
+                            </Badge>
+                            <Button variant="ghost" size="sm" className="h-6 px-2 text-xs" asChild>
+                              <Link href={cert.certificateUrl} target="_blank">
+                                <Eye className="h-3 w-3" />
+                              </Link>
+                            </Button>
+                          </div>
                         </div>
-                        <Download className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
-                      </div>
-                      <h4 className="font-bold text-sm mb-1 line-clamp-2 group-hover:text-primary transition-colors">
-                        {cert.title}
-                      </h4>
-                      <p className="text-xs text-muted-foreground mb-2">Formateur: {cert.instructor}</p>
-                      <div className="flex items-center justify-between">
-                        <Badge className="bg-primary/10 text-primary text-xs border-0">
-                          {cert.date}
-                        </Badge>
-                        <Button variant="ghost" size="sm" className="h-6 px-2 text-xs">
-                          <Eye className="h-3 w-3" />
-                        </Button>
-                      </div>
-                    </div>
-                  </FadeInView>
-                ))}
-              </div>
+                      </FadeInView>
+                    )
+                  })}
+                </div>
+              ) : (
+                <div className="text-center py-8 text-muted-foreground">
+                  <Award className="h-12 w-12 mx-auto mb-3 opacity-50" />
+                  <p className="text-sm">Aucun certificat obtenu pour le moment</p>
+                  <p className="text-xs mt-2">Complétez des cours pour obtenir vos certificats</p>
+                </div>
+              )}
             </CardContent>
           </Card>
         </FadeInView>
@@ -650,49 +772,65 @@ export default function DashboardPage() {
                 </div>
               </CardHeader>
               <CardContent className="space-y-4">
-                {[
-                  { title: "React & TypeScript", completed: "15 Mars 2024", rating: 5, hours: 32.5 },
-                  { title: "Next.js 15", completed: "8 Mars 2024", rating: 5, hours: 28 },
-                  { title: "UI/UX Design", completed: "28 Février 2024", rating: 4, hours: 24 },
-                ].map((course, index) => (
-                  <div
-                    key={index}
-                    className="group p-4 border-2 rounded-xl hover:border-primary/40 hover:bg-primary/5 transition-all duration-300"
-                  >
-                    <div className="flex items-start justify-between gap-3 mb-2">
-                      <div className="flex-1">
-                        <h4 className="font-bold text-sm mb-1 group-hover:text-primary transition-colors">
-                          {course.title}
-                        </h4>
-                        <p className="text-xs text-muted-foreground">{course.completed}</p>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        {[...Array(5)].map((_, i) => (
-                          <Star
-                            key={i}
-                            className={`h-3 w-3 ${
-                              i < course.rating
-                                ? "fill-primary text-primary"
-                                : "text-muted-foreground/30"
-                            }`}
-                          />
-                        ))}
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                      <Clock className="h-3 w-3" />
-                      <span>{course.hours}h de contenu</span>
-                      <span>•</span>
-                      <span className="text-primary font-semibold">Complété</span>
-                    </div>
+                {isLoading ? (
+                  <div className="flex items-center justify-center py-8">
+                    <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                    <span className="ml-2 text-muted-foreground">Chargement...</span>
                   </div>
-                ))}
-                <Button variant="outline" className="w-full border-primary/20 hover:bg-primary/5" asChild>
-                  <Link href="/learning">
-                    Voir tous mes cours complétés
-                    <ArrowUpRight className="h-4 w-4 ml-2" />
-                  </Link>
-                </Button>
+                ) : profile?.completedCourses && profile.completedCourses.length > 0 ? (
+                  <>
+                    {allCourses
+                      .filter(course => profile.completedCourses.includes(course.title))
+                      .slice(0, 3)
+                      .map((course, index) => (
+                        <div
+                          key={course.id}
+                          className="group p-4 border-2 rounded-xl hover:border-primary/40 hover:bg-primary/5 transition-all duration-300"
+                        >
+                          <div className="flex items-start justify-between gap-3 mb-2">
+                            <div className="flex-1">
+                              <h4 className="font-bold text-sm mb-1 group-hover:text-primary transition-colors">
+                                {course.title}
+                              </h4>
+                              <p className="text-xs text-muted-foreground">Complété</p>
+                            </div>
+                            <div className="flex items-center gap-1">
+                              {[...Array(5)].map((_, i) => (
+                                <Star
+                                  key={i}
+                                  className={`h-3 w-3 ${
+                                    i < (course.rating || 0)
+                                      ? "fill-primary text-primary"
+                                      : "text-muted-foreground/30"
+                                  }`}
+                                />
+                              ))}
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                            <Clock className="h-3 w-3" />
+                            <span>{course.duration || 0}h de contenu</span>
+                            <span>•</span>
+                            <span className="text-primary font-semibold">Complété</span>
+                          </div>
+                        </div>
+                      ))}
+                    <Button variant="outline" className="w-full border-primary/20 hover:bg-primary/5" asChild>
+                      <Link href="/learning">
+                        Voir tous mes cours complétés
+                        <ArrowUpRight className="h-4 w-4 ml-2" />
+                      </Link>
+                    </Button>
+                  </>
+                ) : (
+                  <div className="text-center py-8 text-muted-foreground">
+                    <CheckCircle2 className="h-12 w-12 mx-auto mb-3 opacity-50" />
+                    <p className="text-sm">Aucun cours complété pour le moment</p>
+                    <Button variant="outline" size="sm" className="mt-4" asChild>
+                      <Link href="/courses">Découvrir des cours</Link>
+                    </Button>
+                  </div>
+                )}
               </CardContent>
             </Card>
           </FadeInView>
