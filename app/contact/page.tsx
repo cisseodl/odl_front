@@ -11,6 +11,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Mail, MessageSquare, Phone, MapPin } from "lucide-react"
 import { toast } from "sonner"
 import { FadeInView } from "@/components/fade-in-view"
+import { contactService } from "@/lib/api/services"
 
 export default function ContactPage() {
   const [formData, setFormData] = useState({
@@ -19,20 +20,47 @@ export default function ContactPage() {
     subject: "",
     message: "",
   })
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    console.log("[v0] Contact form submitted:", formData)
-    toast.success("Message envoyé !", {
-      description: "Notre équipe vous répondra dans les 24 heures.",
-    })
-    // Reset form
-    setFormData({
-      name: "",
-      email: "",
-      subject: "",
-      message: "",
-    })
+    
+    if (isSubmitting) return
+
+    setIsSubmitting(true)
+
+    try {
+      const response = await contactService.sendMessage(formData)
+      
+      // Le backend retourne un CResponse avec un champ 'ok' (boolean)
+      // Le client API wrapper cela dans response.data
+      const backendResponse = response.data
+      const isSuccess = response.ok && (backendResponse?.ok !== false)
+      
+      if (isSuccess) {
+        toast.success("Message envoyé !", {
+          description: backendResponse?.message || "Notre équipe vous répondra dans les 24 heures.",
+        })
+        // Reset form
+        setFormData({
+          name: "",
+          email: "",
+          subject: "",
+          message: "",
+        })
+      } else {
+        toast.error("Erreur", {
+          description: backendResponse?.message || response.message || "Une erreur s'est produite lors de l'envoi de votre message. Veuillez réessayer.",
+        })
+      }
+    } catch (error) {
+      console.error("Erreur lors de l'envoi du message:", error)
+      toast.error("Erreur", {
+        description: "Une erreur s'est produite lors de l'envoi de votre message. Veuillez réessayer.",
+      })
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   return (
@@ -132,8 +160,8 @@ export default function ContactPage() {
                   />
                 </div>
 
-                <Button type="submit" size="lg" className="w-full">
-                  Envoyer le message
+                <Button type="submit" size="lg" className="w-full" disabled={isSubmitting}>
+                  {isSubmitting ? "Envoi en cours..." : "Envoyer le message"}
                 </Button>
               </form>
             </CardContent>

@@ -94,6 +94,10 @@ export const API_ENDPOINTS = {
     student: "/api/dashboard/student",
     instructor: "/api/dashboard/instructor",
   },
+  // Contact
+  contact: {
+    send: "/contact/send",
+  },
 } as const
 
 

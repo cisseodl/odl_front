@@ -543,6 +543,21 @@ export const learnerService = {
   },
 }
 
+// ============ Contact Services ============
+export const contactService = {
+  /**
+   * Envoyer un message de contact
+   */
+  async sendMessage(data: {
+    name: string
+    email: string
+    subject: string
+    message: string
+  }): Promise<ApiResponse<any>> {
+    return apiClient.post(API_ENDPOINTS.contact.send, data)
+  },
+}
+
 
 
 
