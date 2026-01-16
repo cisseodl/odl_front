@@ -1,9 +1,10 @@
 /**
  * Configuration de l'API backend
+ * L'URL de base doit être configurée via la variable d'environnement NEXT_PUBLIC_API_BASE_URL
+ * Cette variable est configurée dans Amplify pour permettre la communication avec le backend
  */
 export const API_CONFIG = {
-  baseURL: process.env.NEXT_PUBLIC_API_BASE_URL || 
-    "https://api.smart-odc.com",
+  baseURL: process.env.NEXT_PUBLIC_API_BASE_URL || "",
   timeout: 30000,
 } as const
 

@@ -72,8 +72,6 @@ export default function AuthPage() {
       
       // 2. Si l'option est activée, créer le profil Apprenant
       if (createApprenant) {
-        const nom = formData.get("nom") as string
-        const prenom = formData.get("prenom") as string
         const numero = formData.get("numero") as string
         const profession = formData.get("profession") as string
         const niveauEtude = formData.get("niveauEtude") as string
@@ -82,11 +80,10 @@ export default function AuthPage() {
         const cohorteId = formData.get("cohorteId") as string
         const satisfaction = formData.get("satisfaction") === "true"
 
-        if (nom && prenom && numero) {
+        // Utiliser le "name" du User comme "username" pour l'apprenant
+        if (name && numero) {
           const apprenantData: ApprenantCreateRequest = {
-            nom: nom.trim(),
-            prenom: prenom.trim(),
-            email: email,
+            username: name.trim(), // Utiliser le nom complet du User
             numero: numero.trim(),
             profession: profession?.trim() || undefined,
             niveauEtude: niveauEtude || undefined,
@@ -277,28 +274,9 @@ export default function AuthPage() {
                 </div>
 
                 {/* Informations pour créer le profil Apprenant */}
-                <div className="grid md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="register-nom">Nom *</Label>
-                    <Input
-                      id="register-nom"
-                      name="nom"
-                      type="text"
-                      placeholder="Votre nom"
-                      className="bg-white"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="register-prenom">Prénom *</Label>
-                    <Input
-                      id="register-prenom"
-                      name="prenom"
-                      type="text"
-                      placeholder="Votre prénom"
-                      className="bg-white"
-                    />
-                  </div>
-                </div>
+                <p className="text-sm text-muted-foreground">
+                  Le nom complet que vous avez saisi ci-dessus sera utilisé pour votre profil apprenant.
+                </p>
 
                 <div className="space-y-2">
                   <Label htmlFor="register-numero">Numéro de téléphone *</Label>

@@ -55,9 +55,7 @@ export interface Apprenant {
 // Request pour créer un apprenant
 export interface ApprenantCreateRequest {
   activate?: boolean
-  nom: string
-  prenom: string
-  email?: string
+  username: string // Remplace nom et prenom - format: "Prénom Nom"
   numero: string
   profession?: string
   niveauEtude?: string

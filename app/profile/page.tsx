@@ -35,9 +35,7 @@ export default function ProfilePage() {
 
   // État du formulaire apprenant
   const [apprenantForm, setApprenantForm] = useState<ApprenantCreateRequest>({
-    nom: "",
-    prenom: "",
-    email: user?.email || "",
+    username: "",
     numero: "",
     profession: "",
     niveauEtude: "",
@@ -559,52 +557,31 @@ export default function ProfilePage() {
             </CardHeader>
             <CardContent>
               <form onSubmit={handleCreateApprenant} className="space-y-6">
-                <div className="grid md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="nom" className="text-black">Nom *</Label>
-                    <Input
-                      id="nom"
-                      value={apprenantForm.nom}
-                      onChange={(e) => setApprenantForm({ ...apprenantForm, nom: e.target.value })}
-                      className="bg-white"
-                      required
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="prenom" className="text-black">Prénom *</Label>
-                    <Input
-                      id="prenom"
-                      value={apprenantForm.prenom}
-                      onChange={(e) => setApprenantForm({ ...apprenantForm, prenom: e.target.value })}
-                      className="bg-white"
-                      required
-                    />
-                  </div>
+                <div className="space-y-2">
+                  <Label htmlFor="username" className="text-black">Nom complet (Prénom Nom) *</Label>
+                  <Input
+                    id="username"
+                    value={apprenantForm.username}
+                    onChange={(e) => setApprenantForm({ ...apprenantForm, username: e.target.value })}
+                    className="bg-white"
+                    placeholder="Ex: Amadou Diallo"
+                    required
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Entrez votre prénom suivi de votre nom
+                  </p>
                 </div>
 
-                <div className="grid md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="email" className="text-black">Email</Label>
-                    <Input
-                      id="email"
-                      type="email"
-                      value={apprenantForm.email}
-                      onChange={(e) => setApprenantForm({ ...apprenantForm, email: e.target.value })}
-                      className="bg-white"
-                      placeholder="Votre email (optionnel)"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="numero" className="text-black">Numéro de téléphone *</Label>
-                    <Input
-                      id="numero"
-                      value={apprenantForm.numero}
-                      onChange={(e) => setApprenantForm({ ...apprenantForm, numero: e.target.value })}
-                      className="bg-white"
-                      placeholder="+223 XX XX XX XX"
-                      required
-                    />
-                  </div>
+                <div className="space-y-2">
+                  <Label htmlFor="numero" className="text-black">Numéro de téléphone *</Label>
+                  <Input
+                    id="numero"
+                    value={apprenantForm.numero}
+                    onChange={(e) => setApprenantForm({ ...apprenantForm, numero: e.target.value })}
+                    className="bg-white"
+                    placeholder="+223 XX XX XX XX"
+                    required
+                  />
                 </div>
 
                 <div className="grid md:grid-cols-2 gap-4">
@@ -698,9 +675,7 @@ export default function ProfilePage() {
                     {isCreatingApprenant ? "Création..." : "Créer mon profil Apprenant"}
                   </Button>
                   <Button type="button" variant="outline" onClick={() => setApprenantForm({
-                    nom: "",
-                    prenom: "",
-                    email: user?.email || "",
+                    username: "",
                     numero: "",
                     profession: "",
                     niveauEtude: "",
