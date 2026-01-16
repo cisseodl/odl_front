@@ -3,7 +3,7 @@
  */
 export const API_CONFIG = {
   baseURL: process.env.NEXT_PUBLIC_API_BASE_URL || 
-    "http://localhost:8080/awsodclearning",
+    "https://api.smart-odc.com/awsodclearning",
   timeout: 30000,
 } as const
 
