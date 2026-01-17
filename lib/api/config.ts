@@ -34,8 +34,8 @@ export const API_ENDPOINTS = {
   },
   // Categories
   categories: {
-    getAll: "/categorie/read",
-    getById: "/categorie/read",
+    getAll: "/api/categories/read",
+    getById: "/api/categories/read",
     save: "/categorie/save",
     update: "/categorie/update",
     delete: "/categorie/delete",
