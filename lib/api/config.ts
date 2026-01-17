@@ -2,9 +2,25 @@
  * Configuration de l'API backend
  * L'URL de base doit être configurée via la variable d'environnement NEXT_PUBLIC_API_FRONT
  * Cette variable est configurée dans Amplify pour permettre la communication avec le backend
+ * 
+ * Note: Le backend utilise le context path /awsodclearning
+ * Si le reverse proxy ne gère pas le routing, il faut l'inclure dans la base URL
  */
+const getBaseURL = (): string => {
+  const envURL = process.env.NEXT_PUBLIC_API_FRONT
+  if (envURL) {
+    // Si l'URL d'environnement ne contient pas déjà le context path, l'ajouter
+    if (!envURL.includes('/awsodclearning')) {
+      return `${envURL}/awsodclearning`
+    }
+    return envURL
+  }
+  // URL par défaut avec context path
+  return "https://api.smart-odc.com/awsodclearning"
+}
+
 export const API_CONFIG = {
-  baseURL: process.env.NEXT_PUBLIC_API_FRONT || "https://api.smart-odc.com",
+  baseURL: getBaseURL(),
   timeout: 30000,
 } as const
 
