@@ -422,6 +422,59 @@ export const labService = {
   },
 }
 
+// ============ Rubrique Services ============
+export const rubriqueService = {
+  /**
+   * Obtenir toutes les rubriques (piliers)
+   * Le backend retourne CResponse<List<Rubrique>>
+   */
+  async getAllRubriques(): Promise<any[]> {
+    try {
+      const response = await apiClient.get<any>(API_ENDPOINTS.rubriques.getAll)
+      
+      if (response.ok && response.data) {
+        // Le backend retourne CResponse<List<Rubrique>> avec data contenant la liste
+        if (Array.isArray(response.data)) {
+          return response.data
+        }
+        // Si c'est un CResponse, extraire le data
+        if (response.data.data && Array.isArray(response.data.data)) {
+          return response.data.data
+        }
+        // Si response.data est un objet avec une propriété data qui est un array
+        if (response.data && typeof response.data === 'object' && 'data' in response.data) {
+          const data = (response.data as any).data
+          if (Array.isArray(data)) {
+            return data
+          }
+        }
+      }
+      
+      console.warn("getAllRubriques: Aucune rubrique trouvée ou format de réponse inattendu", response)
+      return []
+    } catch (error) {
+      console.error("Erreur lors de la récupération des rubriques:", error)
+      return []
+    }
+  },
+
+  /**
+   * Obtenir une rubrique par ID
+   */
+  async getRubriqueById(id: number): Promise<any | null> {
+    const response = await apiClient.get<any>(
+      `${API_ENDPOINTS.rubriques.getById}/${id}`
+    )
+    
+    if (response.ok && response.data) {
+      // Le backend retourne CResponse<Rubrique> avec data contenant la rubrique
+      return Array.isArray(response.data) ? null : response.data
+    }
+    
+    return null
+  },
+}
+
 // ============ Dashboard Services ============
 export const dashboardService = {
 

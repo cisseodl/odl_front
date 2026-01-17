@@ -121,6 +121,11 @@ export const API_ENDPOINTS = {
   contact: {
     send: "/contact/send",
   },
+  // Rubriques (Piliers)
+  rubriques: {
+    getAll: "/api/v1/rubriques/read",
+    getById: "/api/v1/rubriques/read",
+  },
 } as const
 
 

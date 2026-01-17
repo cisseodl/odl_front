@@ -1,9 +1,23 @@
+"use client"
+
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
-import { BookOpen, Users, Award, Globe, Target, Heart, Lightbulb, TrendingUp, GraduationCap, Rocket, Wrench, Video, Facebook, Twitter, Linkedin, Instagram } from "lucide-react"
+import { BookOpen, Users, Award, Globe, Target, Heart, Lightbulb, TrendingUp, GraduationCap, Rocket, Wrench, Video, Facebook, Twitter, Linkedin, Instagram, Loader2 } from "lucide-react"
 import Link from "next/link"
+import { useQuery } from "@tanstack/react-query"
+import { rubriqueService } from "@/lib/api/services"
+import Image from "next/image"
 
 export default function AboutPage() {
+  // Charger les rubriques depuis l'API
+  const {
+    data: rubriques = [],
+    isLoading: isLoadingRubriques,
+  } = useQuery({
+    queryKey: ["rubriques"],
+    queryFn: () => rubriqueService.getAllRubriques(),
+    staleTime: 10 * 60 * 1000, // Cache pendant 10 minutes
+  })
   return (
     <div className="min-h-screen">
       {/* Hero Section */}
@@ -194,117 +208,74 @@ export default function AboutPage() {
           </div>
 
           <div className="grid md:grid-cols-2 gap-8 max-w-6xl mx-auto">
-            {/* Orange Digital Kalanso */}
-            <Card className="p-8 hover:shadow-lg transition-shadow">
-              <div className="flex items-start gap-6">
-                <div className="w-16 h-16 bg-green-500/10 rounded-full flex items-center justify-center flex-shrink-0">
-                  <GraduationCap className="w-8 h-8 text-green-600" />
-                </div>
-                <div className="flex-1">
-                  <h3 className="text-2xl font-bold mb-3 text-green-700">Orange Digital Kalanso</h3>
-                  <p className="text-sm font-semibold text-green-600 mb-4">École de code</p>
-                  <p className="text-muted-foreground mb-4 text-pretty">
-                    Orange Digital Kalanso est notre école de programmation qui forme les jeunes aux métiers du numérique.
-                    Nous proposons des formations intensives et gratuites en développement web et mobile, couvrant les technologies
-                    les plus demandées sur le marché.
-                  </p>
-                  <div className="space-y-2">
-                    <p className="text-sm font-semibold text-foreground">Formations proposées :</p>
-                    <ul className="text-sm text-muted-foreground space-y-1 list-disc list-inside">
-                      <li>Développement Web (React, Next.js, Angular, Node.js)</li>
-                      <li>Développement Mobile (Flutter, React Native)</li>
-                      <li>Formations intensives de 6 mois avec certification</li>
-                      <li>Bootcamps courts de 2-3 jours sur des technologies spécifiques</li>
-                      <li>Projets pratiques et accompagnement personnalisé</li>
-                    </ul>
-                  </div>
-                </div>
+            {isLoadingRubriques ? (
+              <div className="col-span-2 flex items-center justify-center py-12">
+                <Loader2 className="w-8 h-8 animate-spin text-primary" />
               </div>
-            </Card>
-
-            {/* Orange Fab */}
-            <Card className="p-8 hover:shadow-lg transition-shadow">
-              <div className="flex items-start gap-6">
-                <div className="w-16 h-16 bg-purple-500/10 rounded-full flex items-center justify-center flex-shrink-0">
-                  <Rocket className="w-8 h-8 text-purple-600" />
-                </div>
-                <div className="flex-1">
-                  <h3 className="text-2xl font-bold mb-3 text-purple-700">Orange Fab</h3>
-                  <p className="text-sm font-semibold text-purple-600 mb-4">Accélérateur de start-up</p>
-                  <p className="text-muted-foreground mb-4 text-pretty">
-                    Orange Fab est notre programme d'accélération dédié aux start-up innovantes. Nous accompagnons les entrepreneurs
-                    dans le développement de leur projet, de l'idée initiale jusqu'à la mise sur le marché, en leur offrant des ressources,
-                    un mentorat expert et un réseau de partenaires.
-                  </p>
-                  <div className="space-y-2">
-                    <p className="text-sm font-semibold text-foreground">Services offerts :</p>
-                    <ul className="text-sm text-muted-foreground space-y-1 list-disc list-inside">
-                      <li>Accompagnement personnalisé par des mentors experts</li>
-                      <li>Accès à un réseau de partenaires et investisseurs</li>
-                      <li>Workshops et formations en entrepreneuriat</li>
-                      <li>Espace de coworking et ressources techniques</li>
-                      <li>Mise en relation avec le marché et opportunités business</li>
-                    </ul>
-                  </div>
-                </div>
+            ) : rubriques.length === 0 ? (
+              <div className="col-span-2 text-center text-muted-foreground py-12">
+                Aucune rubrique disponible pour le moment.
               </div>
-            </Card>
-
-            {/* FabLab Solidaire */}
-            <Card className="p-8 hover:shadow-lg transition-shadow">
-              <div className="flex items-start gap-6">
-                <div className="w-16 h-16 bg-gray-500/10 rounded-full flex items-center justify-center flex-shrink-0">
-                  <Wrench className="w-8 h-8 text-gray-600" />
-                </div>
-                <div className="flex-1">
-                  <h3 className="text-2xl font-bold mb-3 text-gray-700">FabLab Solidaire</h3>
-                  <p className="text-sm font-semibold text-gray-600 mb-4">Atelier de fabrication numérique</p>
-                  <p className="text-muted-foreground mb-4 text-pretty">
-                    Le FabLab Solidaire est un espace de fabrication numérique ouvert à tous, où les jeunes peuvent donner vie à leurs
-                    idées créatives. Équipé d'imprimantes 3D, de découpeuses laser et d'autres outils numériques, c'est le lieu idéal
-                    pour prototyper, créer et innover.
-                  </p>
-                  <div className="space-y-2">
-                    <p className="text-sm font-semibold text-foreground">Équipements et services :</p>
-                    <ul className="text-sm text-muted-foreground space-y-1 list-disc list-inside">
-                      <li>Imprimantes 3D pour prototypage rapide</li>
-                      <li>Découpeuses laser et vinyle</li>
-                      <li>Équipements électroniques (Arduino, Raspberry Pi)</li>
-                      <li>Formations à la fabrication numérique</li>
-                      <li>Espace collaboratif pour projets innovants</li>
-                    </ul>
-                  </div>
-                </div>
-              </div>
-            </Card>
-
-            {/* Multimédias */}
-            <Card className="p-8 hover:shadow-lg transition-shadow">
-              <div className="flex items-start gap-6">
-                <div className="w-16 h-16 bg-blue-500/10 rounded-full flex items-center justify-center flex-shrink-0">
-                  <Video className="w-8 h-8 text-blue-600" />
-                </div>
-                <div className="flex-1">
-                  <h3 className="text-2xl font-bold mb-3 text-blue-700">ODC Multimédia</h3>
-                  <p className="text-sm font-semibold text-blue-600 mb-4">Centre de production et formation multimédia</p>
-                  <p className="text-muted-foreground mb-4 text-pretty">
-                    Le programme Multimédias d'Orange Digital Center offre des formations et des ressources pour la création de contenu
-                    numérique. Que ce soit pour la vidéo, le design graphique, le montage ou la photographie, nous formons les jeunes
-                    aux compétences multimédias essentielles pour l'ère digitale.
-                  </p>
-                  <div className="space-y-2">
-                    <p className="text-sm font-semibold text-foreground">Domaines couverts :</p>
-                    <ul className="text-sm text-muted-foreground space-y-1 list-disc list-inside">
-                      <li>Production vidéo et montage (Premiere Pro, DaVinci Resolve)</li>
-                      <li>Design graphique (Photoshop, Illustrator, Canva)</li>
-                      <li>Photographie numérique et retouche</li>
-                      <li>Animation et motion design</li>
-                      <li>Podcasting et création audio</li>
-                    </ul>
-                  </div>
-                </div>
-              </div>
-            </Card>
+            ) : (
+              rubriques.map((rubrique: any) => {
+                // Déterminer la couleur selon le nom de la rubrique
+                const getColorClass = (rubriqueName: string) => {
+                  const name = rubriqueName?.toLowerCase() || ""
+                  if (name.includes("kalanso")) return { bg: "bg-green-500/10", text: "text-green-600", title: "text-green-700", subtitle: "text-green-600" }
+                  if (name.includes("fab")) return { bg: "bg-purple-500/10", text: "text-purple-600", title: "text-purple-700", subtitle: "text-purple-600" }
+                  if (name.includes("fablab") || name.includes("solidaire")) return { bg: "bg-gray-500/10", text: "text-gray-600", title: "text-gray-700", subtitle: "text-gray-600" }
+                  if (name.includes("multimedia") || name.includes("multimédia")) return { bg: "bg-blue-500/10", text: "text-blue-600", title: "text-blue-700", subtitle: "text-blue-600" }
+                  return { bg: "bg-primary/10", text: "text-primary", title: "text-primary", subtitle: "text-primary" }
+                }
+                
+                const colors = getColorClass(rubrique.rubrique)
+                
+                return (
+                  <Card key={rubrique.id} className="p-8 hover:shadow-lg transition-shadow">
+                    <div className="flex items-start gap-6">
+                      {/* Image de la rubrique à la place de l'icône */}
+                      <div className={`w-16 h-16 ${colors.bg} rounded-full flex items-center justify-center flex-shrink-0 overflow-hidden`}>
+                        {rubrique.image ? (
+                          <Image
+                            src={rubrique.image}
+                            alt={rubrique.rubrique || "Rubrique"}
+                            width={64}
+                            height={64}
+                            className="w-full h-full object-cover rounded-full"
+                          />
+                        ) : (
+                          <GraduationCap className={`w-8 h-8 ${colors.text}`} />
+                        )}
+                      </div>
+                      <div className="flex-1">
+                        <h3 className={`text-2xl font-bold mb-3 ${colors.title}`}>
+                          {rubrique.rubrique || "Rubrique"}
+                        </h3>
+                        {rubrique.publicCible && (
+                          <p className={`text-sm font-semibold ${colors.subtitle} mb-4`}>
+                            {rubrique.publicCible}
+                          </p>
+                        )}
+                        {rubrique.description && (
+                          <p className="text-muted-foreground mb-4 text-pretty">
+                            {rubrique.description}
+                          </p>
+                        )}
+                        {rubrique.formationsProposees && (
+                          <div className="space-y-2">
+                            <p className="text-sm font-semibold text-foreground">Formations proposées :</p>
+                            <div 
+                              className="text-sm text-muted-foreground space-y-1"
+                              dangerouslySetInnerHTML={{ __html: rubrique.formationsProposees.replace(/\n/g, '<br />') }}
+                            />
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </Card>
+                )
+              })
+            )}
           </div>
 
           {/* Synthèse Section */}
