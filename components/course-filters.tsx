@@ -6,7 +6,8 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Button } from "@/components/ui/button"
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
-import { categories } from "@/lib/mock-data"
+import { useQuery } from "@tanstack/react-query"
+import { categoryService } from "@/lib/api/services"
 import type { Course } from "@/lib/types"
 
 interface CourseFiltersProps {
@@ -38,14 +39,34 @@ export function CourseFilters({
   onReset,
   courses = [],
 }: CourseFiltersProps) {
-  const levels = ["Débutant", "Intermédiaire", "Avancé"]
+  // Charger les catégories depuis l'API
+  const { data: categoriesData = [] } = useQuery({
+    queryKey: ["categories"],
+    queryFn: () => categoryService.getAllCategories(),
+    staleTime: 10 * 60 * 1000, // 10 minutes
+  })
+
+  // Extraire les catégories uniques depuis les données de l'API
+  const categories = ["Tous les cours", ...categoriesData.map((cat: any) => cat.title || cat.nom).filter(Boolean)]
+
+  // Extraire les niveaux uniques depuis les cours
+  const availableLevels = Array.from(new Set(courses.map(c => c.level).filter(Boolean)))
+  const levels = ["Débutant", "Intermédiaire", "Avancé"].filter(level => 
+    availableLevels.includes(level)
+  )
+
   const durations = [
     { label: "0-5 heures", value: "0-5" },
     { label: "5-20 heures", value: "5-20" },
     { label: "20-40 heures", value: "20-40" },
     { label: "40+ heures", value: "40+" },
   ]
-  const languages = ["Français", "Anglais", "Espagnol"]
+
+  // Extraire les langues uniques depuis les cours (français et anglais seulement)
+  const availableLanguages = Array.from(new Set(
+    courses.map(c => c.language).filter(lang => lang === "Français" || lang === "Anglais")
+  ))
+  const languages = ["Français", "Anglais"].filter(lang => availableLanguages.includes(lang))
 
   // Calculate dynamic counts
   const getCategoryCount = (category: string) => {

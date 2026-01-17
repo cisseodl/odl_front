@@ -223,7 +223,14 @@ export const categoryService = {
     
     if (response.ok && response.data) {
       // Le backend retourne CResponse<List<Categorie>> avec data contenant la liste
-      return Array.isArray(response.data) ? response.data : []
+      // response.data peut être directement un array ou dans response.data.data
+      if (Array.isArray(response.data)) {
+        return response.data
+      }
+      // Si c'est un CResponse, extraire le data
+      if (response.data.data && Array.isArray(response.data.data)) {
+        return response.data.data
+      }
     }
     
     return []
