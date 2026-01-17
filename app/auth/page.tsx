@@ -3,7 +3,7 @@
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
-import { Mail, Lock, User, Eye, EyeOff, Phone, GraduationCap, Briefcase } from "lucide-react"
+import { Mail, Lock, User, Eye, EyeOff, Phone, GraduationCap, Briefcase, Users } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -11,22 +11,28 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { useAuthStore } from "@/lib/store/auth-store"
-import { apprenantService } from "@/lib/api/services"
+import { apprenantService, cohorteService } from "@/lib/api/services"
 import { toast } from "sonner"
 import type { ApprenantCreateRequest } from "@/lib/api/types"
+import { useQuery } from "@tanstack/react-query"
 
 export default function AuthPage() {
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
-  const [createApprenant, setCreateApprenant] = useState(true) // Option pour créer un profil apprenant
+  const [apprenantType, setApprenantType] = useState<"new" | "existing">("new") // Type d'apprenant : nouveau ou ancien
   const { login, register } = useAuthStore()
 
-  // Note: Les cohortes nécessitent une authentification, donc on ne les charge pas dans le formulaire d'inscription
-  // L'utilisateur pourra compléter sa cohorte après l'inscription dans son profil
-  const cohortes: Array<{ id: number; nom: string }> = [] // Vide car nécessite authentification
+  // Charger les cohortes pour le formulaire (nécessite authentification, mais on peut les charger publiquement si l'endpoint le permet)
+  const { data: cohortes = [] } = useQuery({
+    queryKey: ["cohortes"],
+    queryFn: () => cohorteService.getAllCohortes(),
+    staleTime: 10 * 60 * 1000,
+    retry: false, // Ne pas réessayer si ça échoue (peut nécessiter auth)
+  })
 
   const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -51,7 +57,8 @@ export default function AuthPage() {
     }
   }
 
-  const handleRegister = async (e: React.FormEvent<HTMLFormElement>) => {
+  // Handler pour nouveau apprenant (formulaire complet)
+  const handleRegisterNew = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     setIsLoading(true)
     const formData = new FormData(e.currentTarget)
@@ -70,38 +77,100 @@ export default function AuthPage() {
       // 1. Créer l'utilisateur
       await register(name, email, password)
       
-      // 2. Si l'option est activée, créer le profil Apprenant
-      if (createApprenant) {
-        const numero = formData.get("numero") as string
-        const profession = formData.get("profession") as string
-        const niveauEtude = formData.get("niveauEtude") as string
-        const filiere = formData.get("filiere") as string
-        const attentes = formData.get("attentes") as string
-        const cohorteId = formData.get("cohorteId") as string
-        const satisfaction = formData.get("satisfaction") === "true"
+      // 2. Créer le profil Apprenant avec toutes les informations
+      const numero = formData.get("numero") as string
+      const profession = formData.get("profession") as string
+      const niveauEtude = formData.get("niveauEtude") as string
+      const filiere = formData.get("filiere") as string
+      const attentes = formData.get("attentes") as string
+      const cohorteId = formData.get("cohorteId") as string
+      const satisfaction = formData.get("satisfaction") === "true"
 
-        // Utiliser le "name" du User comme "username" pour l'apprenant
-        if (name && numero) {
-          const apprenantData: ApprenantCreateRequest = {
-            username: name.trim(), // Utiliser le nom complet du User
-            numero: numero.trim(),
-            profession: profession?.trim() || undefined,
-            niveauEtude: niveauEtude || undefined,
-            filiere: filiere?.trim() || undefined,
-            attentes: attentes?.trim() || undefined,
-            satisfaction: satisfaction,
-            cohorteId: cohorteId ? Number.parseInt(cohorteId) : undefined,
-            activate: true,
-          }
-
-          const apprenantResponse = await apprenantService.createApprenant(apprenantData)
-          
-          if (!apprenantResponse.ok) {
-            toast.warning("Compte créé mais erreur lors de la création du profil apprenant", {
-              description: "Vous pourrez compléter votre profil plus tard",
-            })
-          }
+      // Utiliser le "name" du User comme "username" pour l'apprenant
+      if (name && numero) {
+        const apprenantData: ApprenantCreateRequest = {
+          username: name.trim(), // Utiliser le nom complet du User
+          numero: numero.trim(),
+          profession: profession?.trim() || undefined,
+          niveauEtude: niveauEtude || undefined,
+          filiere: filiere?.trim() || undefined,
+          attentes: attentes?.trim() || undefined,
+          satisfaction: satisfaction,
+          cohorteId: cohorteId ? Number.parseInt(cohorteId) : undefined,
+          activate: true,
         }
+
+        const apprenantResponse = await apprenantService.createApprenant(apprenantData)
+        
+        if (!apprenantResponse.ok) {
+          toast.warning("Compte créé mais erreur lors de la création du profil apprenant", {
+            description: "Vous pourrez compléter votre profil plus tard",
+          })
+        }
+      }
+
+      toast.success("Inscription réussie !", {
+        description: "Bienvenue sur Orange Digital Learning",
+      })
+      router.push("/dashboard")
+      router.refresh()
+    } catch (error) {
+      toast.error("Erreur d'inscription", {
+        description: error instanceof Error ? error.message : "Une erreur est survenue",
+      })
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  // Handler pour ancien apprenant (formulaire simplifié)
+  const handleRegisterExisting = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
+    setIsLoading(true)
+    const formData = new FormData(e.currentTarget)
+    const usernameOrEmail = formData.get("usernameOrEmail") as string
+    const password = formData.get("password") as string
+    const confirmPassword = formData.get("confirmPassword") as string
+    const cohorteId = formData.get("cohorteId") as string
+
+    if (password !== confirmPassword) {
+      toast.error("Les mots de passe ne correspondent pas")
+      setIsLoading(false)
+      return
+    }
+
+    if (!cohorteId) {
+      toast.error("Veuillez sélectionner une cohorte")
+      setIsLoading(false)
+      return
+    }
+
+    // Récupérer l'email et le username séparément
+    const email = usernameOrEmail // L'email est dans usernameOrEmail
+    const username = formData.get("username") as string | null
+
+    // Pour créer un User, on a besoin d'un email et d'un nom
+    const name = username || email || ""
+
+    try {
+      // 1. Créer l'utilisateur
+      await register(name, email, password)
+      
+      // 2. Créer le profil Apprenant simplifié (username et cohorte)
+      const apprenantData: ApprenantCreateRequest = {
+        username: username || name, // Utiliser le username fourni ou le nom/email
+        numero: "", // Numéro optionnel pour ancien apprenant
+        cohorteId: Number.parseInt(cohorteId),
+        activate: true,
+        satisfaction: true,
+      }
+
+      const apprenantResponse = await apprenantService.createApprenant(apprenantData)
+      
+      if (!apprenantResponse.ok) {
+        toast.warning("Compte créé mais erreur lors de la création du profil apprenant", {
+          description: "Vous pourrez compléter votre profil plus tard",
+        })
       }
 
       toast.success("Inscription réussie !", {
@@ -180,7 +249,30 @@ export default function AuthPage() {
             </TabsContent>
 
             <TabsContent value="register" className="space-y-4 mt-6">
-              <form onSubmit={handleRegister} className="space-y-4">
+              {/* Sélecteur de type d'apprenant */}
+              <div className="space-y-3">
+                <Label className="text-base font-semibold">Type d'apprenant</Label>
+                <RadioGroup value={apprenantType} onValueChange={(value) => setApprenantType(value as "new" | "existing")} className="grid grid-cols-2 gap-4">
+                  <div className="flex items-center space-x-2 rounded-lg border p-4 cursor-pointer hover:bg-accent" onClick={() => setApprenantType("new")}>
+                    <RadioGroupItem value="new" id="new-apprenant" />
+                    <Label htmlFor="new-apprenant" className="cursor-pointer flex-1">
+                      <div className="font-medium">Nouveau apprenant</div>
+                      <div className="text-xs text-muted-foreground">Première inscription</div>
+                    </Label>
+                  </div>
+                  <div className="flex items-center space-x-2 rounded-lg border p-4 cursor-pointer hover:bg-accent" onClick={() => setApprenantType("existing")}>
+                    <RadioGroupItem value="existing" id="existing-apprenant" />
+                    <Label htmlFor="existing-apprenant" className="cursor-pointer flex-1">
+                      <div className="font-medium">Ancien apprenant</div>
+                      <div className="text-xs text-muted-foreground">Déjà inscrit</div>
+                    </Label>
+                  </div>
+                </RadioGroup>
+              </div>
+
+              {/* Formulaire pour nouveau apprenant */}
+              {apprenantType === "new" && (
+                <form onSubmit={handleRegisterNew} className="space-y-4">
                 {/* Informations de base pour créer le User */}
                 <div className="space-y-2">
                   <Label htmlFor="register-name">Nom complet *</Label>
@@ -377,13 +469,133 @@ export default function AuthPage() {
                   </Label>
                 </div>
 
-                <Button type="submit" className="w-full bg-primary text-white hover:bg-primary/95" disabled={isLoading}>
-                  {isLoading ? "Inscription..." : "S'inscrire"}
-                </Button>
-                <p className="text-xs text-center text-muted-foreground">
-                  * Champs obligatoires. Les informations apprenant peuvent être complétées plus tard.
-                </p>
-              </form>
+                  <Button type="submit" className="w-full bg-primary text-white hover:bg-primary/95" disabled={isLoading}>
+                    {isLoading ? "Inscription..." : "S'inscrire"}
+                  </Button>
+                  <p className="text-xs text-center text-muted-foreground">
+                    * Champs obligatoires. Les informations apprenant peuvent être complétées plus tard.
+                  </p>
+                </form>
+              )}
+
+              {/* Formulaire pour ancien apprenant */}
+              {apprenantType === "existing" && (
+                <form onSubmit={handleRegisterExisting} className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="existing-email">Email *</Label>
+                    <div className="relative">
+                      <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <Input
+                        id="existing-email"
+                        name="usernameOrEmail"
+                        type="email"
+                        placeholder="votre@email.com"
+                        className="pl-10"
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="existing-username">Nom d'utilisateur (optionnel)</Label>
+                    <div className="relative">
+                      <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <Input
+                        id="existing-username"
+                        name="username"
+                        type="text"
+                        placeholder="Votre nom d'utilisateur"
+                        className="pl-10"
+                      />
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      Si vous avez un nom d'utilisateur, entrez-le ici. Sinon, votre email sera utilisé.
+                    </p>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="existing-password">Mot de passe *</Label>
+                    <div className="relative">
+                      <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <Input
+                        id="existing-password"
+                        name="password"
+                        type={showPassword ? "text" : "password"}
+                        placeholder="••••••••"
+                        className="pl-10 pr-10"
+                        required
+                        minLength={6}
+                      />
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="absolute right-0 top-0 h-full w-10"
+                        onClick={() => setShowPassword(!showPassword)}
+                      >
+                        {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                      </Button>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="existing-confirm-password">Confirmer le mot de passe *</Label>
+                    <div className="relative">
+                      <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <Input
+                        id="existing-confirm-password"
+                        name="confirmPassword"
+                        type={showConfirmPassword ? "text" : "password"}
+                        placeholder="••••••••"
+                        className="pl-10 pr-10"
+                        required
+                        minLength={6}
+                      />
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="absolute right-0 top-0 h-full w-10"
+                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                      >
+                        {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                      </Button>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="existing-cohorteId">Cohorte *</Label>
+                    <Select name="cohorteId" required>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Sélectionnez votre cohorte" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {cohortes.length > 0 ? (
+                          cohortes.map((cohorte) => (
+                            <SelectItem key={cohorte.id} value={cohorte.id.toString()}>
+                              {cohorte.nom}
+                            </SelectItem>
+                          ))
+                        ) : (
+                          <SelectItem value="" disabled>
+                            Aucune cohorte disponible
+                          </SelectItem>
+                        )}
+                      </SelectContent>
+                    </Select>
+                    <p className="text-xs text-muted-foreground">
+                      Sélectionnez la cohorte à laquelle vous appartenez
+                    </p>
+                  </div>
+
+                  <Button type="submit" className="w-full bg-primary text-white hover:bg-primary/95" disabled={isLoading}>
+                    {isLoading ? "Inscription..." : "S'inscrire"}
+                  </Button>
+                  <p className="text-xs text-center text-muted-foreground">
+                    * Champs obligatoires. Vous pourrez compléter votre profil après l'inscription.
+                  </p>
+                </form>
+              )}
             </TabsContent>
           </Tabs>
         </CardContent>
