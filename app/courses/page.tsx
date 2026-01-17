@@ -13,7 +13,7 @@ import { ViewToggle } from "@/components/view-toggle"
 import { EmptyState } from "@/components/empty-state"
 import { Search } from "lucide-react"
 import { useQuery } from "@tanstack/react-query"
-import { courseService } from "@/lib/api/services"
+import { courseService, categoryService } from "@/lib/api/services"
 import type { Course } from "@/lib/types"
 
 type SortOption = "popularity" | "rating" | "recent"
