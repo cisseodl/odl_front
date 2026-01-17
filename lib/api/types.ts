@@ -67,6 +67,26 @@ export interface ApprenantCreateRequest {
   userEmail?: string
 }
 
+// Request pour mettre à jour un apprenant
+// Le backend attend un @RequestBody User et des @RequestParam pour les champs apprenant
+export interface ApprenantUpdateRequest {
+  // User details (sera envoyé dans le body)
+  userDetails?: {
+    fullName?: string
+    email?: string
+    phone?: string
+  }
+  // Apprenant fields (seront envoyés en query params)
+  username?: string // Format: "Prénom Nom"
+  numero?: string
+  profession?: string
+  niveauEtude?: string
+  filiere?: string
+  attentes?: string
+  satisfaction?: boolean
+  cohorteId?: number
+}
+
 export interface Cohorte {
   id: number
   nom: string

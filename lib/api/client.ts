@@ -165,8 +165,21 @@ class ApiClient {
   /**
    * PUT request
    */
-  async put<T>(endpoint: string, body?: any): Promise<ApiResponse<T>> {
-    return this.request<T>(endpoint, {
+  async put<T>(endpoint: string, body?: any, params?: Record<string, any>): Promise<ApiResponse<T>> {
+    let url = endpoint
+    if (params) {
+      const searchParams = new URLSearchParams()
+      Object.entries(params).forEach(([key, value]) => {
+        if (value !== undefined && value !== null) {
+          searchParams.append(key, String(value))
+        }
+      })
+      const queryString = searchParams.toString()
+      if (queryString) {
+        url += `?${queryString}`
+      }
+    }
+    return this.request<T>(url, {
       method: "PUT",
       body: body ? JSON.stringify(body) : undefined,
     })

@@ -288,6 +288,7 @@ export default function AuthPage() {
                       type="tel"
                       placeholder="+223 XX XX XX XX"
                       className="pl-10 bg-white"
+                      required
                     />
                   </div>
                 </div>

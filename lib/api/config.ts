@@ -84,6 +84,9 @@ export const API_ENDPOINTS = {
     create: "/apprenants/create",
     getAll: "/apprenants/get-all",
     getById: "/apprenants",
+    update: "/apprenants",
+    delete: "/apprenants",
+    getByCohorte: "/apprenants/get-by-cohorte",
   },
   // Cohortes
   cohortes: {

@@ -80,10 +80,35 @@ export default function ProfilePage() {
 
   const handleCreateApprenant = async (e: React.FormEvent) => {
     e.preventDefault()
+    
+    // Validation des champs requis
+    if (!apprenantForm.username || !apprenantForm.username.trim()) {
+      toast.error("Le nom complet est requis")
+      return
+    }
+    
+    if (!apprenantForm.numero || !apprenantForm.numero.trim()) {
+      toast.error("Le numéro de téléphone est requis")
+      return
+    }
+    
     setIsCreatingApprenant(true)
 
     try {
-      const response = await apprenantService.createApprenant(apprenantForm)
+      // Préparer les données en nettoyant les chaînes vides
+      const dataToSend: ApprenantCreateRequest = {
+        username: apprenantForm.username.trim(),
+        numero: apprenantForm.numero.trim(),
+        profession: apprenantForm.profession?.trim() || undefined,
+        niveauEtude: apprenantForm.niveauEtude || undefined,
+        filiere: apprenantForm.filiere?.trim() || undefined,
+        attentes: apprenantForm.attentes?.trim() || undefined,
+        satisfaction: apprenantForm.satisfaction,
+        cohorteId: apprenantForm.cohorteId,
+        activate: apprenantForm.activate ?? true,
+      }
+      
+      const response = await apprenantService.createApprenant(dataToSend)
       
       if (response.ok) {
         toast.success("Profil apprenant créé avec succès !")

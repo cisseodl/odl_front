@@ -16,6 +16,7 @@ import type {
   DashboardStatsDTO,
   BackendChapter,
   ApprenantCreateRequest,
+  ApprenantUpdateRequest,
   Cohorte,
   ProfileDto,
   CertificateDto,
@@ -432,6 +433,62 @@ export const apprenantService = {
     }
     
     return []
+  },
+
+  /**
+   * Obtenir un apprenant par ID
+   */
+  async getApprenantById(id: number): Promise<ApiResponse<any>> {
+    return apiClient.get(`${API_ENDPOINTS.apprenants.getById}/${id}`)
+  },
+
+  /**
+   * Mettre à jour un apprenant
+   * Le backend attend un @RequestBody User et des @RequestParam pour les champs apprenant
+   */
+  async updateApprenant(
+    id: number,
+    data: ApprenantUpdateRequest
+  ): Promise<ApiResponse<any>> {
+    const { userDetails, ...apprenantParams } = data
+    
+    // Préparer les query params pour les champs apprenant
+    const params: Record<string, any> = {}
+    if (apprenantParams.username !== undefined) params.username = apprenantParams.username
+    if (apprenantParams.numero !== undefined) params.numero = apprenantParams.numero
+    if (apprenantParams.profession !== undefined) params.profession = apprenantParams.profession
+    if (apprenantParams.niveauEtude !== undefined) params.niveauEtude = apprenantParams.niveauEtude
+    if (apprenantParams.filiere !== undefined) params.filiere = apprenantParams.filiere
+    if (apprenantParams.attentes !== undefined) params.attentes = apprenantParams.attentes
+    if (apprenantParams.satisfaction !== undefined) params.satisfaction = apprenantParams.satisfaction
+    if (apprenantParams.cohorteId !== undefined) params.cohorteId = apprenantParams.cohorteId
+
+    // Envoyer userDetails dans le body et les autres champs en query params
+    return apiClient.put(
+      `${API_ENDPOINTS.apprenants.update}/${id}`,
+      userDetails || {},
+      params
+    )
+  },
+
+  /**
+   * Supprimer un apprenant (admin seulement)
+   */
+  async deleteApprenant(id: number): Promise<ApiResponse<any>> {
+    return apiClient.delete(`${API_ENDPOINTS.apprenants.delete}/${id}`)
+  },
+
+  /**
+   * Obtenir les apprenants par cohorte avec pagination
+   */
+  async getApprenantsByCohorte(
+    cohorteId: number,
+    page: number = 0,
+    size: number = 10
+  ): Promise<ApiResponse<any>> {
+    return apiClient.get(
+      `${API_ENDPOINTS.apprenants.getByCohorte}/${cohorteId}/${page}/${size}`
+    )
   },
 
   /**
