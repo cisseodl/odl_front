@@ -117,23 +117,48 @@ export const authService = {
 export const courseService = {
   /**
    * Obtenir tous les cours
-   * Le backend retourne CResponse<List<CourseDto>>
+   * Le backend retourne CResponse<List<CourseDto>> avec les modules et leçons inclus
    */
   async getAllCourses(): Promise<Course[]> {
-    const response = await apiClient.get<{ data: BackendCourse[] } | BackendCourse[]>(
-      API_ENDPOINTS.courses.getAll
-    )
-    
-    if (response.ok && response.data) {
-      // Le backend peut retourner soit directement un array, soit dans { data: [...] }
-      const courses = Array.isArray(response.data)
-        ? response.data
-        : (response.data as any).data || []
+    try {
+      const response = await apiClient.get<{ data: BackendCourse[] } | BackendCourse[]>(
+        API_ENDPOINTS.courses.getAll
+      )
       
-      return adaptCourses(courses)
+      if (response.ok && response.data) {
+        // Le backend peut retourner soit directement un array, soit dans { data: [...] }
+        let courses: BackendCourse[] = []
+        
+        if (Array.isArray(response.data)) {
+          courses = response.data
+        } else if (response.data && typeof response.data === 'object') {
+          // Si c'est un CResponse, extraire le data
+          if ('data' in response.data && Array.isArray((response.data as any).data)) {
+            courses = (response.data as any).data
+          } else if (Array.isArray((response.data as any))) {
+            courses = response.data as BackendCourse[]
+          }
+        }
+        
+        console.log("getAllCourses: Nombre de cours récupérés:", courses.length)
+        if (courses.length > 0) {
+          console.log("getAllCourses: Premier cours:", {
+            id: courses[0].id,
+            title: courses[0].title,
+            hasCurriculum: !!courses[0].curriculum,
+            curriculumLength: courses[0].curriculum?.length || 0
+          })
+        }
+        
+        return adaptCourses(courses)
+      }
+      
+      console.warn("getAllCourses: Aucun cours trouvé ou réponse invalide", response)
+      return []
+    } catch (error) {
+      console.error("Erreur lors de la récupération des cours:", error)
+      return []
     }
-    
-    return []
   },
 
   /**
@@ -219,21 +244,34 @@ export const categoryService = {
    * Le backend retourne CResponse<List<Categorie>>
    */
   async getAllCategories(): Promise<BackendCategorie[]> {
-    const response = await apiClient.get<any>(API_ENDPOINTS.categories.getAll)
-    
-    if (response.ok && response.data) {
-      // Le backend retourne CResponse<List<Categorie>> avec data contenant la liste
-      // response.data peut être directement un array ou dans response.data.data
-      if (Array.isArray(response.data)) {
-        return response.data
+    try {
+      const response = await apiClient.get<any>(API_ENDPOINTS.categories.getAll)
+      
+      if (response.ok && response.data) {
+        // Le backend retourne CResponse<List<Categorie>> avec data contenant la liste
+        // response.data peut être directement un array ou dans response.data.data
+        if (Array.isArray(response.data)) {
+          return response.data
+        }
+        // Si c'est un CResponse, extraire le data
+        if (response.data.data && Array.isArray(response.data.data)) {
+          return response.data.data
+        }
+        // Si response.data est un objet avec une propriété data qui est un array
+        if (response.data && typeof response.data === 'object' && 'data' in response.data) {
+          const data = (response.data as any).data
+          if (Array.isArray(data)) {
+            return data
+          }
+        }
       }
-      // Si c'est un CResponse, extraire le data
-      if (response.data.data && Array.isArray(response.data.data)) {
-        return response.data.data
-      }
+      
+      console.warn("getAllCategories: Aucune catégorie trouvée ou format de réponse inattendu", response)
+      return []
+    } catch (error) {
+      console.error("Erreur lors de la récupération des catégories:", error)
+      return []
     }
-    
-    return []
   },
 
   /**
