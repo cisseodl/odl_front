@@ -57,56 +57,6 @@ export default function QuizPage({ params }: QuizPageProps) {
       setTimeRemaining(quiz.timeLimit)
     }
   }, [quiz])
-    {
-      id: 0,
-      type: "single",
-      question: "Qu'est-ce que React ?",
-      options: ["Une bibliothèque JavaScript", "Un langage de programmation", "Un framework CSS", "Un éditeur de code"],
-      correct: "Une bibliothèque JavaScript",
-    },
-    {
-      id: 1,
-      type: "multiple",
-      question: "Quels sont les hooks React les plus courants ? (Sélectionnez plusieurs réponses)",
-      options: ["useState", "useEffect", "useQuery", "useContext"],
-      correct: ["useState", "useEffect", "useContext"],
-    },
-    {
-      id: 2,
-      type: "single",
-      question: "Quel est le rôle de JSX dans React ?",
-      options: [
-        "Compiler le code JavaScript",
-        "Créer des styles CSS",
-        "Écrire du HTML dans du JavaScript",
-        "Gérer les états",
-      ],
-      correct: "Écrire du HTML dans du JavaScript",
-    },
-    {
-      id: 3,
-      type: "single",
-      question: "Comment passe-t-on des données d'un composant parent à un composant enfant ?",
-      options: ["Via les props", "Via les hooks", "Via le state global", "Via le context"],
-      correct: "Via les props",
-    },
-    {
-      id: 4,
-      type: "multiple",
-      question: "Quelles sont les bonnes pratiques en React ?",
-      options: [
-        "Garder les composants petits et réutilisables",
-        "Éviter les effets de bord dans le rendu",
-        "Tout mettre dans un seul fichier",
-        "Utiliser des noms de variables descriptifs",
-      ],
-      correct: [
-        "Garder les composants petits et réutilisables",
-        "Éviter les effets de bord dans le rendu",
-        "Utiliser des noms de variables descriptifs",
-      ],
-    },
-  ]
 
   const question = questions[currentQuestion]
   const progress = ((currentQuestion + 1) / questions.length) * 100
