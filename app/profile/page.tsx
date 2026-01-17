@@ -176,18 +176,18 @@ export default function ProfilePage() {
   }
 
   // Utiliser les données de l'utilisateur authentifié et du profil
+  // Le backend retourne ApprenantWithUserDto avec username (pas nom/prenom séparés)
   const displayUser = {
-    name: user?.name || profile?.fullName || "Utilisateur",
-    email: user?.email || profile?.email || "",
-    location: finalLearner?.cohorte?.nom || "Non spécifié",
-    joinedDate: calculateMemberSince((user as any)?.createdAt),
+    name: user?.name || profile?.fullName || finalLearner?.fullName || "Utilisateur",
+    email: user?.email || profile?.email || finalLearner?.userEmail || "",
+    location: finalLearner?.cohorteNom || "Non spécifié",
+    joinedDate: calculateMemberSince((user as any)?.createdAt || finalLearner?.createdAt),
     bio: finalLearner?.profession || finalLearner?.attentes || (profile?.enrolledCourses?.length 
       ? `${profile.enrolledCourses.length} cours inscrits` 
       : "Non spécifié"),
-    avatar: user?.avatar || profile?.avatar || "/placeholder.svg",
-    prenom: finalLearner?.prenom || "",
-    nom: finalLearner?.nom || user?.name?.split(" ").slice(-1)[0] || "",
-    phone: finalLearner?.numero || (user as any)?.phone || "",
+    avatar: user?.avatar || profile?.avatar || finalLearner?.avatar || "/placeholder.svg",
+    username: finalLearner?.username || user?.name || "",
+    phone: finalLearner?.phone || finalLearner?.numero || (user as any)?.phone || "",
     profession: finalLearner?.profession || "",
     niveauEtude: finalLearner?.niveauEtude || "",
     filiere: finalLearner?.filiere || "",
@@ -295,26 +295,18 @@ export default function ProfilePage() {
                 <CardTitle className="text-black">Informations Personnelles</CardTitle>
               </CardHeader>
               <CardContent className="space-y-6">
-                <div className="grid md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="firstName" className="text-black">Prénom</Label>
+                  <Label htmlFor="username" className="text-black">Nom complet (Prénom Nom)</Label>
                   <Input 
-                    id="firstName" 
-                    defaultValue={displayUser.prenom} 
+                    id="username" 
+                    defaultValue={displayUser.username} 
                     className="bg-white" 
-                    placeholder="Votre prénom"
+                    placeholder="Ex: Amadou Diallo"
                   />
+                  <p className="text-xs text-muted-foreground">
+                    Entrez votre prénom suivi de votre nom
+                  </p>
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="lastName" className="text-black">Nom</Label>
-                  <Input 
-                    id="lastName" 
-                    defaultValue={displayUser.nom} 
-                    className="bg-white" 
-                    placeholder="Votre nom"
-                  />
-                </div>
-              </div>
 
               <div className="space-y-2">
                 <Label htmlFor="email" className="text-black">Email</Label>

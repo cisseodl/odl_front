@@ -40,15 +40,18 @@ export const API_ENDPOINTS = {
     update: "/categorie/update",
     delete: "/categorie/delete",
   },
-  // Chapters
-  chapters: {
-    getByCourse: "/chapters/course",
-    save: "/chapters/save",
+  // Modules (remplace chapters)
+  modules: {
+    getByCourse: "/modules/course",
+    save: "/modules/save",
   },
   // Quiz
   quiz: {
     getByCourse: "/quiz/course",
+    getById: "/quiz",
     create: "/quiz/create",
+    update: "/quiz/update",
+    delete: "/quiz/delete",
     submit: "/quiz/submit",
   },
   // Labs
@@ -81,12 +84,12 @@ export const API_ENDPOINTS = {
   },
   // Apprenants
   apprenants: {
-    create: "/apprenants/create",
-    getAll: "/apprenants/get-all",
-    getById: "/apprenants",
-    update: "/apprenants",
-    delete: "/apprenants",
-    getByCohorte: "/apprenants/get-by-cohorte",
+    create: "/api/apprenants/create",
+    getAll: "/api/apprenants/get-all",
+    getById: "/api/apprenants",
+    update: "/api/apprenants",
+    delete: "/api/apprenants",
+    getByCohorte: "/api/apprenants/get-by-cohorte",
   },
   // Cohortes
   cohortes: {

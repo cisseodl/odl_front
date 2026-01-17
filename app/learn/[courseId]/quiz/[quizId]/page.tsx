@@ -2,7 +2,7 @@
 
 import { use, useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
-import { ChevronLeft, CheckCircle2, XCircle, Flag } from "lucide-react"
+import { ChevronLeft, CheckCircle2, XCircle, Flag, Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
@@ -15,24 +15,48 @@ import { QuizMinimap } from "@/components/quiz-minimap"
 import { QuizTimer } from "@/components/quiz-timer"
 import { cn } from "@/lib/utils"
 import { ProtectedRoute } from "@/components/protected-route"
+import { useQuery } from "@tanstack/react-query"
+import { quizService } from "@/lib/api/services"
+import { adaptQuiz, adaptQuestion } from "@/lib/api/adapters"
+import type { Quiz, QuizQuestion } from "@/lib/types"
+import { toast } from "sonner"
 
 interface QuizPageProps {
   params: Promise<{ courseId: string; quizId: string }>
 }
 
 export default function QuizPage({ params }: QuizPageProps) {
-  const { courseId } = use(params)
+  const { courseId, quizId } = use(params)
   const router = useRouter()
+  const quizIdNum = Number.parseInt(quizId)
+
+  // Charger le quiz depuis l'API
+  const {
+    data: quiz,
+    isLoading: isLoadingQuiz,
+    error: quizError,
+  } = useQuery({
+    queryKey: ["quiz", quizIdNum],
+    queryFn: () => quizService.getQuizById(quizIdNum),
+    enabled: !Number.isNaN(quizIdNum),
+  })
 
   const [currentQuestion, setCurrentQuestion] = useState(0)
-  const [answers, setAnswers] = useState<Record<number, string | string[]>>({})
+  const [answers, setAnswers] = useState<Record<number, number[] | string>>({}) // IDs de réponses ou texte
   const [markedForReview, setMarkedForReview] = useState<number[]>([])
   const [showResults, setShowResults] = useState(false)
-  const [timeRemaining, setTimeRemaining] = useState(600) // 10 minutes
+  const [timeRemaining, setTimeRemaining] = useState(600) // 10 minutes par défaut
   const [selectedOption, setSelectedOption] = useState<string | null>(null)
 
-  // Mock quiz data
-  const questions = [
+  // Utiliser les questions du quiz chargé depuis l'API
+  const questions: QuizQuestion[] = quiz?.questions || []
+  
+  // Mettre à jour le timer avec la durée du quiz
+  useEffect(() => {
+    if (quiz?.timeLimit) {
+      setTimeRemaining(quiz.timeLimit)
+    }
+  }, [quiz])
     {
       id: 0,
       type: "single",
@@ -109,7 +133,15 @@ export default function QuizPage({ params }: QuizPageProps) {
   }, [showResults, timeRemaining])
 
   const handleAnswer = (value: string | string[]) => {
-    setAnswers({ ...answers, [currentQuestion]: value })
+    // Pour les QCM, on stocke les IDs des réponses sélectionnées
+    // Pour les questions texte, on stocke le texte directement
+    const question = questions[currentQuestion]
+    if (question.type === "code" || question.type === "text") {
+      setAnswers({ ...answers, [currentQuestion]: value as string })
+    } else {
+      // Pour single/multiple choice, on stocke les IDs des réponses
+      setAnswers({ ...answers, [currentQuestion]: value })
+    }
     setSelectedOption(null)
     // Animation feedback
     setTimeout(() => setSelectedOption(null), 300)
@@ -135,29 +167,133 @@ export default function QuizPage({ params }: QuizPageProps) {
     }
   }
 
-  const handleSubmit = () => {
-    setShowResults(true)
+  const handleSubmit = async () => {
+    if (!quiz) return
+    
+    // Préparer les réponses au format attendu par le backend
+    const submissionAnswers = questions.map((q, index) => {
+      const answer = answers[index]
+      
+      if (q.type === "single" || q.type === "multiple") {
+        // Pour QCM, convertir les options sélectionnées (textes) en IDs de réponses
+        let selectedIds: number[] = []
+        
+        if (q.optionToIdMap) {
+          if (Array.isArray(answer)) {
+            // Multiple choice: convertir chaque option texte en ID
+            selectedIds = answer
+              .map((optionText) => q.optionToIdMap?.get(optionText))
+              .filter((id): id is number => id !== undefined)
+          } else if (typeof answer === "string") {
+            // Single choice: convertir l'option texte en ID
+            const id = q.optionToIdMap.get(answer)
+            if (id !== undefined) {
+              selectedIds = [id]
+            }
+          }
+        }
+        
+        return {
+          questionId: Number.parseInt(q.id),
+          reponseIds: selectedIds.length > 0 ? selectedIds : undefined,
+          texteReponse: undefined,
+        }
+      } else {
+        // Pour TEXTE, utiliser texteReponse
+        return {
+          questionId: Number.parseInt(q.id),
+          reponseIds: undefined,
+          texteReponse: typeof answer === "string" ? answer : "",
+        }
+      }
+    })
+    
+    try {
+      const response = await quizService.submitQuiz({
+        quizId: quizIdNum,
+        answers: submissionAnswers,
+      })
+      
+      if (response.ok) {
+        setShowResults(true)
+        toast.success("Quiz soumis avec succès !")
+      } else {
+        toast.error(response.message || "Erreur lors de la soumission du quiz")
+      }
+    } catch (error) {
+      console.error("Error submitting quiz:", error)
+      toast.error("Erreur lors de la soumission du quiz")
+    }
   }
 
   const calculateScore = () => {
+    if (!quiz) return 0
+    
     let correct = 0
     questions.forEach((q, index) => {
       const answer = answers[index]
       if (q.type === "single") {
-        if (answer === q.correct) correct++
+        // Pour single choice, comparer avec correctAnswers[0]
+        if (q.correctAnswers && q.correctAnswers.length > 0) {
+          const correctId = q.correctAnswers[0]
+          if (String(answer) === correctId) correct++
+        }
       } else if (q.type === "multiple") {
-        const answerArray = answer as string[]
-        const correctArray = q.correct as string[]
+        // Pour multiple choice, vérifier que tous les correctAnswers sont sélectionnés
+        const answerArray = Array.isArray(answer) ? answer.map(String) : [String(answer)]
+        const correctArray = q.correctAnswers || []
         if (
-          answerArray &&
           answerArray.length === correctArray.length &&
-          answerArray.every((a) => correctArray.includes(a))
+          correctArray.every((a) => answerArray.includes(a))
         ) {
           correct++
         }
       }
     })
     return correct
+  }
+  
+  // Afficher un loader pendant le chargement
+  if (isLoadingQuiz) {
+    return (
+      <ProtectedRoute>
+        <div className="flex items-center justify-center min-h-[400px]">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <span className="ml-2 text-muted-foreground">Chargement du quiz...</span>
+        </div>
+      </ProtectedRoute>
+    )
+  }
+  
+  // Afficher une erreur si le quiz n'a pas pu être chargé
+  if (quizError || !quiz) {
+    return (
+      <ProtectedRoute>
+        <div className="flex items-center justify-center min-h-[400px]">
+          <div className="text-center">
+            <p className="text-destructive mb-4">Erreur lors du chargement du quiz</p>
+            <Button onClick={() => router.push(`/learn/${courseId}`)}>
+              Retourner au cours
+            </Button>
+          </div>
+        </div>
+      </ProtectedRoute>
+    )
+  }
+  
+  if (questions.length === 0) {
+    return (
+      <ProtectedRoute>
+        <div className="flex items-center justify-center min-h-[400px]">
+          <div className="text-center">
+            <p className="text-muted-foreground mb-4">Ce quiz ne contient aucune question</p>
+            <Button onClick={() => router.push(`/learn/${courseId}`)}>
+              Retourner au cours
+            </Button>
+          </div>
+        </div>
+      </ProtectedRoute>
+    )
   }
 
   if (showResults) {
@@ -341,11 +477,22 @@ export default function QuizPage({ params }: QuizPageProps) {
 
           <CardContent className="space-y-6">
             {/* Single Choice */}
-            {question.type === "single" && (
-              <RadioGroup value={answers[currentQuestion] as string} onValueChange={handleAnswer}>
+            {question.type === "single" && question.options && (
+              <RadioGroup 
+                value={(() => {
+                  // Trouver l'option correspondant à la réponse stockée (qui est un texte)
+                  const currentAnswer = answers[currentQuestion] as string
+                  return currentAnswer || ""
+                })()}
+                onValueChange={(value) => {
+                  // Stocker le texte de l'option (sera converti en ID lors de la soumission)
+                  handleAnswer(value)
+                }}
+              >
                 <div className="space-y-3">
                   {question.options.map((option, index) => {
-                    const isSelected = answers[currentQuestion] === option
+                    const currentAnswer = answers[currentQuestion] as string
+                    const isSelected = currentAnswer === option
                     return (
                     <div
                       key={index}

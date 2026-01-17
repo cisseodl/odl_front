@@ -100,7 +100,19 @@ class ApiClient {
 
       const data = await response.json()
 
-      // Si la réponse n'a pas la structure ApiResponse, la wrapper
+      // Le backend retourne toujours une structure CResponse avec { ok: boolean, data: T, message: string }
+      // Vérifier si c'est une CResponse du backend
+      if (typeof data === "object" && "ok" in data) {
+        const cResponse = data as { ok: boolean; data?: any; message?: string }
+        return {
+          data: cResponse.data as T,
+          ok: cResponse.ok,
+          ko: !cResponse.ok,
+          message: cResponse.message,
+        }
+      }
+
+      // Si la réponse n'a pas la structure CResponse, la wrapper
       if (!response.ok) {
         return {
           data: data,
@@ -108,11 +120,6 @@ class ApiClient {
           ko: true,
           message: data.message || `HTTP error! status: ${response.status}`,
         }
-      }
-
-      // Si la réponse a déjà la structure ApiResponse, la retourner telle quelle
-      if (typeof data === "object" && ("ok" in data || "ko" in data)) {
-        return data as ApiResponse<T>
       }
 
       // Sinon, wrapper la réponse

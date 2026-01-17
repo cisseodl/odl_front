@@ -175,29 +175,40 @@ export function adaptQuiz(quizDTO: QuizDTO): Quiz {
   return {
     id: String(quizDTO.id),
     courseId: String(quizDTO.courseId),
-    title: quizDTO.titre,
+    title: quizDTO.title, // Backend utilise "title" (pas "titre")
     questions: quizDTO.questions?.map(adaptQuestion) || [],
-    timeLimit: quizDTO.dureeMinutes ? quizDTO.dureeMinutes * 60 : undefined, // Convertir minutes en secondes
+    timeLimit: quizDTO.durationMinutes ? quizDTO.durationMinutes * 60 : undefined, // Convertir minutes en secondes
     passingScore: quizDTO.scoreMinimum || 0,
   }
 }
 
 /**
  * Convertir une question backend en question frontend
+ * Note: Les options sont les textes des réponses, mais correctAnswers contient les IDs des réponses correctes
  */
-export function adaptQuestion(questionDTO: QuestionDTO): QuizQuestion {
-  const isQCM = questionDTO.type === "QCM"
+export function adaptQuestion(questionDTO: QuestionDTO): QuizQuestion & { optionToIdMap?: Map<string, number> } {
+  const isQCM = questionDTO.type === "SINGLE_CHOICE" || questionDTO.type === "MULTIPLE_CHOICE"
   const reponses = questionDTO.reponses || []
+
+  // Créer un mapping option texte -> ID de réponse
+  const optionToIdMap = new Map<string, number>()
+  reponses.forEach((r) => {
+    optionToIdMap.set(r.text, r.id)
+  })
 
   return {
     id: String(questionDTO.id),
-    question: questionDTO.contenu,
-    type: isQCM ? (reponses.filter((r) => r.estCorrecte).length > 1 ? "multiple" : "single") : "boolean",
-    options: isQCM ? reponses.map((r) => r.texte) : undefined,
-    correctAnswers: reponses.filter((r) => r.estCorrecte).map((r) => String(r.id)),
+    question: questionDTO.content, // Backend utilise "content" (pas "contenu")
+    type: questionDTO.type === "MULTIPLE_CHOICE" ? "multiple" : 
+          questionDTO.type === "SINGLE_CHOICE" ? "single" : 
+          questionDTO.type === "TEXT" ? "code" : "boolean",
+    options: isQCM ? reponses.map((r) => r.text) : undefined, // Backend utilise "text" (pas "texte")
+    correctAnswers: reponses.filter((r) => r.isCorrect).map((r) => String(r.id)), // IDs des réponses correctes
     explanation: "",
     points: questionDTO.points || 1,
-  }
+    // Mapping pour convertir option texte -> ID de réponse
+    optionToIdMap: optionToIdMap,
+  } as QuizQuestion & { optionToIdMap?: Map<string, number> }
 }
 
 /**

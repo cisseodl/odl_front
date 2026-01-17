@@ -14,9 +14,10 @@ import type {
   LabSession,
   SubmitLabRequest,
   DashboardStatsDTO,
-  BackendChapter,
+  ModuleDto,
   ApprenantCreateRequest,
   ApprenantUpdateRequest,
+  Apprenant,
   Cohorte,
   ProfileDto,
   CertificateDto,
@@ -140,15 +141,15 @@ export const courseService = {
    * Le backend retourne CResponse<CourseDto>
    */
   async getCourseById(id: number): Promise<Course | null> {
-    const response = await apiClient.get<{ data: BackendCourse } | BackendCourse>(
+    const response = await apiClient.get<any>(
       `${API_ENDPOINTS.courses.getById}/${id}`
     )
     
     if (response.ok && response.data) {
-      // Le backend peut retourner soit directement l'objet, soit dans { data: {...} }
+      // Le backend retourne CResponse<CourseDto> avec data contenant le cours
       const course = Array.isArray(response.data)
         ? null
-        : (response.data as any).data || response.data
+        : response.data
       
       return course ? adaptCourse(course as BackendCourse) : null
     }
@@ -161,16 +162,17 @@ export const courseService = {
    * Le backend retourne CResponse<List<CourseDto>>
    */
   async getCoursesByCategory(catId: number): Promise<Course[]> {
-    const response = await apiClient.get<{ data: BackendCourse[] } | BackendCourse[]>(
+    const response = await apiClient.get<any>(
       `${API_ENDPOINTS.courses.getByCategory}/${catId}`
     )
     
     if (response.ok && response.data) {
+      // Le backend retourne CResponse<List<CourseDto>> avec data contenant la liste
       const courses = Array.isArray(response.data)
         ? response.data
-        : (response.data as any).data || []
+        : []
       
-      return adaptCourses(courses)
+      return adaptCourses(courses as BackendCourse[])
     }
     
     return []
@@ -214,13 +216,14 @@ export const courseService = {
 export const categoryService = {
   /**
    * Obtenir toutes les catégories
+   * Le backend retourne CResponse<List<Categorie>>
    */
   async getAllCategories(): Promise<BackendCategorie[]> {
     const response = await apiClient.get<any>(API_ENDPOINTS.categories.getAll)
     
     if (response.ok && response.data) {
-      // Adapter selon la structure de réponse réelle
-      return Array.isArray(response.data) ? response.data : response.data.data || []
+      // Le backend retourne CResponse<List<Categorie>> avec data contenant la liste
+      return Array.isArray(response.data) ? response.data : []
     }
     
     return []
@@ -228,32 +231,36 @@ export const categoryService = {
 
   /**
    * Obtenir une catégorie par ID
+   * Le backend retourne CResponse<Categorie>
    */
   async getCategoryById(id: number): Promise<BackendCategorie | null> {
-    const response = await apiClient.get<BackendCategorie>(
+    const response = await apiClient.get<any>(
       `${API_ENDPOINTS.categories.getById}/${id}`
     )
     
     if (response.ok && response.data) {
-      return response.data
+      // Le backend retourne CResponse<Categorie> avec data contenant la catégorie
+      return Array.isArray(response.data) ? null : response.data
     }
     
     return null
   },
 }
 
-// ============ Chapter Services ============
-export const chapterService = {
+// ============ Module Services ============
+export const moduleService = {
   /**
-   * Obtenir les chapitres d'un cours
+   * Obtenir les modules d'un cours
+   * Le backend retourne CResponse<List<ModuleDto>>
    */
-  async getChaptersByCourse(courseId: number): Promise<BackendChapter[]> {
+  async getModulesByCourse(courseId: number): Promise<ModuleDto[]> {
     const response = await apiClient.get<any>(
-      `${API_ENDPOINTS.chapters.getByCourse}/${courseId}`
+      `${API_ENDPOINTS.modules.getByCourse}/${courseId}`
     )
     
     if (response.ok && response.data) {
-      return Array.isArray(response.data) ? response.data : response.data.data || []
+      // Le backend retourne CResponse<List<ModuleDto>> avec data contenant la liste
+      return Array.isArray(response.data) ? response.data : []
     }
     
     return []
@@ -266,19 +273,35 @@ export const quizService = {
    * Obtenir les quiz d'un cours
    */
   async getQuizzesByCourse(courseId: number): Promise<Quiz[]> {
-    const response = await apiClient.get<{ data: QuizDTO[] }>(
+    const response = await apiClient.get<any>(
       `${API_ENDPOINTS.quiz.getByCourse}/${courseId}`
     )
     
     if (response.ok && response.data) {
-      const quizzes = Array.isArray(response.data)
-        ? response.data
-        : response.data.data || []
+      // Le backend retourne CResponse<List<QuizDTO>>
+      const data = (response.data as any).data || response.data
+      const quizzes = Array.isArray(data) ? data : []
       
       return quizzes.map(adaptQuiz)
     }
     
     return []
+  },
+
+  /**
+   * Obtenir un quiz par ID
+   */
+  async getQuizById(quizId: number): Promise<Quiz | null> {
+    const response = await apiClient.get<any>(
+      `${API_ENDPOINTS.quiz.getById}/${quizId}`
+    )
+    
+    if (response.ok && response.data) {
+      const data = (response.data as any).data || response.data
+      return adaptQuiz(data as QuizDTO)
+    }
+    
+    return null
   },
 
   /**
@@ -300,16 +323,16 @@ export const quizService = {
 export const labService = {
   /**
    * Obtenir tous les labs
+   * Le backend retourne CResponse<List<LabDefinition>>
    */
   async getAllLabs(): Promise<Lab[]> {
-    const response = await apiClient.get<{ data: LabDefinition[] }>(API_ENDPOINTS.labs.getAll)
+    const response = await apiClient.get<any>(API_ENDPOINTS.labs.getAll)
     
     if (response.ok && response.data) {
-      const labs = Array.isArray(response.data)
-        ? response.data
-        : response.data.data || []
+      // Le backend retourne CResponse<List<LabDefinition>> avec data contenant la liste
+      const labs = Array.isArray(response.data) ? response.data : []
       
-      return labs.map((lab) => adaptLab(lab))
+      return labs.map((lab) => adaptLab(lab as LabDefinition))
     }
     
     return []
@@ -317,16 +340,16 @@ export const labService = {
 
   /**
    * Obtenir mes sessions de lab
+   * Le backend retourne CResponse<List<LabSession>>
    */
   async getMySessions(): Promise<LabSession[]> {
-    const response = await apiClient.get<{ data: LabSession[] }>(
+    const response = await apiClient.get<any>(
       API_ENDPOINTS.labs.getMySessions
     )
     
     if (response.ok && response.data) {
-      return Array.isArray(response.data)
-        ? response.data
-        : response.data.data || []
+      // Le backend retourne CResponse<List<LabSession>> avec data contenant la liste
+      return Array.isArray(response.data) ? response.data : []
     }
     
     return []
@@ -400,14 +423,30 @@ export const dashboardService = {
     }
   },
   
+  /**
+   * Obtenir le dashboard étudiant
+   * Le backend retourne CResponse<DashboardStatsDTO>
+   */
   async getStudentDashboard(): Promise<DashboardStatsDTO | null> {
     const response = await apiClient.get<any>(API_ENDPOINTS.dashboard.student)
-    return response.ok && response.data ? (response.data as any).data || response.data : null
+    if (response.ok && response.data) {
+      // Le backend retourne CResponse<DashboardStatsDTO> avec data contenant les stats
+      return response.data as DashboardStatsDTO
+    }
+    return null
   },
   
+  /**
+   * Obtenir le dashboard instructeur
+   * Le backend retourne CResponse<DashboardStatsDTO>
+   */
   async getInstructorDashboard(): Promise<DashboardStatsDTO | null> {
     const response = await apiClient.get<any>(API_ENDPOINTS.dashboard.instructor)
-    return response.ok && response.data ? (response.data as any).data || response.data : null
+    if (response.ok && response.data) {
+      // Le backend retourne CResponse<DashboardStatsDTO> avec data contenant les stats
+      return response.data as DashboardStatsDTO
+    }
+    return null
   },
 }
 
@@ -422,14 +461,14 @@ export const apprenantService = {
 
   /**
    * Obtenir tous les apprenants
+   * Le backend retourne CResponse<List<ApprenantWithUserDto>>
    */
-  async getAllApprenants(): Promise<any[]> {
+  async getAllApprenants(): Promise<Apprenant[]> {
     const response = await apiClient.get<any>(API_ENDPOINTS.apprenants.getAll)
     
     if (response.ok && response.data) {
-      return Array.isArray(response.data)
-        ? response.data
-        : (response.data as any).data || []
+      // Le backend retourne CResponse<List<ApprenantWithUserDto>> avec data contenant la liste
+      return Array.isArray(response.data) ? response.data : []
     }
     
     return []
@@ -437,9 +476,17 @@ export const apprenantService = {
 
   /**
    * Obtenir un apprenant par ID
+   * Le backend retourne CResponse<ApprenantWithUserDto>
    */
-  async getApprenantById(id: number): Promise<ApiResponse<any>> {
-    return apiClient.get(`${API_ENDPOINTS.apprenants.getById}/${id}`)
+  async getApprenantById(id: number): Promise<Apprenant | null> {
+    const response = await apiClient.get<any>(`${API_ENDPOINTS.apprenants.getById}/${id}`)
+    
+    if (response.ok && response.data) {
+      // Le backend retourne CResponse<ApprenantWithUserDto> avec data contenant l'apprenant
+      return response.data as Apprenant
+    }
+    
+    return null
   },
 
   /**
@@ -521,16 +568,16 @@ export const cohorteService = {
 
   /**
    * Obtenir une cohorte par ID
+   * Le backend retourne CResponse<Cohorte>
    */
   async getCohorteById(id: number): Promise<Cohorte | null> {
-    const response = await apiClient.get<Cohorte>(
+    const response = await apiClient.get<any>(
       `${API_ENDPOINTS.cohortes.getById}/${id}`
     )
     
     if (response.ok && response.data) {
-      return Array.isArray(response.data)
-        ? null
-        : (response.data as any).data || response.data
+      // Le backend retourne CResponse<Cohorte> avec data contenant la cohorte
+      return Array.isArray(response.data) ? null : response.data
     }
     
     return null
@@ -541,13 +588,14 @@ export const cohorteService = {
 export const profileService = {
   /**
    * Obtenir le profil de l'utilisateur authentifié
+   * Le backend retourne ResponseEntity<ProfileDto> (pas CResponse)
    */
   async getMyProfile(): Promise<ProfileDto | null> {
     const response = await apiClient.get<any>(API_ENDPOINTS.profile.me)
     
     if (response.ok && response.data) {
-      // Le backend peut retourner directement ProfileDto ou dans CResponse
-      return (response.data as any).data || response.data
+      // Le backend retourne directement ProfileDto dans ResponseEntity
+      return response.data as ProfileDto
     }
     
     return null
@@ -558,13 +606,15 @@ export const profileService = {
 export const certificateService = {
   /**
    * Obtenir les certificats de l'utilisateur authentifié
+   * Le backend retourne CResponse<List<CertificateDto>>
    */
   async getMyCertificates(): Promise<CertificateDto[]> {
     const response = await apiClient.get<any>(API_ENDPOINTS.certificates.myCertificates)
     
     if (response.ok && response.data) {
-      const data = (response.data as any).data || response.data
-      return Array.isArray(data) ? data : []
+      // Le backend retourne CResponse<List<CertificateDto>> avec data contenant la liste
+      const data = Array.isArray(response.data) ? response.data : []
+      return data as CertificateDto[]
     }
     
     return []
@@ -591,6 +641,7 @@ export const learnerService = {
 
   /**
    * Marquer une leçon comme complétée
+   * POST /api/learn/{courseId}/lessons/{lessonId}/complete
    */
   async completeLesson(courseId: number, lessonId: number): Promise<ApiResponse<any>> {
     return apiClient.post(

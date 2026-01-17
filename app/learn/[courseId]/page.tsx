@@ -18,7 +18,7 @@ import { TranscriptWithTimestamps } from "@/components/transcript-with-timestamp
 import { cn } from "@/lib/utils"
 import { ProtectedRoute } from "@/components/protected-route"
 import { useQuery } from "@tanstack/react-query"
-import { courseService, chapterService } from "@/lib/api/services"
+import { courseService, learnerService } from "@/lib/api/services"
 import type { Lesson } from "@/lib/types"
 
 interface LearnPageProps {
@@ -40,13 +40,13 @@ export default function LearnPage({ params }: LearnPageProps) {
     enabled: !Number.isNaN(courseIdNum),
   })
 
-  // Charger les chapitres depuis l'API
+  // Charger la progression du cours depuis l'API
   const {
-    data: chapters = [],
-    isLoading: chaptersLoading,
+    data: courseProgress,
+    isLoading: progressLoading,
   } = useQuery({
-    queryKey: ["chapters", courseIdNum],
-    queryFn: () => chapterService.getChaptersByCourse(courseIdNum),
+    queryKey: ["courseProgress", courseIdNum],
+    queryFn: () => learnerService.getCourseProgress(courseIdNum),
     enabled: !Number.isNaN(courseIdNum) && !!course,
   })
 

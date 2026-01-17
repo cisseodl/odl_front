@@ -95,9 +95,10 @@ export interface QuizQuestion {
   question: string
   type: "single" | "multiple" | "boolean" | "code"
   options?: string[]
-  correctAnswers: string[]
+  correctAnswers: string[] // IDs des réponses correctes
   explanation: string
   points: number
+  optionToIdMap?: Map<string, number> // Mapping option texte -> ID de réponse
 }
 
 export interface UserProgress {

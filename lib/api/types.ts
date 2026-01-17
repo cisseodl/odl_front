@@ -35,14 +35,19 @@ export interface BackendUser {
 
 export interface Apprenant {
   id: number
-  nom: string
-  prenom: string
-  email: string
+  username: string // Remplace nom et prenom - format: "Prénom Nom"
   numero: string
   profession?: string
   niveauEtude?: string
   filiere?: string
-  cohorte?: Cohorte
+  cohorteId?: number
+  cohorteNom?: string
+  userId?: number
+  fullName?: string // Depuis User
+  userEmail?: string // Depuis User
+  phone?: string // Depuis User
+  avatar?: string // Depuis User
+  userActivate?: boolean // Depuis User
   createdBy?: string
   lastModifiedBy?: string
   activate?: boolean
@@ -200,26 +205,26 @@ export interface BackendChapter {
 // ============ Quiz ============
 export interface QuizDTO {
   id: number
-  titre: string
+  title: string // Backend utilise "title" (pas "titre")
   description?: string
   courseId: number
-  dureeMinutes?: number
+  durationMinutes?: number // Backend utilise "durationMinutes" (pas "dureeMinutes")
   scoreMinimum?: number
   questions?: QuestionDTO[]
 }
 
 export interface QuestionDTO {
   id: number
-  contenu: string
-  type: "QCM" | "TEXTE"
+  content: string // Backend utilise "content" (pas "contenu")
+  type: "SINGLE_CHOICE" | "MULTIPLE_CHOICE" | "TEXT" // Types du backend
   points?: number
   reponses?: ReponseDTO[]
 }
 
 export interface ReponseDTO {
   id: number
-  texte: string
-  estCorrecte: boolean
+  text: string // Backend utilise "text" (pas "texte")
+  isCorrect: boolean // Backend utilise "isCorrect" (pas "estCorrecte")
 }
 
 export interface QuizSubmissionDTO {
@@ -229,8 +234,8 @@ export interface QuizSubmissionDTO {
 
 export interface AnswerDTO {
   questionId: number
-  reponseIds?: number[]
-  texteReponse?: string
+  reponseIds?: number[] // IDs des réponses sélectionnées (pour QCM)
+  texteReponse?: string // Réponse texte libre (pour TEXTE)
 }
 
 // ============ Labs ============
@@ -271,22 +276,51 @@ export interface SubmitLabRequest {
 
 // ============ Dashboard ============
 export interface DashboardStatsDTO {
+  mode?: "ADMIN" | "INSTRUCTOR" | "STUDENT"
+  adminStats?: AdminStats
+  instructorStats?: InstructorStats
+  studentStats?: StudentStats
+}
+
+export interface AdminStats {
+  totalUsers?: number
+  newUsersLast7Days?: number
+  newUsersLast30Days?: number
+  usersByRole?: Record<string, number>
+  totalCourses?: number
+  newCoursesLast7Days?: number
+  newCoursesLast30Days?: number
+  publishedCourses?: number
+  draftCourses?: number
+  totalEnrollments?: number
+  top5CoursesByEnrollment?: Record<string, number>
+  lessonsCompleted?: number
+  totalQuizzes?: number
+  pendingModeration?: number
+}
+
+export interface InstructorStats {
+  totalCourses?: number
+  publishedCourses?: number
+  draftCourses?: number
+  totalEnrollments?: number
+  newEnrollmentsLast7Days?: number
+  newEnrollmentsLast30Days?: number
+  activeLearners?: number
+  averageCompletionRate?: number
+  averageQuizScore?: number
+  totalCertificatesByModule?: number
+  newComments?: number
+  averageRating?: number
+  totalStudents?: number
+  totalRevenue?: number
+}
+
+export interface StudentStats {
   coursesJoined?: number
   certificatesObtained?: number
   averageScore?: number
   totalQuizAttempts?: number
-  totalUsers?: number
-  totalCourses?: number
-  totalQuizAttemptsGlobal?: number
-  totalCertificatesGlobal?: number
-  mode?: string
-  adminStats?: {
-    totalUsers?: number
-    totalCourses?: number
-    publishedCourses?: number
-    totalEnrollments?: number
-    top5CoursesByEnrollment?: Record<string, number>
-  }
 }
 
 // Statistiques publiques pour la page d'accueil
