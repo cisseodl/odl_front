@@ -21,7 +21,10 @@ import { toast } from "sonner"
 import { RatingStars } from "@/components/rating-stars"
 import { FadeInView } from "@/components/fade-in-view"
 import { useScrollSpy } from "@/hooks/use-scroll-spy"
-import type { Course } from "@/lib/types"
+import { useQuery } from "@tanstack/react-query"
+import { moduleService } from "@/lib/api/services"
+import { adaptModule } from "@/lib/api/adapters"
+import type { Course, Module } from "@/lib/types"
 
 interface CourseDetailClientProps {
   course: Course
@@ -49,8 +52,26 @@ const getTotalLectures = (curriculum: Course["curriculum"]) => {
 export function CourseDetailClient({ course }: CourseDetailClientProps) {
   const [showFullDescription, setShowFullDescription] = useState(false)
   const [activeTab, setActiveTab] = useState("overview")
+  const [dynamicCurriculum, setDynamicCurriculum] = useState<Module[] | null>(null)
 
-  const totalLectures = getTotalLectures(course.curriculum)
+  // Charger les modules depuis l'API si le curriculum est vide
+  const { data: modulesFromApi, isLoading: isLoadingModules } = useQuery({
+    queryKey: ["modules", course.id],
+    queryFn: () => moduleService.getModulesByCourse(typeof course.id === 'string' ? parseInt(course.id) : course.id),
+    enabled: !course.curriculum || course.curriculum.length === 0,
+  })
+
+  // Adapter les modules de l'API si nécessaire
+  useEffect(() => {
+    if (modulesFromApi && modulesFromApi.length > 0) {
+      const adaptedModules = modulesFromApi.map(adaptModule)
+      setDynamicCurriculum(adaptedModules)
+    }
+  }, [modulesFromApi])
+
+  // Utiliser le curriculum du cours s'il existe, sinon utiliser les modules chargés dynamiquement
+  const curriculum = course.curriculum && course.curriculum.length > 0 ? course.curriculum : (dynamicCurriculum || [])
+  const totalLectures = getTotalLectures(curriculum)
 
   // Scroll spy for tabs
   const sectionIds = ["overview", "content", "instructor", "reviews", "faq"]
@@ -350,16 +371,18 @@ export function CourseDetailClient({ course }: CourseDetailClientProps) {
                     <div className="flex items-center justify-between mb-4">
                       <h3 className="text-xl font-bold text-foreground">Contenu du cours</h3>
                       <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                        <span>{course.curriculum.length} sections</span>
+                        <span>{curriculum.length} sections</span>
                         <span>•</span>
                         <span>{totalLectures || 398} leçons</span>
                         <span>•</span>
                         <span>{course.duration}h de contenu</span>
                       </div>
                     </div>
-                    <Accordion type="multiple" className="w-full" defaultValue={course.curriculum.length > 0 ? [course.curriculum[0]?.id] : []}>
-                      {course.curriculum.length > 0 ? (
-                        course.curriculum.map((module, moduleIndex) => (
+                    <Accordion type="multiple" className="w-full" defaultValue={curriculum.length > 0 ? [curriculum[0]?.id] : []}>
+                      {isLoadingModules ? (
+                        <div className="p-4 text-center text-muted-foreground">Chargement des modules...</div>
+                      ) : curriculum.length > 0 ? (
+                        curriculum.map((module, moduleIndex) => (
                           <AccordionItem key={module.id} value={module.id} className="border-2 rounded-lg mb-3 px-4 hover:border-primary/40 transition-all">
                             <AccordionTrigger className="hover:no-underline py-4">
                               <div className="flex items-start justify-between w-full pr-4">
@@ -411,41 +434,7 @@ export function CourseDetailClient({ course }: CourseDetailClientProps) {
                           </AccordionItem>
                         ))
                       ) : (
-                        // Fallback mock content
-                        [...Array(5)].map((_, moduleIndex) => (
-                          <AccordionItem key={`mock-${moduleIndex}`} value={`mock-${moduleIndex}`} className="border-2 rounded-lg mb-3 px-4">
-                            <AccordionTrigger className="hover:no-underline py-4">
-                              <div className="flex items-start justify-between w-full pr-4">
-                                <div className="flex-1 text-left">
-                                  <div className="font-bold text-base text-foreground mb-2">
-                                    Section {moduleIndex + 1}: {moduleIndex === 0 ? "Introduction" : `Module ${moduleIndex + 1}`}
-                                  </div>
-                                  <div className="flex items-center gap-3 text-sm text-muted-foreground">
-                                    <span>5 leçons</span>
-                                    <span>•</span>
-                                    <span>{Math.floor(Math.random() * 60) + 30} min</span>
-                                  </div>
-                                </div>
-                              </div>
-                            </AccordionTrigger>
-                            <AccordionContent className="pb-4">
-                              <div className="space-y-2 mt-2">
-                                {[...Array(5)].map((_, lessonIndex) => (
-                                  <div
-                                    key={lessonIndex}
-                                    className="flex items-center justify-between p-3 rounded-lg hover:bg-muted transition-colors"
-                                  >
-                                    <div className="flex items-center gap-3">
-                                      <span className="text-sm text-muted-foreground w-6">{lessonIndex + 1}.</span>
-                                      <span className="text-sm text-foreground/80">Leçon {lessonIndex + 1}</span>
-                                    </div>
-                                    <Play className="h-4 w-4 text-muted-foreground/60" />
-                                  </div>
-                                ))}
-                              </div>
-                            </AccordionContent>
-                          </AccordionItem>
-                        ))
+                        <div className="p-4 text-center text-muted-foreground">Aucun module disponible pour ce cours.</div>
                       )}
                     </Accordion>
                   </div>

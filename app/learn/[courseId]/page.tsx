@@ -18,8 +18,9 @@ import { TranscriptWithTimestamps } from "@/components/transcript-with-timestamp
 import { cn } from "@/lib/utils"
 import { ProtectedRoute } from "@/components/protected-route"
 import { useQuery } from "@tanstack/react-query"
-import { courseService, learnerService } from "@/lib/api/services"
-import type { Lesson } from "@/lib/types"
+import { courseService, learnerService, moduleService } from "@/lib/api/services"
+import { adaptModule } from "@/lib/api/adapters"
+import type { Lesson, Module } from "@/lib/types"
 
 interface LearnPageProps {
   params: Promise<{ courseId: string }>
@@ -50,6 +51,16 @@ export default function LearnPage({ params }: LearnPageProps) {
     enabled: !Number.isNaN(courseIdNum) && !!course,
   })
 
+  // Charger les modules depuis l'API si le curriculum est vide
+  const {
+    data: modulesFromApi,
+    isLoading: isLoadingModules,
+  } = useQuery({
+    queryKey: ["modules", courseIdNum],
+    queryFn: () => moduleService.getModulesByCourse(courseIdNum),
+    enabled: !Number.isNaN(courseIdNum) && !!course && (!course.curriculum || course.curriculum.length === 0),
+  })
+
   const [currentLesson, setCurrentLesson] = useState(0)
   const [sidebarOpen, setSidebarOpen] = useState(true)
   const [notes, setNotes] = useState("")
@@ -58,13 +69,24 @@ export default function LearnPage({ params }: LearnPageProps) {
   const [showMiniPlayer, setShowMiniPlayer] = useState(true)
   const videoRef = useRef<HTMLVideoElement>(null)
 
+  // Utiliser le curriculum du cours s'il existe, sinon utiliser les modules chargés dynamiquement
+  const curriculum = useMemo(() => {
+    if (course?.curriculum && course.curriculum.length > 0) {
+      return course.curriculum
+    }
+    if (modulesFromApi && modulesFromApi.length > 0) {
+      return modulesFromApi.map(adaptModule)
+    }
+    return []
+  }, [course?.curriculum, modulesFromApi])
+
   // Convertir les modules du cours en leçons pour l'affichage
   const lessons = useMemo(() => {
-    if (!course?.curriculum) return []
+    if (!curriculum || curriculum.length === 0) return []
     
     const allLessons: Array<Lesson & { moduleTitle: string; moduleId: string }> = []
     
-    course.curriculum.forEach((module) => {
+    curriculum.forEach((module) => {
       module.lessons.forEach((lesson) => {
         allLessons.push({
           ...lesson,
@@ -75,7 +97,7 @@ export default function LearnPage({ params }: LearnPageProps) {
     })
     
     return allLessons
-  }, [course])
+  }, [curriculum])
 
   if (Number.isNaN(courseIdNum)) {
     notFound()
@@ -111,9 +133,9 @@ export default function LearnPage({ params }: LearnPageProps) {
 
   // Group lessons by module for display
   const groupedLessons = useMemo(() => {
-    if (!course?.curriculum) return []
+    if (!curriculum || curriculum.length === 0) return []
     
-    return course.curriculum.map((module) => ({
+    return curriculum.map((module) => ({
       module: module.title,
       lessons: module.lessons.filter((lesson) => {
         if (!searchQuery.trim()) return true
@@ -124,7 +146,7 @@ export default function LearnPage({ params }: LearnPageProps) {
         )
       }),
     }))
-  }, [course, searchQuery])
+  }, [curriculum, searchQuery])
 
   const handleMarkComplete = () => {
     if (!completedLessons.includes(currentLesson)) {
