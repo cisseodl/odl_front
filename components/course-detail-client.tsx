@@ -67,10 +67,12 @@ export function CourseDetailClient({ course }: CourseDetailClientProps) {
   }, [course.id])
 
   // Charger les modules depuis l'API si le curriculum est vide ou manquant
+  // Toujours charger les modules pour s'assurer qu'ils sont à jour
   const { data: modulesFromApi, isLoading: isLoadingModules } = useQuery({
     queryKey: ["modules", courseIdNum],
     queryFn: () => moduleService.getModulesByCourse(courseIdNum!),
-    enabled: (!course.curriculum || course.curriculum.length === 0) && courseIdNum !== null,
+    enabled: courseIdNum !== null && !Number.isNaN(courseIdNum!),
+    staleTime: 5 * 60 * 1000, // Cache pendant 5 minutes
   })
 
   // Adapter les modules de l'API si nécessaire
@@ -83,15 +85,24 @@ export function CourseDetailClient({ course }: CourseDetailClientProps) {
         // Si l'API retourne un tableau vide, réinitialiser
         setDynamicCurriculum([])
       }
+    } else if (modulesFromApi === null || modulesFromApi === undefined) {
+      // Si la requête n'a pas encore été exécutée ou a échoué, ne pas réinitialiser
+      // On garde dynamicCurriculum tel quel
     }
   }, [modulesFromApi])
 
   // Utiliser le curriculum du cours s'il existe et n'est pas vide, sinon utiliser les modules chargés dynamiquement
   const curriculum = useMemo(() => {
-    if (course.curriculum && course.curriculum.length > 0) {
+    // Si le curriculum du cours existe et contient des modules, l'utiliser
+    if (course.curriculum && Array.isArray(course.curriculum) && course.curriculum.length > 0) {
       return course.curriculum
     }
-    return dynamicCurriculum || []
+    // Sinon, utiliser les modules chargés dynamiquement
+    if (dynamicCurriculum && Array.isArray(dynamicCurriculum) && dynamicCurriculum.length > 0) {
+      return dynamicCurriculum
+    }
+    // Si aucun des deux n'est disponible, retourner un tableau vide
+    return []
   }, [course.curriculum, dynamicCurriculum])
   const totalLectures = getTotalLectures(curriculum)
 
@@ -402,7 +413,12 @@ export function CourseDetailClient({ course }: CourseDetailClientProps) {
                     </div>
                     <Accordion type="multiple" className="w-full" defaultValue={curriculum.length > 0 ? [curriculum[0]?.id] : []}>
                       {isLoadingModules ? (
-                        <div className="p-4 text-center text-muted-foreground">Chargement des modules...</div>
+                        <div className="p-4 text-center text-muted-foreground">
+                          <div className="flex items-center justify-center gap-2">
+                            <div className="h-4 w-4 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
+                            <span>Chargement des modules et leçons...</span>
+                          </div>
+                        </div>
                       ) : curriculum.length > 0 ? (
                         curriculum.map((module, moduleIndex) => (
                           <AccordionItem key={module.id} value={module.id} className="border-2 rounded-lg mb-3 px-4 hover:border-primary/40 transition-all">
@@ -456,7 +472,10 @@ export function CourseDetailClient({ course }: CourseDetailClientProps) {
                           </AccordionItem>
                         ))
                       ) : (
-                        <div className="p-4 text-center text-muted-foreground">Aucun module disponible pour ce cours.</div>
+                        <div className="p-4 text-center text-muted-foreground">
+                          <p className="mb-2">Aucun module disponible pour ce cours.</p>
+                          <p className="text-sm">Les modules et leçons seront ajoutés prochainement.</p>
+                        </div>
                       )}
                     </Accordion>
                   </div>
