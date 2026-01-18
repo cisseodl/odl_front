@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Mail, MapPin, Calendar, Award, Download, UserPlus } from "lucide-react"
+import { Mail, MapPin, Calendar, Award, Download, UserPlus, LogOut } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Input } from "@/components/ui/input"
@@ -22,9 +22,10 @@ import { Textarea } from "@/components/ui/textarea"
 import type { ApprenantCreateRequest, Cohorte, CertificateDto, Apprenant } from "@/lib/api/types"
 
 export default function ProfilePage() {
+  const router = useRouter()
   const [emailNotifications, setEmailNotifications] = useState(true)
   const [courseUpdates, setCourseUpdates] = useState(true)
-  const { user } = useAuthStore()
+  const { user, logout } = useAuthStore()
 
   // Charger les cohortes pour le formulaire
   const { data: cohortes = [] } = useQuery({
@@ -285,7 +286,19 @@ export default function ProfilePage() {
                   </>
                 )}
 
-                <Button className="w-full">Modifier la Photo</Button>
+                <Button className="w-full mb-2">Modifier la Photo</Button>
+                <Button 
+                  variant="outline" 
+                  className="w-full border-destructive text-destructive hover:bg-destructive hover:text-destructive-foreground"
+                  onClick={() => {
+                    logout()
+                    router.push("/auth")
+                    router.refresh()
+                  }}
+                >
+                  <LogOut className="h-4 w-4 mr-2" />
+                  Déconnexion
+                </Button>
               </CardContent>
             </Card>
 
@@ -625,8 +638,6 @@ export default function ProfilePage() {
                         <SelectItem value="Bac">Bac</SelectItem>
                         <SelectItem value="Bac+2">Bac+2</SelectItem>
                         <SelectItem value="Licence">Licence</SelectItem>
-                        <SelectItem value="Master">Master</SelectItem>
-                        <SelectItem value="Doctorat">Doctorat</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>

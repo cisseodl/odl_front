@@ -77,16 +77,16 @@ export default function AuthPage() {
       // 1. Créer l'utilisateur
       await register(name, email, password)
       
-      // 2. Créer le profil Apprenant avec toutes les informations
+          // 2. Créer le profil Apprenant avec toutes les informations (sans cohorte pour nouveau apprenant)
       const numero = formData.get("numero") as string
       const profession = formData.get("profession") as string
       const niveauEtude = formData.get("niveauEtude") as string
       const filiere = formData.get("filiere") as string
       const attentes = formData.get("attentes") as string
-      const cohorteId = formData.get("cohorteId") as string
       const satisfaction = formData.get("satisfaction") === "true"
 
       // Utiliser le "name" du User comme "username" pour l'apprenant
+      // Note: cohorteId n'est pas inclus pour les nouveaux apprenants
       if (name && numero) {
         const apprenantData: ApprenantCreateRequest = {
           username: name.trim(), // Utiliser le nom complet du User
@@ -96,7 +96,7 @@ export default function AuthPage() {
           filiere: filiere?.trim() || undefined,
           attentes: attentes?.trim() || undefined,
           satisfaction: satisfaction,
-          cohorteId: cohorteId ? Number.parseInt(cohorteId) : undefined,
+          // cohorteId n'est pas inclus pour les nouveaux apprenants
           activate: true,
         }
 
@@ -123,12 +123,13 @@ export default function AuthPage() {
     }
   }
 
-  // Handler pour ancien apprenant (formulaire simplifié)
+  // Handler pour ancien apprenant (formulaire complet avec cohorte obligatoire)
   const handleRegisterExisting = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     setIsLoading(true)
     const formData = new FormData(e.currentTarget)
-    const usernameOrEmail = formData.get("usernameOrEmail") as string
+    const name = formData.get("name") as string
+    const email = formData.get("email") as string
     const password = formData.get("password") as string
     const confirmPassword = formData.get("confirmPassword") as string
     const cohorteId = formData.get("cohorteId") as string
@@ -145,32 +146,39 @@ export default function AuthPage() {
       return
     }
 
-    // Récupérer l'email et le username séparément
-    const email = usernameOrEmail // L'email est dans usernameOrEmail
-    const username = formData.get("username") as string | null
-
-    // Pour créer un User, on a besoin d'un email et d'un nom
-    const name = username || email || ""
-
     try {
       // 1. Créer l'utilisateur
       await register(name, email, password)
       
-      // 2. Créer le profil Apprenant simplifié (username et cohorte)
-      const apprenantData: ApprenantCreateRequest = {
-        username: username || name, // Utiliser le username fourni ou le nom/email
-        numero: "", // Numéro optionnel pour ancien apprenant
-        cohorteId: Number.parseInt(cohorteId),
-        activate: true,
-        satisfaction: true,
-      }
+      // 2. Créer le profil Apprenant avec toutes les informations (cohorte obligatoire pour ancien apprenant)
+      const numero = formData.get("numero") as string
+      const profession = formData.get("profession") as string
+      const niveauEtude = formData.get("niveauEtude") as string
+      const filiere = formData.get("filiere") as string
+      const attentes = formData.get("attentes") as string
+      const satisfaction = formData.get("satisfaction") === "true"
 
-      const apprenantResponse = await apprenantService.createApprenant(apprenantData)
-      
-      if (!apprenantResponse.ok) {
-        toast.warning("Compte créé mais erreur lors de la création du profil apprenant", {
-          description: "Vous pourrez compléter votre profil plus tard",
-        })
+      // Utiliser le "name" du User comme "username" pour l'apprenant
+      if (name && numero) {
+        const apprenantData: ApprenantCreateRequest = {
+          username: name.trim(), // Utiliser le nom complet du User
+          numero: numero.trim(),
+          profession: profession?.trim() || undefined,
+          niveauEtude: niveauEtude || undefined,
+          filiere: filiere?.trim() || undefined,
+          attentes: attentes?.trim() || undefined,
+          satisfaction: satisfaction,
+          cohorteId: Number.parseInt(cohorteId), // Cohorte obligatoire pour ancien apprenant
+          activate: true,
+        }
+
+        const apprenantResponse = await apprenantService.createApprenant(apprenantData)
+        
+        if (!apprenantResponse.ok) {
+          toast.warning("Compte créé mais erreur lors de la création du profil apprenant", {
+            description: "Vous pourrez compléter votre profil plus tard",
+          })
+        }
       }
 
       toast.success("Inscription réussie !", {
@@ -409,8 +417,6 @@ export default function AuthPage() {
                         <SelectItem value="Bac">Bac</SelectItem>
                         <SelectItem value="Bac+2">Bac+2</SelectItem>
                         <SelectItem value="Licence">Licence</SelectItem>
-                        <SelectItem value="Master">Master</SelectItem>
-                        <SelectItem value="Doctorat">Doctorat</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
