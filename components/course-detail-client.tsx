@@ -370,12 +370,12 @@ export function CourseDetailClient({ course }: CourseDetailClientProps) {
                     <div>
                       <h3 className="text-xl font-bold mb-4 text-foreground">Ce que vous apprendrez</h3>
                       <div className="grid md:grid-cols-2 gap-3">
-                        {course.objectives.map((objective, index) => (
+                        {course.objectives && Array.isArray(course.objectives) ? course.objectives.map((objective, index) => (
                           <div key={index} className="flex items-start gap-3">
                             <CheckCircle2 className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
                             <span className="text-muted-foreground">{objective}</span>
                           </div>
-                        ))}
+                        )) : null}
                       </div>
                     </div>
                   )}
@@ -384,14 +384,14 @@ export function CourseDetailClient({ course }: CourseDetailClientProps) {
                   <div>
                     <h3 className="text-xl font-bold mb-4 text-foreground">Ce que vous obtenez</h3>
                     <div className="grid md:grid-cols-2 gap-4">
-                      {course.features.map((feature, index) => (
+                      {course.features && Array.isArray(course.features) ? course.features.map((feature, index) => (
                         <div key={index} className="flex items-center gap-3 p-3 border-2 rounded-lg hover:border-primary/40 hover:bg-primary/5 transition-all">
                           <div className="rounded-lg bg-primary/10 p-2 border border-primary/20">
                             <CheckCircle2 className="h-4 w-4 text-primary" />
                           </div>
                           <span className="text-sm font-medium text-foreground">{feature}</span>
                         </div>
-                      ))}
+                      )) : null}
                     </div>
                     </div>
                   </div>
@@ -411,7 +411,7 @@ export function CourseDetailClient({ course }: CourseDetailClientProps) {
                         <span>{course.duration}h de contenu</span>
                       </div>
                     </div>
-                    <Accordion type="multiple" className="w-full" defaultValue={curriculum.length > 0 ? [curriculum[0]?.id] : []}>
+                    <Accordion type="multiple" className="w-full" defaultValue={curriculum.length > 0 && curriculum[0]?.id ? [String(curriculum[0].id)] : []}>
                       {isLoadingModules ? (
                         <div className="p-4 text-center text-muted-foreground">
                           <div className="flex items-center justify-center gap-2">
@@ -420,8 +420,8 @@ export function CourseDetailClient({ course }: CourseDetailClientProps) {
                           </div>
                         </div>
                       ) : curriculum.length > 0 ? (
-                        curriculum.map((module, moduleIndex) => (
-                          <AccordionItem key={module.id} value={module.id} className="border-2 rounded-lg mb-3 px-4 hover:border-primary/40 transition-all">
+                        curriculum.filter(module => module && module.id).map((module, moduleIndex) => (
+                          <AccordionItem key={String(module.id)} value={String(module.id)} className="border-2 rounded-lg mb-3 px-4 hover:border-primary/40 transition-all">
                             <AccordionTrigger className="hover:no-underline py-4">
                               <div className="flex items-start justify-between w-full pr-4">
                                 <div className="flex-1 text-left">
@@ -438,9 +438,9 @@ export function CourseDetailClient({ course }: CourseDetailClientProps) {
                             </AccordionTrigger>
                             <AccordionContent className="pb-4">
                               <div className="space-y-2 mt-2">
-                                {module.lessons.map((lesson, lessonIndex) => (
+                                {module.lessons && Array.isArray(module.lessons) ? module.lessons.filter(lesson => lesson && lesson.id).map((lesson, lessonIndex) => (
                                   <Link
-                                    key={lesson.id}
+                                    key={String(lesson.id)}
                                     href={`/learn/${course.id}?lesson=${lesson.id}`}
                                     className="flex items-center justify-between p-3 rounded-lg hover:bg-primary/10 hover:border-l-4 hover:border-primary transition-all group"
                                   >
@@ -466,7 +466,7 @@ export function CourseDetailClient({ course }: CourseDetailClientProps) {
                                       <Play className="h-4 w-4 text-muted-foreground/60 group-hover:text-primary transition-colors" />
                                     </div>
                                   </Link>
-                                ))}
+                                )) : null}
                               </div>
                             </AccordionContent>
                           </AccordionItem>
@@ -566,8 +566,8 @@ export function CourseDetailClient({ course }: CourseDetailClientProps) {
 
                     {/* Reviews List */}
                     <div className="space-y-4">
-                      {reviews.map((review) => (
-                        <Card key={review.id} className="border-2 hover:border-primary/20 transition-all">
+                      {reviews && Array.isArray(reviews) ? reviews.filter(review => review && review.id).map((review) => (
+                        <Card key={String(review.id)} className="border-2 hover:border-primary/20 transition-all">
                           <CardContent className="p-6">
                             <div className="flex items-start gap-4">
                               <Avatar className="h-12 w-12 border-2 border-primary/30">
@@ -596,7 +596,7 @@ export function CourseDetailClient({ course }: CourseDetailClientProps) {
                             </div>
                           </CardContent>
                         </Card>
-                      ))}
+                      )) : null}
                     </div>
                     </div>
                   </div>
@@ -608,7 +608,7 @@ export function CourseDetailClient({ course }: CourseDetailClientProps) {
                   <div className="space-y-4">
                     <h3 className="text-xl font-bold mb-4 text-foreground">Questions fréquemment posées</h3>
                     <Accordion type="single" collapsible className="w-full">
-                      {faqs.map((faq, index) => (
+                      {faqs && Array.isArray(faqs) ? faqs.map((faq, index) => (
                         <AccordionItem key={index} value={`faq-${index}`} className="border-2 rounded-lg mb-3 px-4 hover:border-primary/40 transition-all">
                           <AccordionTrigger className="hover:no-underline py-4">
                             <div className="flex items-center gap-3 text-left">
@@ -620,7 +620,7 @@ export function CourseDetailClient({ course }: CourseDetailClientProps) {
                             <p className="text-muted-foreground leading-relaxed">{faq.answer}</p>
                           </AccordionContent>
                         </AccordionItem>
-                      ))}
+                      )) : null}
                     </Accordion>
                   </div>
                   </div>
@@ -715,12 +715,12 @@ export function CourseDetailClient({ course }: CourseDetailClientProps) {
                   <div className="pt-4 border-t border-border">
                     <h4 className="font-bold text-sm mb-3 text-foreground">Ce que vous obtenez :</h4>
                     <div className="space-y-2">
-                      {course.features.slice(0, 4).map((feature, index) => (
+                      {course.features && Array.isArray(course.features) ? course.features.slice(0, 4).map((feature, index) => (
                         <div key={index} className="flex items-center gap-2">
                           <CheckCircle2 className="h-4 w-4 text-primary flex-shrink-0" />
                           <span className="text-sm text-muted-foreground">{feature}</span>
                         </div>
-                      ))}
+                      )) : null}
                     </div>
                   </div>
 
