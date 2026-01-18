@@ -485,40 +485,43 @@ export function CourseDetailClient({ course }: CourseDetailClientProps) {
                 {/* Instructor Tab */}
                 <TabsContent value="instructor" className="mt-6">
                   <div id="instructor" className="scroll-mt-24">
-                  <Card className="border-2 hover:border-primary/20 transition-all">
-                    <CardContent className="p-6">
-                      <div className="flex flex-col md:flex-row gap-6">
-                        <Avatar className="h-24 w-24 border-2 border-primary/30">
-                          <AvatarImage src={course.instructor.avatar} alt={course.instructor.name} />
-                          <AvatarFallback className="bg-primary text-white font-bold text-xl">
-                            {course.instructor.name[0]}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div className="flex-1 space-y-4">
-                          <div>
-                            <h3 className="text-2xl font-bold mb-2 text-foreground">{course.instructor.name}</h3>
-                            <p className="text-muted-foreground font-medium">{course.instructor.title}</p>
-                          </div>
-                          <p className="text-muted-foreground leading-relaxed">{course.instructor.bio}</p>
+                  {course.instructor ? (
+                    <Card className="border-2 hover:border-primary/20 transition-all">
+                      <CardContent className="p-6">
+                        <div className="flex flex-col md:flex-row gap-6">
+                          <Avatar className="h-24 w-24 border-2 border-primary/30">
+                            <AvatarImage src={course.instructor?.avatar || "/placeholder-user.jpg"} alt={course.instructor?.name || "Instructeur"} />
+                            <AvatarFallback className="bg-primary text-white font-bold text-xl">
+                              {(course.instructor?.name || "I")[0]}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div className="flex-1 space-y-4">
+                            <div>
+                              <h3 className="text-2xl font-bold mb-2 text-foreground">{course.instructor?.name || "Instructeur"}</h3>
+                              <p className="text-muted-foreground font-medium">{course.instructor?.title || "Formateur"}</p>
+                            </div>
+                            {course.instructor?.bio && (
+                              <p className="text-muted-foreground leading-relaxed">{course.instructor.bio}</p>
+                            )}
                           <div className="flex flex-wrap items-center gap-6 pt-4 border-t border-border">
                             <div className="flex items-center gap-2">
                               <BarChart3 className="h-5 w-5 text-primary" />
                               <div>
-                                <p className="text-sm font-bold text-foreground">{course.instructor.rating.toFixed(1)}</p>
+                                <p className="text-sm font-bold text-foreground">{((course.instructor?.rating || 0)).toFixed(1)}</p>
                                 <p className="text-xs text-muted-foreground">Note moyenne</p>
                               </div>
                             </div>
                             <div className="flex items-center gap-2">
                               <Users className="h-5 w-5 text-primary" />
                               <div>
-                                <p className="text-sm font-bold text-foreground">{course.instructor.studentCount.toLocaleString()}</p>
+                                <p className="text-sm font-bold text-foreground">{((course.instructor?.studentCount || 0)).toLocaleString()}</p>
                                 <p className="text-xs text-muted-foreground">Étudiants</p>
                               </div>
                             </div>
                             <div className="flex items-center gap-2">
                               <BookOpen className="h-5 w-5 text-primary" />
                               <div>
-                                <p className="text-sm font-bold text-foreground">{course.instructor.courseCount}</p>
+                                <p className="text-sm font-bold text-foreground">{course.instructor?.courseCount || 0}</p>
                                 <p className="text-xs text-muted-foreground">Cours</p>
                               </div>
                             </div>
@@ -527,6 +530,13 @@ export function CourseDetailClient({ course }: CourseDetailClientProps) {
                       </div>
                     </CardContent>
                   </Card>
+                  ) : (
+                    <Card className="border-2 hover:border-primary/20 transition-all">
+                      <CardContent className="p-6">
+                        <p className="text-muted-foreground text-center">Informations de l'instructeur non disponibles</p>
+                      </CardContent>
+                    </Card>
+                  )}
                   </div>
                 </TabsContent>
 
@@ -744,20 +754,23 @@ export function CourseDetailClient({ course }: CourseDetailClientProps) {
                   </div>
 
                   {/* Instructor Preview */}
-                  <div className="pt-4 border-t border-border">
-                    <div className="flex items-center gap-3">
-                      <Avatar className="h-12 w-12 border-2 border-primary/30">
-                        <AvatarImage src={course.instructor.avatar} alt={course.instructor.name} />
-                        <AvatarFallback className="bg-primary text-white font-bold">
-                          {course.instructor.name[0]}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div className="flex-1 min-w-0">
-                        <p className="font-bold text-sm text-foreground truncate">{course.instructor.name}</p>
-                        <p className="text-xs text-muted-foreground truncate">{course.instructor.title}</p>
+                  {course.instructor && (
+                    <div className="pt-4 border-t border-border">
+                      <h4 className="font-bold text-sm mb-3 text-foreground">Instructeur</h4>
+                      <div className="flex items-center gap-3">
+                        <Avatar className="h-12 w-12 border-2 border-primary/30">
+                          <AvatarImage src={course.instructor?.avatar || "/placeholder-user.jpg"} alt={course.instructor?.name || "Instructeur"} />
+                          <AvatarFallback className="bg-primary text-white font-bold">
+                            {(course.instructor?.name || "I")[0]}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="flex-1 min-w-0">
+                          <p className="font-bold text-sm text-foreground truncate">{course.instructor?.name || "Instructeur"}</p>
+                          <p className="text-xs text-muted-foreground truncate">{course.instructor?.title || "Formateur"}</p>
+                        </div>
                       </div>
                     </div>
-                  </div>
+                  )}
                 </CardContent>
               </Card>
             </FadeInView>
