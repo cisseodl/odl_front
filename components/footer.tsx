@@ -30,13 +30,13 @@ export function Footer() {
     Ressources: [
       { label: "Centre d'Aide", href: "/help" },
       { label: "Cours", href: "/courses" },
-      { label: "Témoignages", href: "/testimonials" },
-      { label: "Partenaires", href: "/partners" },
+      // { label: "Témoignages", href: "/testimonials" }, // Page à créer
+      // { label: "Partenaires", href: "/partners" }, // Page à créer
     ],
     Légal: [
       { label: "Conditions d'Utilisation", href: "/terms" },
       { label: "Politique de Confidentialité", href: "/privacy" },
-      { label: "Politique de Cookies", href: "/cookies" },
+      // { label: "Politique de Cookies", href: "/cookies" }, // Page à créer
     ],
   }
 
