@@ -5,6 +5,18 @@ const nextConfig = {
   },
   images: {
     unoptimized: true,
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'api.smart-odc.com',
+        pathname: '/awsodclearning/api/files/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'smart-odc.com',
+        pathname: '/**',
+      },
+    ],
   },
   // Fix for Turbopack chunk loading issues
   experimental: {

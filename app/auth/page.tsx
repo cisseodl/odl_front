@@ -123,7 +123,7 @@ export default function AuthPage() {
     }
   }
 
-  // Handler pour ancien apprenant (formulaire complet avec cohorte obligatoire)
+  // Handler pour étudiant des cohortes passées (formulaire complet avec cohorte obligatoire)
   const handleRegisterExisting = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     setIsLoading(true)
@@ -150,7 +150,7 @@ export default function AuthPage() {
       // 1. Créer l'utilisateur
       await register(name, email, password)
       
-      // 2. Créer le profil Apprenant avec toutes les informations (cohorte obligatoire pour ancien apprenant)
+      // 2. Créer le profil Apprenant avec toutes les informations (cohorte obligatoire pour étudiant des cohortes passées)
       const numero = formData.get("numero") as string
       const profession = formData.get("profession") as string
       const niveauEtude = formData.get("niveauEtude") as string
@@ -168,7 +168,7 @@ export default function AuthPage() {
           filiere: filiere?.trim() || undefined,
           attentes: attentes?.trim() || undefined,
           satisfaction: satisfaction,
-          cohorteId: Number.parseInt(cohorteId), // Cohorte obligatoire pour ancien apprenant
+          cohorteId: Number.parseInt(cohorteId), // Cohorte obligatoire pour étudiant des cohortes passées
           activate: true,
         }
 
@@ -271,7 +271,7 @@ export default function AuthPage() {
                   <div className="flex items-center space-x-2 rounded-lg border p-4 cursor-pointer hover:bg-accent" onClick={() => setApprenantType("existing")}>
                     <RadioGroupItem value="existing" id="existing-apprenant" />
                     <Label htmlFor="existing-apprenant" className="cursor-pointer flex-1">
-                      <div className="font-medium">Ancien apprenant</div>
+                      <div className="font-medium">Étudiant des cohortes passées</div>
                       <div className="text-xs text-muted-foreground">Déjà inscrit</div>
                     </Label>
                   </div>
@@ -470,121 +470,219 @@ export default function AuthPage() {
                 </form>
               )}
 
-              {/* Formulaire pour ancien apprenant */}
+              {/* Formulaire pour étudiant des cohortes passées */}
               {apprenantType === "existing" && (
                 <form onSubmit={handleRegisterExisting} className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="existing-email">Email *</Label>
-                    <div className="relative">
-                      <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                      <Input
-                        id="existing-email"
-                        name="usernameOrEmail"
-                        type="email"
-                        placeholder="votre@email.com"
-                        className="pl-10"
-                        required
-                      />
+                {/* Informations de base pour créer le User */}
+                <div className="space-y-2">
+                  <Label htmlFor="existing-name">Nom complet *</Label>
+                  <div className="relative">
+                    <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      id="existing-name"
+                      name="name"
+                      type="text"
+                      placeholder="Votre nom complet"
+                      className="pl-10"
+                      required
+                    />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="existing-email">Email *</Label>
+                  <div className="relative">
+                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      id="existing-email"
+                      name="email"
+                      type="email"
+                      placeholder="votre@email.com"
+                      className="pl-10"
+                      required
+                    />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="existing-password">Mot de passe *</Label>
+                  <div className="relative">
+                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      id="existing-password"
+                      name="password"
+                      type={showPassword ? "text" : "password"}
+                      placeholder="••••••••"
+                      className="pl-10 pr-10"
+                      required
+                      minLength={6}
+                    />
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="absolute right-0 top-0 h-full w-10"
+                      onClick={() => setShowPassword(!showPassword)}
+                    >
+                      {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </Button>
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="existing-confirm-password">Confirmer le mot de passe *</Label>
+                  <div className="relative">
+                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      id="existing-confirm-password"
+                      name="confirmPassword"
+                      type={showConfirmPassword ? "text" : "password"}
+                      placeholder="••••••••"
+                      className="pl-10 pr-10"
+                      required
+                      minLength={6}
+                    />
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="absolute right-0 top-0 h-full w-10"
+                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    >
+                      {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </Button>
+                  </div>
+                </div>
+
+                {/* Séparateur */}
+                <div className="py-2">
+                  <div className="relative">
+                    <div className="absolute inset-0 flex items-center">
+                      <span className="w-full border-t" />
+                    </div>
+                    <div className="relative flex justify-center text-xs uppercase">
+                      <span className="bg-background px-2 text-muted-foreground">
+                        Informations Apprenant (optionnel)
+                      </span>
                     </div>
                   </div>
+                </div>
 
+                {/* Informations pour créer le profil Apprenant */}
+                <p className="text-sm text-muted-foreground">
+                  Le nom complet que vous avez saisi ci-dessus sera utilisé pour votre profil apprenant.
+                </p>
+
+                <div className="space-y-2">
+                  <Label htmlFor="existing-numero">Numéro de téléphone *</Label>
+                  <div className="relative">
+                    <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      id="existing-numero"
+                      name="numero"
+                      type="tel"
+                      placeholder="+223 XX XX XX XX"
+                      className="pl-10 bg-white"
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div className="grid md:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="existing-username">Nom d'utilisateur (optionnel)</Label>
+                    <Label htmlFor="existing-profession">Profession</Label>
                     <div className="relative">
-                      <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <Briefcase className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                       <Input
-                        id="existing-username"
-                        name="username"
+                        id="existing-profession"
+                        name="profession"
                         type="text"
-                        placeholder="Votre nom d'utilisateur"
-                        className="pl-10"
+                        placeholder="Ex: Étudiant, Développeur"
+                        className="pl-10 bg-white"
                       />
                     </div>
-                    <p className="text-xs text-muted-foreground">
-                      Si vous avez un nom d'utilisateur, entrez-le ici. Sinon, votre email sera utilisé.
-                    </p>
                   </div>
-
                   <div className="space-y-2">
-                    <Label htmlFor="existing-password">Mot de passe *</Label>
-                    <div className="relative">
-                      <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                      <Input
-                        id="existing-password"
-                        name="password"
-                        type={showPassword ? "text" : "password"}
-                        placeholder="••••••••"
-                        className="pl-10 pr-10"
-                        required
-                        minLength={6}
-                      />
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        className="absolute right-0 top-0 h-full w-10"
-                        onClick={() => setShowPassword(!showPassword)}
-                      >
-                        {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                      </Button>
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="existing-confirm-password">Confirmer le mot de passe *</Label>
-                    <div className="relative">
-                      <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                      <Input
-                        id="existing-confirm-password"
-                        name="confirmPassword"
-                        type={showConfirmPassword ? "text" : "password"}
-                        placeholder="••••••••"
-                        className="pl-10 pr-10"
-                        required
-                        minLength={6}
-                      />
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        className="absolute right-0 top-0 h-full w-10"
-                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                      >
-                        {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                      </Button>
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="existing-cohorteId">Cohorte *</Label>
-                    <Select name="cohorteId" required>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Sélectionnez votre cohorte" />
+                    <Label htmlFor="existing-niveauEtude">Niveau d'étude</Label>
+                    <Select name="niveauEtude">
+                      <SelectTrigger className="bg-white">
+                        <SelectValue placeholder="Sélectionnez votre niveau" />
                       </SelectTrigger>
                       <SelectContent>
-                        {cohortes.length > 0 ? (
-                          cohortes.map((cohorte) => (
-                            <SelectItem key={cohorte.id} value={cohorte.id.toString()}>
-                              {cohorte.nom}
-                            </SelectItem>
-                          ))
-                        ) : (
-                          <div className="px-2 py-1.5 text-sm text-muted-foreground">
-                            Aucune cohorte disponible
-                          </div>
-                        )}
+                        <SelectItem value="Bac">Bac</SelectItem>
+                        <SelectItem value="Bac+2">Bac+2</SelectItem>
+                        <SelectItem value="Licence">Licence</SelectItem>
                       </SelectContent>
                     </Select>
-                    <p className="text-xs text-muted-foreground">
-                      Sélectionnez la cohorte à laquelle vous appartenez
-                    </p>
                   </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="existing-filiere">Filière</Label>
+                  <div className="relative">
+                    <GraduationCap className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      id="existing-filiere"
+                      name="filiere"
+                      type="text"
+                      placeholder="Ex: Informatique, Commerce"
+                      className="pl-10 bg-white"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="existing-cohorteId">Cohorte *</Label>
+                  <Select name="cohorteId" required>
+                    <SelectTrigger className="bg-white">
+                      <SelectValue placeholder="Sélectionnez votre cohorte" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {cohortes.length > 0 ? (
+                        cohortes.map((cohorte) => (
+                          <SelectItem key={cohorte.id} value={cohorte.id.toString()}>
+                            {cohorte.nom}
+                          </SelectItem>
+                        ))
+                      ) : (
+                        <div className="px-2 py-1.5 text-sm text-muted-foreground">
+                          Aucune cohorte disponible
+                        </div>
+                      )}
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-muted-foreground">
+                    Sélectionnez la cohorte à laquelle vous appartenez
+                  </p>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="existing-attentes">Attentes</Label>
+                  <Textarea
+                    id="existing-attentes"
+                    name="attentes"
+                    placeholder="Décrivez vos attentes concernant la formation..."
+                    className="bg-white"
+                    rows={3}
+                  />
+                </div>
+
+                <div className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    id="existing-satisfaction"
+                    name="satisfaction"
+                    value="true"
+                    defaultChecked
+                    className="rounded border-gray-300"
+                  />
+                  <Label htmlFor="existing-satisfaction" className="text-sm">
+                    Je suis satisfait des conditions d'apprentissage
+                  </Label>
+                </div>
 
                   <Button type="submit" className="w-full bg-primary text-white hover:bg-primary/95" disabled={isLoading}>
                     {isLoading ? "Inscription..." : "S'inscrire"}
                   </Button>
                   <p className="text-xs text-center text-muted-foreground">
-                    * Champs obligatoires. Vous pourrez compléter votre profil après l'inscription.
+                    * Champs obligatoires. Les informations apprenant peuvent être complétées plus tard.
                   </p>
                 </form>
               )}

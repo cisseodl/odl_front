@@ -15,7 +15,16 @@ export default function AboutPage() {
     isLoading: isLoadingRubriques,
   } = useQuery({
     queryKey: ["rubriques"],
-    queryFn: () => rubriqueService.getAllRubriques(),
+    queryFn: async () => {
+      const data = await rubriqueService.getAllRubriques()
+      // Debug: vérifier la structure des données
+      if (data && data.length > 0) {
+        console.log("Rubriques chargées:", data)
+        console.log("Première rubrique:", data[0])
+        console.log("Image de la première rubrique:", data[0]?.image || data[0]?.imageUrl)
+      }
+      return data
+    },
     staleTime: 10 * 60 * 1000, // Cache pendant 10 minutes
   })
   return (
@@ -230,19 +239,38 @@ export default function AboutPage() {
                 
                 const colors = getColorClass(rubrique.rubrique)
                 
+                // Vérifier si l'image existe et est valide
+                const imageUrl = rubrique.image || rubrique.imageUrl || null
+                
                 return (
                   <Card key={rubrique.id} className="p-8 hover:shadow-lg transition-shadow">
                     <div className="flex items-start gap-6">
                       {/* Image de la rubrique à la place de l'icône */}
-                      <div className={`w-16 h-16 ${colors.bg} rounded-full flex items-center justify-center flex-shrink-0 overflow-hidden`}>
-                        {rubrique.image ? (
-                          <Image
-                            src={rubrique.image}
-                            alt={rubrique.rubrique || "Rubrique"}
-                            width={64}
-                            height={64}
-                            className="w-full h-full object-cover rounded-full"
-                          />
+                      <div className={`w-16 h-16 ${colors.bg} rounded-full flex items-center justify-center flex-shrink-0 overflow-hidden relative`}>
+                        {imageUrl ? (
+                          <>
+                            <Image
+                              src={imageUrl}
+                              alt={rubrique.rubrique || "Rubrique"}
+                              width={64}
+                              height={64}
+                              className="w-full h-full object-cover rounded-full"
+                              onError={(e) => {
+                                // Si l'image ne charge pas, masquer l'erreur et afficher l'icône par défaut
+                                const parent = e.currentTarget.parentElement
+                                if (parent) {
+                                  e.currentTarget.style.display = 'none'
+                                  const fallback = parent.querySelector('.image-fallback')
+                                  if (fallback) {
+                                    (fallback as HTMLElement).style.display = 'flex'
+                                  }
+                                }
+                              }}
+                            />
+                            <div className="image-fallback hidden absolute inset-0 items-center justify-center">
+                              <GraduationCap className={`w-8 h-8 ${colors.text}`} />
+                            </div>
+                          </>
                         ) : (
                           <GraduationCap className={`w-8 h-8 ${colors.text}`} />
                         )}

@@ -54,11 +54,23 @@ export function CourseDetailClient({ course }: CourseDetailClientProps) {
   const [activeTab, setActiveTab] = useState("overview")
   const [dynamicCurriculum, setDynamicCurriculum] = useState<Module[] | null>(null)
 
+  // Convertir course.id en nombre de manière sécurisée
+  const courseIdNum = useMemo(() => {
+    if (typeof course.id === 'string') {
+      const parsed = parseInt(course.id, 10)
+      return Number.isNaN(parsed) ? null : parsed
+    }
+    if (typeof course.id === 'number') {
+      return Number.isNaN(course.id) ? null : course.id
+    }
+    return null
+  }, [course.id])
+
   // Charger les modules depuis l'API si le curriculum est vide ou manquant
   const { data: modulesFromApi, isLoading: isLoadingModules } = useQuery({
-    queryKey: ["modules", course.id],
-    queryFn: () => moduleService.getModulesByCourse(typeof course.id === 'string' ? parseInt(course.id) : course.id),
-    enabled: !course.curriculum || course.curriculum.length === 0,
+    queryKey: ["modules", courseIdNum],
+    queryFn: () => moduleService.getModulesByCourse(courseIdNum!),
+    enabled: (!course.curriculum || course.curriculum.length === 0) && courseIdNum !== null,
   })
 
   // Adapter les modules de l'API si nécessaire
