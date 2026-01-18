@@ -437,20 +437,6 @@ export default function AuthPage() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="register-cohorteId">Cohorte</Label>
-                  <Input
-                    id="register-cohorteId"
-                    name="cohorteId"
-                    type="number"
-                    placeholder="ID de la cohorte (optionnel - peut être complété plus tard)"
-                    className="bg-white"
-                  />
-                  <p className="text-xs text-muted-foreground">
-                    Vous pouvez laisser ce champ vide et compléter votre profil apprenant après l'inscription dans votre profil.
-                  </p>
-                </div>
-
-                <div className="space-y-2">
                   <Label htmlFor="register-attentes">Attentes</Label>
                   <Textarea
                     id="register-attentes"
@@ -583,9 +569,9 @@ export default function AuthPage() {
                             </SelectItem>
                           ))
                         ) : (
-                          <SelectItem value="" disabled>
+                          <div className="px-2 py-1.5 text-sm text-muted-foreground">
                             Aucune cohorte disponible
-                          </SelectItem>
+                          </div>
                         )}
                       </SelectContent>
                     </Select>

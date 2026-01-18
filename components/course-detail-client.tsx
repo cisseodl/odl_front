@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { useState, useEffect } from "react"
+import { useState, useEffect, useMemo } from "react"
 import { Share2, Bookmark, MoreVertical, Play, Plus, Star, Clock, Users, Award, CheckCircle2, FileText, Video, BookOpen, HelpCircle, ArrowLeft, Globe, BarChart3, Infinity } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -54,7 +54,7 @@ export function CourseDetailClient({ course }: CourseDetailClientProps) {
   const [activeTab, setActiveTab] = useState("overview")
   const [dynamicCurriculum, setDynamicCurriculum] = useState<Module[] | null>(null)
 
-  // Charger les modules depuis l'API si le curriculum est vide
+  // Charger les modules depuis l'API si le curriculum est vide ou manquant
   const { data: modulesFromApi, isLoading: isLoadingModules } = useQuery({
     queryKey: ["modules", course.id],
     queryFn: () => moduleService.getModulesByCourse(typeof course.id === 'string' ? parseInt(course.id) : course.id),
@@ -63,14 +63,24 @@ export function CourseDetailClient({ course }: CourseDetailClientProps) {
 
   // Adapter les modules de l'API si nécessaire
   useEffect(() => {
-    if (modulesFromApi && modulesFromApi.length > 0) {
-      const adaptedModules = modulesFromApi.map(adaptModule)
-      setDynamicCurriculum(adaptedModules)
+    if (modulesFromApi) {
+      if (modulesFromApi.length > 0) {
+        const adaptedModules = modulesFromApi.map(adaptModule)
+        setDynamicCurriculum(adaptedModules)
+      } else {
+        // Si l'API retourne un tableau vide, réinitialiser
+        setDynamicCurriculum([])
+      }
     }
   }, [modulesFromApi])
 
-  // Utiliser le curriculum du cours s'il existe, sinon utiliser les modules chargés dynamiquement
-  const curriculum = course.curriculum && course.curriculum.length > 0 ? course.curriculum : (dynamicCurriculum || [])
+  // Utiliser le curriculum du cours s'il existe et n'est pas vide, sinon utiliser les modules chargés dynamiquement
+  const curriculum = useMemo(() => {
+    if (course.curriculum && course.curriculum.length > 0) {
+      return course.curriculum
+    }
+    return dynamicCurriculum || []
+  }, [course.curriculum, dynamicCurriculum])
   const totalLectures = getTotalLectures(curriculum)
 
   // Scroll spy for tabs
