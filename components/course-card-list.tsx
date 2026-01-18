@@ -117,9 +117,11 @@ export function CourseCardList({ course }: CourseCardListProps) {
               </div>
 
               {/* Instructor */}
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <span className="font-medium">{course.instructor.name}</span>
-              </div>
+              {course.instructor && (
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <span className="font-medium">{course.instructor?.name || "Formateur"}</span>
+                </div>
+              )}
 
               {/* Rating & Stats */}
               <div className="flex items-center gap-4 flex-wrap">

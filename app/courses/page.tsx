@@ -59,6 +59,9 @@ export default function CoursesPage() {
 
   // Filter courses
   const filteredCourses = useMemo(() => {
+    if (!courses || !Array.isArray(courses)) {
+      return []
+    }
     let filtered = courses
 
     // Category filter
@@ -94,7 +97,7 @@ export default function CoursesPage() {
     }
 
     return filtered
-  }, [selectedCategory, selectedLevel, selectedDuration, minRating, selectedLanguage])
+  }, [courses, selectedCategory, selectedLevel, selectedDuration, minRating, selectedLanguage])
 
   // Sort courses
   const sortedCourses = useMemo(() => {
@@ -271,7 +274,7 @@ export default function CoursesPage() {
           {activeFilters.length > 0 && (
             <div className="flex items-center gap-2 mb-6 flex-wrap">
               <span className="text-sm text-muted-foreground font-medium">Filtres actifs:</span>
-              {activeFilters.map((filter, index) => (
+              {activeFilters && Array.isArray(activeFilters) ? activeFilters.map((filter, index) => (
                 <Badge
                   key={index}
                   variant="secondary"
@@ -286,7 +289,7 @@ export default function CoursesPage() {
                     <X className="h-3 w-3" />
                   </button>
                 </Badge>
-              ))}
+              )) : null}
               <Button
                 variant="ghost"
                 size="sm"
@@ -302,14 +305,14 @@ export default function CoursesPage() {
           {sortedCourses.length > 0 ? (
             viewMode === "grid" ? (
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-              {sortedCourses.map((course) => (
-                <CourseCard key={course.id} course={course} />
+              {sortedCourses.filter(course => course && course.id).map((course) => (
+                <CourseCard key={String(course.id)} course={course} />
               ))}
             </div>
           ) : (
               <div className="space-y-4">
-                {sortedCourses.map((course) => (
-                  <CourseCardList key={course.id} course={course} />
+                {sortedCourses.filter(course => course && course.id).map((course) => (
+                  <CourseCardList key={String(course.id)} course={course} />
                 ))}
             </div>
             )

@@ -100,13 +100,15 @@ export function CourseCard({ course, showPreview = true }: CourseCardProps) {
           </h3>
 
           {/* Nom formateur avec avatar */}
-          <div className="flex items-center gap-2">
-            <Avatar className="h-7 w-7 border-2 border-white shadow-sm">
-              <AvatarImage src={course.instructor.avatar || "/placeholder.svg"} alt={course.instructor.name} />
-              <AvatarFallback className="text-xs bg-primary text-white">{course.instructor.name[0]}</AvatarFallback>
-            </Avatar>
-            <span className="text-sm text-muted-foreground font-medium">{course.instructor.name}</span>
-          </div>
+          {course.instructor && (
+            <div className="flex items-center gap-2">
+              <Avatar className="h-7 w-7 border-2 border-white shadow-sm">
+                <AvatarImage src={course.instructor?.avatar || "/placeholder.svg"} alt={course.instructor?.name || "Formateur"} />
+                <AvatarFallback className="text-xs bg-primary text-white">{(course.instructor?.name || "F")[0]}</AvatarFallback>
+              </Avatar>
+              <span className="text-sm text-muted-foreground font-medium">{course.instructor?.name || "Formateur"}</span>
+            </div>
+          )}
 
           {/* Rating étoiles + nombre d'avis - Orange pour maximiser l'impact */}
           <div className="flex items-center gap-2">
