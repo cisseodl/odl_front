@@ -224,6 +224,7 @@ export default function DashboardPage() {
 
   // Formater les données de progression pour le graphique
   const chartData = useMemo(() => {
+    console.log("learningProgressData:", learningProgressData, "selectedPeriod:", selectedPeriod)
     if (!learningProgressData || learningProgressData.length === 0) {
       // Retourner des données vides si pas de données
       if (selectedPeriod === "week") {
@@ -514,6 +515,12 @@ export default function DashboardPage() {
                   </div>
                 </CardHeader>
                 <CardContent>
+                  {isLoadingProgress ? (
+                    <div className="flex items-center justify-center h-[350px]">
+                      <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                      <span className="ml-2 text-muted-foreground">Chargement des données...</span>
+                    </div>
+                  ) : (
                   <ChartContainer
                     config={{
                       hours: {

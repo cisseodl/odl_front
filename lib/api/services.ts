@@ -514,26 +514,53 @@ export const dashboardService = {
    * Obtenir les statistiques publiques pour la page d'accueil
    * Calcule les stats à partir des données disponibles
    */
+  /**
+   * Obtenir les statistiques publiques pour la page d'accueil
+   * GET /api/dashboard/public-stats
+   * Le backend retourne CResponse<Map<String, Object>>
+   */
   async getPublicStats(): Promise<PublicStats> {
     try {
-      // Récupérer tous les cours pour calculer les stats
-      const courses = await courseService.getAllCourses()
+      const response = await apiClient.get<any>(API_ENDPOINTS.dashboard.publicStats)
       
-      // Calculer les statistiques
-      const totalCourses = courses.length
+      if (response.ok && response.data) {
+        // Le backend retourne CResponse<Map<String, Object>>
+        let stats: any = {}
+        
+        if (response.data.data && typeof response.data.data === 'object') {
+          // Si c'est un CResponse, extraire le data
+          stats = response.data.data
+        } else if (typeof response.data === 'object' && 'totalStudents' in response.data) {
+          // Si response.data est directement l'objet stats
+          stats = response.data
+        }
+        
+        return {
+          totalStudents: stats.totalStudents || 0,
+          totalCourses: stats.totalCourses || 0,
+          mostViewedCourses: stats.mostViewedCourses || 0,
+          satisfactionRate: stats.satisfactionRate || 98,
+        }
+      }
       
-      // Cours les plus consultés = cours avec le plus d'inscriptions
-      const mostViewedCourses = Math.max(...courses.map(c => c.enrolledCount || 0), 0)
-      
-      // Taux de satisfaction = moyenne des ratings
-      const totalRating = courses.reduce((sum, c) => sum + (c.rating || 0), 0)
-      const satisfactionRate = courses.length > 0 
-        ? Math.round((totalRating / courses.length) * 20) // Convertir de 0-5 à 0-100
-        : 98 // Valeur par défaut
-      
-      // Pour le total d'étudiants, on peut utiliser la somme des inscriptions
-      // ou essayer de récupérer depuis l'API admin si disponible
-      const totalStudents = courses.reduce((sum, c) => sum + (c.enrolledCount || 0), 0)
+      // Valeurs par défaut en cas d'erreur
+      return {
+        totalStudents: 0,
+        totalCourses: 0,
+        mostViewedCourses: 0,
+        satisfactionRate: 98,
+      }
+    } catch (error) {
+      console.error("Erreur lors de la récupération des statistiques publiques:", error)
+      // Valeurs par défaut en cas d'erreur
+      return {
+        totalStudents: 0,
+        totalCourses: 0,
+        mostViewedCourses: 0,
+        satisfactionRate: 98,
+      }
+    }
+  },
       
       return {
         totalStudents: totalStudents || 250000, // Fallback si pas de données

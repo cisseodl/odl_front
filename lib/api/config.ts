@@ -124,6 +124,7 @@ export const API_ENDPOINTS = {
   dashboard: {
     student: "/api/dashboard/student",
     instructor: "/api/dashboard/instructor",
+    publicStats: "/api/dashboard/public-stats",
   },
   // Contact
   contact: {
