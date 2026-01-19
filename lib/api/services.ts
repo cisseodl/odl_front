@@ -568,24 +568,6 @@ export const dashboardService = {
       }
     }
   },
-      
-      return {
-        totalStudents: totalStudents || 250000, // Fallback si pas de données
-        totalCourses: totalCourses || 5000,
-        mostViewedCourses: mostViewedCourses || 1200,
-        satisfactionRate: satisfactionRate || 98,
-      }
-    } catch (error) {
-      console.error("Error fetching public stats:", error)
-      // Retourner des valeurs par défaut en cas d'erreur
-      return {
-        totalStudents: 250000,
-        totalCourses: 5000,
-        mostViewedCourses: 1200,
-        satisfactionRate: 98,
-      }
-    }
-  },
   
   /**
    * Obtenir le dashboard étudiant
