@@ -66,13 +66,17 @@ export function CourseDetailClient({ course }: CourseDetailClientProps) {
     return null
   }, [course.id])
 
-  // Charger les modules depuis l'API si le curriculum est vide ou manquant
-  // Toujours charger les modules pour s'assurer qu'ils sont à jour
-  const { data: modulesFromApi, isLoading: isLoadingModules } = useQuery({
+  // Charger les modules depuis l'API - toujours charger pour s'assurer qu'ils sont à jour
+  // Même si le cours a déjà un curriculum, on recharge les modules pour avoir les dernières données
+  const { data: modulesFromApi, isLoading: isLoadingModules, error: modulesError } = useQuery({
     queryKey: ["modules", courseIdNum],
     queryFn: () => moduleService.getModulesByCourse(courseIdNum!),
     enabled: courseIdNum !== null && !Number.isNaN(courseIdNum!),
     staleTime: 5 * 60 * 1000, // Cache pendant 5 minutes
+    retry: 2, // Réessayer 2 fois en cas d'erreur
+    onError: (error) => {
+      console.error("Erreur lors du chargement des modules:", error)
+    }
   })
 
   // Adapter les modules de l'API si nécessaire
@@ -92,14 +96,15 @@ export function CourseDetailClient({ course }: CourseDetailClientProps) {
   }, [modulesFromApi])
 
   // Utiliser le curriculum du cours s'il existe et n'est pas vide, sinon utiliser les modules chargés dynamiquement
+  // Priorité : modules chargés dynamiquement > curriculum du cours (pour avoir les données les plus récentes)
   const curriculum = useMemo(() => {
-    // Si le curriculum du cours existe et contient des modules, l'utiliser
-    if (course.curriculum && Array.isArray(course.curriculum) && course.curriculum.length > 0) {
-      return course.curriculum
-    }
-    // Sinon, utiliser les modules chargés dynamiquement
+    // Priorité 1 : Utiliser les modules chargés dynamiquement depuis l'API (données les plus récentes)
     if (dynamicCurriculum && Array.isArray(dynamicCurriculum) && dynamicCurriculum.length > 0) {
       return dynamicCurriculum
+    }
+    // Priorité 2 : Utiliser le curriculum du cours s'il existe
+    if (course.curriculum && Array.isArray(course.curriculum) && course.curriculum.length > 0) {
+      return course.curriculum
     }
     // Si aucun des deux n'est disponible, retourner un tableau vide
     return []

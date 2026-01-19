@@ -166,20 +166,36 @@ export const courseService = {
    * Le backend retourne CResponse<CourseDto>
    */
   async getCourseById(id: number): Promise<Course | null> {
-    const response = await apiClient.get<any>(
-      `${API_ENDPOINTS.courses.getById}/${id}`
-    )
-    
-    if (response.ok && response.data) {
-      // Le backend retourne CResponse<CourseDto> avec data contenant le cours
-      const course = Array.isArray(response.data)
-        ? null
-        : response.data
+    try {
+      const response = await apiClient.get<any>(
+        `${API_ENDPOINTS.courses.getById}/${id}`
+      )
       
-      return course ? adaptCourse(course as BackendCourse) : null
+      if (response.ok && response.data) {
+        // Le backend retourne CResponse<CourseDto> avec data contenant le cours
+        const course = Array.isArray(response.data)
+          ? null
+          : response.data
+        
+        if (course) {
+          return adaptCourse(course as BackendCourse)
+        }
+      }
+      
+      // Logger l'erreur pour le débogage
+      if (!response.ok) {
+        console.error(`getCourseById(${id}) failed:`, {
+          status: response.ko ? "error" : "ok",
+          message: response.message,
+          data: response.data
+        })
+      }
+      
+      return null
+    } catch (error) {
+      console.error(`Erreur lors de la récupération du cours ${id}:`, error)
+      return null
     }
-    
-    return null
   },
 
   /**
@@ -299,16 +315,32 @@ export const moduleService = {
    * Le backend retourne CResponse<List<ModuleDto>>
    */
   async getModulesByCourse(courseId: number): Promise<ModuleDto[]> {
-    const response = await apiClient.get<any>(
-      `${API_ENDPOINTS.modules.getByCourse}/${courseId}`
-    )
-    
-    if (response.ok && response.data) {
-      // Le backend retourne CResponse<List<ModuleDto>> avec data contenant la liste
-      return Array.isArray(response.data) ? response.data : []
+    try {
+      const response = await apiClient.get<any>(
+        `${API_ENDPOINTS.modules.getByCourse}/${courseId}`
+      )
+      
+      if (response.ok && response.data) {
+        // Le backend retourne CResponse<List<ModuleDto>> avec data contenant la liste
+        const modules = Array.isArray(response.data) ? response.data : []
+        console.log(`getModulesByCourse(${courseId}): ${modules.length} modules récupérés`)
+        return modules
+      }
+      
+      // Logger l'erreur pour le débogage
+      if (!response.ok) {
+        console.error(`getModulesByCourse(${courseId}) failed:`, {
+          status: response.ko ? "error" : "ok",
+          message: response.message,
+          data: response.data
+        })
+      }
+      
+      return []
+    } catch (error) {
+      console.error(`Erreur lors de la récupération des modules pour le cours ${courseId}:`, error)
+      return []
     }
-    
-    return []
   },
 }
 

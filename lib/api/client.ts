@@ -61,6 +61,25 @@ class ApiClient {
   }
 
   /**
+   * Obtenir le token actuel (depuis l'instance ou localStorage)
+   */
+  private getCurrentToken(): string | null {
+    // D'abord vérifier l'instance
+    if (this.token) {
+      return this.token
+    }
+    // Sinon, récupérer depuis localStorage (pour les cas où le token a été mis à jour ailleurs)
+    if (typeof window !== "undefined") {
+      const storedToken = localStorage.getItem("auth_token")
+      if (storedToken) {
+        this.token = storedToken
+        return storedToken
+      }
+    }
+    return null
+  }
+
+  /**
    * Effectuer une requête HTTP
    */
   private async request<T>(
@@ -74,9 +93,10 @@ class ApiClient {
       ...options.headers,
     }
 
-    // Ajouter le token d'authentification si disponible
-    if (this.token) {
-      headers["Authorization"] = `Bearer ${this.token}`
+    // Récupérer le token actuel (depuis l'instance ou localStorage)
+    const currentToken = this.getCurrentToken()
+    if (currentToken) {
+      headers["Authorization"] = `Bearer ${currentToken}`
     }
 
     try {
@@ -98,6 +118,51 @@ class ApiClient {
         }
       }
 
+      // Gérer les erreurs HTTP avant de parser le JSON
+      if (!response.ok) {
+        // Essayer de parser le JSON pour obtenir le message d'erreur
+        let errorMessage = `HTTP error! status: ${response.status}`
+        let errorData: any = null
+        
+        try {
+          const errorJson = await response.json()
+          if (typeof errorJson === "object") {
+            if ("message" in errorJson) {
+              errorMessage = errorJson.message
+            } else if ("error" in errorJson) {
+              errorMessage = errorJson.error
+            }
+            errorData = errorJson
+          }
+        } catch (e) {
+          // Si le parsing JSON échoue, utiliser le texte brut
+          try {
+            const errorText = await response.text()
+            if (errorText) {
+              errorMessage = errorText
+            }
+          } catch (textError) {
+            // Ignorer les erreurs de parsing
+          }
+        }
+
+        // Gérer les erreurs 403 (Forbidden) - Token invalide ou expiré
+        if (response.status === 403) {
+          // Nettoyer le token invalide
+          if (typeof window !== "undefined") {
+            localStorage.removeItem("auth_token")
+            this.token = null
+          }
+        }
+
+        return {
+          data: errorData,
+          ok: false,
+          ko: true,
+          message: errorMessage,
+        }
+      }
+
       const data = await response.json()
 
       // Le backend retourne toujours une structure CResponse avec { ok: boolean, data: T, message: string }
@@ -109,16 +174,6 @@ class ApiClient {
           ok: cResponse.ok,
           ko: !cResponse.ok,
           message: cResponse.message,
-        }
-      }
-
-      // Si la réponse n'a pas la structure CResponse, la wrapper
-      if (!response.ok) {
-        return {
-          data: data,
-          ok: false,
-          ko: true,
-          message: data.message || `HTTP error! status: ${response.status}`,
         }
       }
 
@@ -213,9 +268,10 @@ class ApiClient {
       ...additionalHeaders,
     }
 
-    // Ajouter le token d'authentification si disponible
-    if (this.token) {
-      headers["Authorization"] = `Bearer ${this.token}`
+    // Récupérer le token actuel (depuis l'instance ou localStorage)
+    const currentToken = this.getCurrentToken()
+    if (currentToken) {
+      headers["Authorization"] = `Bearer ${currentToken}`
     }
 
     try {

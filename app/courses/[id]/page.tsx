@@ -23,6 +23,10 @@ export default function CoursePage({ params }: CoursePageProps) {
     queryKey: ["course", courseId],
     queryFn: () => courseService.getCourseById(courseId),
     enabled: !Number.isNaN(courseId),
+    retry: 1, // Réessayer une fois en cas d'erreur
+    onError: (error) => {
+      console.error("Erreur lors du chargement du cours:", error)
+    }
   })
 
   if (Number.isNaN(courseId)) {
@@ -38,8 +42,31 @@ export default function CoursePage({ params }: CoursePageProps) {
     )
   }
 
+  // Si le cours ne charge pas mais qu'on a un ID valide, créer un cours minimal pour permettre l'affichage des modules
   if (error || !course) {
-    notFound()
+    console.warn(`Impossible de charger le cours ${courseId}, utilisation d'un cours minimal`)
+    // Créer un cours minimal pour permettre l'affichage des modules
+    const minimalCourse = {
+      id: String(courseId),
+      title: "Cours",
+      subtitle: "",
+      description: "",
+      imageUrl: "/placeholder.svg",
+      instructor: { id: "0", name: "Instructeur", avatar: "/placeholder-user.jpg" },
+      category: "Non catégorisé",
+      level: "Intermédiaire",
+      rating: 0,
+      reviewCount: 0,
+      duration: "0h",
+      language: "Français",
+      lastUpdated: "",
+      bestseller: false,
+      objectives: [],
+      curriculum: [],
+      enrolledCount: 0,
+      features: [],
+    }
+    return <CourseDetailClient course={minimalCourse} />
   }
 
   return <CourseDetailClient course={course} />
