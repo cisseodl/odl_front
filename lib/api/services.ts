@@ -801,6 +801,72 @@ export const learnerService = {
       return []
     }
   },
+
+  /**
+   * Obtenir la progression d'apprentissage par période (week, month, year)
+   * GET /api/learn/learning-progress?period=week|month|year
+   */
+  async getLearningProgress(period: "week" | "month" | "year" = "week"): Promise<any[]> {
+    try {
+      const response = await apiClient.get<any>(
+        `${API_ENDPOINTS.learner.getLearningProgress}?period=${period}`
+      )
+      
+      if (response.ok && response.data) {
+        const data = Array.isArray(response.data) ? response.data : []
+        return data
+      }
+      
+      return []
+    } catch (error) {
+      console.error("Erreur lors de la récupération de la progression:", error)
+      return []
+    }
+  },
+
+  /**
+   * Obtenir les échéances à venir (quiz non complétés)
+   * GET /api/learn/upcoming-deadlines
+   */
+  async getUpcomingDeadlines(): Promise<any[]> {
+    try {
+      const response = await apiClient.get<any>(
+        API_ENDPOINTS.learner.getUpcomingDeadlines
+      )
+      
+      if (response.ok && response.data) {
+        const data = Array.isArray(response.data) ? response.data : []
+        return data
+      }
+      
+      return []
+    } catch (error) {
+      console.error("Erreur lors de la récupération des échéances:", error)
+      return []
+    }
+  },
+
+  /**
+   * Obtenir les prochaines étapes suggérées
+   * GET /api/learn/next-steps
+   */
+  async getNextSteps(): Promise<any[]> {
+    try {
+      const response = await apiClient.get<any>(
+        API_ENDPOINTS.learner.getNextSteps
+      )
+      
+      if (response.ok && response.data) {
+        const data = Array.isArray(response.data) ? response.data : []
+        return data
+      }
+      
+      return []
+    } catch (error) {
+      console.error("Erreur lors de la récupération des prochaines étapes:", error)
+      return []
+    }
+  },
 }
 
 // ============ Details Course Services ============

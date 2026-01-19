@@ -83,6 +83,9 @@ export const API_ENDPOINTS = {
     getCourseProgress: "/api/learn",
     completeLesson: "/api/learn",
     getRecentActivity: "/api/learn/recent-activity",
+    getLearningProgress: "/api/learn/learning-progress",
+    getUpcomingDeadlines: "/api/learn/upcoming-deadlines",
+    getNextSteps: "/api/learn/next-steps",
   },
   // Details Course
   detailsCourse: {

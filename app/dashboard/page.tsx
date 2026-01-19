@@ -214,22 +214,65 @@ export default function DashboardPage() {
     })
   }, [recentActivityData])
 
-  const weeklyProgress = [
-    { day: "Lun", hours: 2.5, goal: 3 },
-    { day: "Mar", hours: 3.2, goal: 3 },
-    { day: "Mer", hours: 1.8, goal: 3 },
-    { day: "Jeu", hours: 4.0, goal: 3 },
-    { day: "Ven", hours: 2.0, goal: 3 },
-    { day: "Sam", hours: 5.5, goal: 3 },
-    { day: "Dim", hours: 3.0, goal: 3 },
-  ]
+  // Récupérer la progression d'apprentissage dynamique
+  const { data: learningProgressData = [], isLoading: isLoadingProgress } = useQuery({
+    queryKey: ["learningProgress", user?.id, selectedPeriod],
+    queryFn: () => learnerService.getLearningProgress(selectedPeriod),
+    enabled: !!user,
+    staleTime: 2 * 60 * 1000, // 2 minutes
+  })
 
-  const monthlyProgress = [
-    { week: "Sem 1", hours: 18.5, goal: 20 },
-    { week: "Sem 2", hours: 22.3, goal: 20 },
-    { week: "Sem 3", hours: 19.8, goal: 20 },
-    { week: "Sem 4", hours: 24.1, goal: 20 },
-  ]
+  // Formater les données de progression pour le graphique
+  const chartData = useMemo(() => {
+    if (!learningProgressData || learningProgressData.length === 0) {
+      // Retourner des données vides si pas de données
+      if (selectedPeriod === "week") {
+        return [
+          { day: "Lun", hours: 0, goal: 3 },
+          { day: "Mar", hours: 0, goal: 3 },
+          { day: "Mer", hours: 0, goal: 3 },
+          { day: "Jeu", hours: 0, goal: 3 },
+          { day: "Ven", hours: 0, goal: 3 },
+          { day: "Sam", hours: 0, goal: 3 },
+          { day: "Dim", hours: 0, goal: 3 },
+        ]
+      } else if (selectedPeriod === "month") {
+        return [
+          { week: "Sem 1", hours: 0, goal: 20 },
+          { week: "Sem 2", hours: 0, goal: 20 },
+          { week: "Sem 3", hours: 0, goal: 20 },
+          { week: "Sem 4", hours: 0, goal: 20 },
+        ]
+      } else {
+        return []
+      }
+    }
+
+    // Mapper les données de l'API vers le format du graphique
+    return learningProgressData.map((item: any) => {
+      if (selectedPeriod === "week") {
+        return {
+          day: item.day || "",
+          hours: item.hours || 0,
+          goal: item.goal || 3,
+        }
+      } else if (selectedPeriod === "month") {
+        return {
+          week: item.week || "",
+          hours: item.hours || 0,
+          goal: item.goal || 20,
+        }
+      } else {
+        return {
+          month: item.month || "",
+          hours: item.hours || 0,
+          goal: item.goal || 80,
+        }
+      }
+    })
+  }, [learningProgressData, selectedPeriod])
+
+  const chartDataKey = selectedPeriod === "week" ? "day" : selectedPeriod === "month" ? "week" : "month"
 
 
   // Formater les cours complétés pour l'affichage
@@ -267,13 +310,45 @@ export default function DashboardPage() {
     })
   }, [completedCoursesData])
 
-  const upcomingDeadlines = [
-    { course: "React & TypeScript", task: "Projet Final", dueDate: "Dans 3 jours", priority: "high" },
-    { course: "Next.js 15", task: "Quiz Module 5", dueDate: "Dans 5 jours", priority: "medium" },
-  ]
+  // Récupérer les échéances à venir
+  const { data: upcomingDeadlinesData = [], isLoading: isLoadingDeadlines } = useQuery({
+    queryKey: ["upcomingDeadlines", user?.id],
+    queryFn: () => learnerService.getUpcomingDeadlines(),
+    enabled: !!user,
+    staleTime: 5 * 60 * 1000,
+  })
 
-  const chartData = selectedPeriod === "week" ? weeklyProgress : monthlyProgress
-  const chartDataKey = selectedPeriod === "week" ? "day" : "week"
+  // Récupérer les prochaines étapes
+  const { data: nextStepsData = [], isLoading: isLoadingNextSteps } = useQuery({
+    queryKey: ["nextSteps", user?.id],
+    queryFn: () => learnerService.getNextSteps(),
+    enabled: !!user,
+    staleTime: 5 * 60 * 1000,
+  })
+
+  // Formater les échéances
+  const upcomingDeadlines = useMemo(() => {
+    return upcomingDeadlinesData.map((deadline: any) => ({
+      course: deadline.course || "Cours",
+      task: deadline.task || "Tâche",
+      dueDate: deadline.dueDate || "Bientôt",
+      priority: deadline.priority || "medium",
+      courseId: deadline.courseId,
+      quizId: deadline.quizId,
+      taskType: deadline.taskType,
+    }))
+  }, [upcomingDeadlinesData])
+
+  // Formater les prochaines étapes
+  const nextSteps = useMemo(() => {
+    return nextStepsData.map((step: any) => ({
+      action: step.action || "Action",
+      progress: step.progress || 0,
+      link: step.link || "/courses",
+      type: step.type || "explore",
+    }))
+  }, [nextStepsData])
+
 
   return (
     <ProtectedRoute>
@@ -517,6 +592,7 @@ export default function DashboardPage() {
                       />
                     </AreaChart>
                   </ChartContainer>
+                  )}
                 </CardContent>
               </Card>
             </FadeInView>
@@ -646,62 +722,56 @@ export default function DashboardPage() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3">
-                  {upcomingDeadlines.map((deadline, index) => (
-                    <div
+                  {isLoadingDeadlines ? (
+                    <div className="flex items-center justify-center py-8">
+                      <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                      <span className="ml-2 text-muted-foreground">Chargement...</span>
+                    </div>
+                  ) : upcomingDeadlines.length > 0 ? (
+                    upcomingDeadlines.map((deadline, index) => (
+                    <Link 
                       key={index}
-                      className={`p-4 border-2 rounded-xl transition-all duration-300 hover:shadow-lg ${
-                        deadline.priority === "high"
-                          ? "border-primary/40 bg-primary/10 hover:bg-primary/15"
-                          : "border-muted bg-muted/20 hover:bg-muted/30"
-                      }`}
+                      href={deadline.taskType === "quiz" && deadline.courseId && deadline.quizId 
+                        ? `/learn/${deadline.courseId}/quiz/${deadline.quizId}` 
+                        : deadline.courseId 
+                        ? `/learn/${deadline.courseId}` 
+                        : "/courses"}
                     >
-                      <div className="flex items-start justify-between gap-2 mb-2">
-                        <div className="flex-1">
-                          <p className="font-bold text-sm mb-1">{deadline.course}</p>
-                          <p className="text-xs text-muted-foreground">{deadline.task}</p>
-                        </div>
-                        {deadline.priority === "high" && (
-                          <Flame className="h-4 w-4 text-primary flex-shrink-0" />
-                        )}
-                      </div>
-                      <Badge
-                        className={`text-xs font-semibold ${
+                      <div
+                        className={`p-4 border-2 rounded-xl transition-all duration-300 hover:shadow-lg cursor-pointer ${
                           deadline.priority === "high"
-                            ? "bg-primary text-white border-0"
-                            : "bg-muted text-foreground"
+                            ? "border-primary/40 bg-primary/10 hover:bg-primary/15"
+                            : "border-muted bg-muted/20 hover:bg-muted/30"
                         }`}
                       >
-                        {deadline.dueDate}
-                      </Badge>
+                        <div className="flex items-start justify-between gap-2 mb-2">
+                          <div className="flex-1">
+                            <p className="font-bold text-sm mb-1">{deadline.course}</p>
+                            <p className="text-xs text-muted-foreground">{deadline.task}</p>
+                          </div>
+                          {deadline.priority === "high" && (
+                            <Flame className="h-4 w-4 text-primary flex-shrink-0" />
+                          )}
+                        </div>
+                        <Badge
+                          className={`text-xs font-semibold ${
+                            deadline.priority === "high"
+                              ? "bg-primary text-white border-0"
+                              : "bg-muted text-foreground"
+                          }`}
+                        >
+                          {deadline.dueDate}
+                        </Badge>
+                      </div>
+                    </Link>
+                    ))
+                  ) : (
+                    <div className="text-center py-8 text-muted-foreground">
+                      <Calendar className="h-12 w-12 mx-auto mb-3 opacity-50" />
+                      <p className="text-sm">Aucune échéance à venir</p>
+                      <p className="text-xs mt-1">Vous êtes à jour avec vos cours</p>
                     </div>
-                  ))}
-                </CardContent>
-              </Card>
-            </FadeInView>
-
-            {/* Learning Goal */}
-            <FadeInView delay={0.5}>
-              <Card className="border-2 border-primary/40 bg-gradient-to-br from-primary/10 via-primary/5 to-transparent">
-                <CardHeader className="pb-4">
-                  <CardTitle className="text-lg flex items-center gap-2">
-                    <Target className="h-5 w-5 text-primary" />
-                    Objectif de la Semaine
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div>
-                    <div className="flex items-center justify-between mb-3">
-                      <span className="text-sm font-bold">20 heures d'apprentissage</span>
-                      <span className="text-sm font-bold text-primary">22/20h</span>
-                    </div>
-                    <Progress value={110} className="h-3 bg-muted" />
-                  </div>
-                  <div className="flex items-center gap-2 p-3 bg-primary/10 rounded-lg border border-primary/20">
-                    <Sparkles className="h-4 w-4 text-primary" />
-                    <p className="text-xs font-bold text-primary">
-                      Objectif dépassé ! Excellent travail 🎉
-                    </p>
-                  </div>
+                  )}
                 </CardContent>
               </Card>
             </FadeInView>
@@ -1011,34 +1081,46 @@ export default function DashboardPage() {
               </div>
             </CardHeader>
             <CardContent className="space-y-3">
-              {[
-                { action: "Compléter le cours React & TypeScript", progress: 75, link: "/learn/1" },
-                { action: "Passer le quiz Next.js Module 5", progress: 0, link: "/learn/2" },
-                { action: "Explorer les nouveaux cours disponibles", progress: 0, link: "/courses" },
-              ].map((step, index) => (
-                <div
-                  key={index}
-                  className="group p-4 border-2 border-primary/20 rounded-xl hover:border-primary/40 hover:bg-primary/10 transition-all duration-300 cursor-pointer"
-                >
-                  <div className="flex items-start justify-between gap-3 mb-2">
-                    <div className="flex-1">
-                      <p className="font-bold text-sm group-hover:text-primary transition-colors">
-                        {step.action}
-                      </p>
-                      {step.progress > 0 && (
-                        <div className="mt-2 space-y-1">
-                          <div className="flex items-center justify-between text-xs text-muted-foreground">
-                            <span>Progression</span>
-                            <span className="font-semibold">{step.progress}%</span>
-                          </div>
-                          <Progress value={step.progress} className="h-2" />
-                        </div>
-                      )}
-                    </div>
-                    <ArrowUpRight className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors flex-shrink-0" />
-                  </div>
+              {isLoadingNextSteps ? (
+                <div className="flex items-center justify-center py-8">
+                  <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                  <span className="ml-2 text-muted-foreground">Chargement...</span>
                 </div>
-              ))}
+              ) : nextSteps.length > 0 ? (
+                nextSteps.map((step, index) => (
+                  <Link key={index} href={step.link || "/courses"}>
+                    <div
+                      className="group p-4 border-2 border-primary/20 rounded-xl hover:border-primary/40 hover:bg-primary/10 transition-all duration-300 cursor-pointer"
+                    >
+                      <div className="flex items-start justify-between gap-3 mb-2">
+                        <div className="flex-1">
+                          <p className="font-bold text-sm group-hover:text-primary transition-colors">
+                            {step.action}
+                          </p>
+                          {step.progress > 0 && (
+                            <div className="mt-2 space-y-1">
+                              <div className="flex items-center justify-between text-xs text-muted-foreground">
+                                <span>Progression</span>
+                                <span className="font-semibold">{step.progress}%</span>
+                              </div>
+                              <Progress value={step.progress} className="h-2" />
+                            </div>
+                          )}
+                        </div>
+                        <ArrowUpRight className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors flex-shrink-0" />
+                      </div>
+                    </div>
+                  </Link>
+                ))
+              ) : (
+                <div className="text-center py-8 text-muted-foreground">
+                  <Target className="h-12 w-12 mx-auto mb-3 opacity-50" />
+                  <p className="text-sm">Aucune suggestion pour le moment</p>
+                  <Button variant="outline" size="sm" className="mt-4" asChild>
+                    <Link href="/courses">Explorer les cours</Link>
+                  </Button>
+                </div>
+              )}
             </CardContent>
           </Card>
         </FadeInView>
