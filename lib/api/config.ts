@@ -135,6 +135,15 @@ export const API_ENDPOINTS = {
     getAll: "/api/v1/rubriques/read",
     getById: "/api/v1/rubriques/read",
   },
+  // ODC Formations
+  odcFormations: {
+    getAll: "/api/odc-formations",
+    getById: "/api/odc-formations",
+    create: "/api/odc-formations",
+    update: "/api/odc-formations",
+    delete: "/api/odc-formations",
+    myFormations: "/api/odc-formations/my-formations",
+  },
 } as const
 
 

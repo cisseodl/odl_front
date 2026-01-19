@@ -507,6 +507,104 @@ export const rubriqueService = {
   },
 }
 
+// ============ ODC Formations Services ============
+export const odcFormationService = {
+  /**
+   * Obtenir toutes les formations ODC
+   * GET /api/odc-formations
+   */
+  async getAllFormations(): Promise<any[]> {
+    try {
+      const response = await apiClient.get<any>(API_ENDPOINTS.odcFormations.getAll)
+      
+      if (response.ok && response.data) {
+        // Le backend retourne CResponse<List<OdcFormationDto>>
+        if (Array.isArray(response.data)) {
+          return response.data
+        }
+        if (response.data.data && Array.isArray(response.data.data)) {
+          return response.data.data
+        }
+      }
+      
+      return []
+    } catch (error) {
+      console.error("Erreur lors de la récupération des formations ODC:", error)
+      return []
+    }
+  },
+
+  /**
+   * Obtenir une formation ODC par ID
+   * GET /api/odc-formations/{id}
+   */
+  async getFormationById(id: number): Promise<any | null> {
+    try {
+      const response = await apiClient.get<any>(`${API_ENDPOINTS.odcFormations.getById}/${id}`)
+      
+      if (response.ok && response.data) {
+        if (response.data.data) {
+          return response.data.data
+        }
+        return response.data
+      }
+      
+      return null
+    } catch (error) {
+      console.error("Erreur lors de la récupération de la formation ODC:", error)
+      return null
+    }
+  },
+
+  /**
+   * Créer une nouvelle formation ODC
+   * POST /api/odc-formations
+   */
+  async createFormation(data: { titre: string; description: string; lien: string }): Promise<ApiResponse<any>> {
+    return apiClient.post(API_ENDPOINTS.odcFormations.create, data)
+  },
+
+  /**
+   * Mettre à jour une formation ODC
+   * PUT /api/odc-formations/{id}
+   */
+  async updateFormation(id: number, data: { titre: string; description: string; lien: string }): Promise<ApiResponse<any>> {
+    return apiClient.put(`${API_ENDPOINTS.odcFormations.update}/${id}`, data)
+  },
+
+  /**
+   * Supprimer une formation ODC
+   * DELETE /api/odc-formations/{id}
+   */
+  async deleteFormation(id: number): Promise<ApiResponse<any>> {
+    return apiClient.delete(`${API_ENDPOINTS.odcFormations.delete}/${id}`)
+  },
+
+  /**
+   * Obtenir les formations créées par l'admin actuel
+   * GET /api/odc-formations/my-formations
+   */
+  async getMyFormations(): Promise<any[]> {
+    try {
+      const response = await apiClient.get<any>(API_ENDPOINTS.odcFormations.myFormations)
+      
+      if (response.ok && response.data) {
+        if (Array.isArray(response.data)) {
+          return response.data
+        }
+        if (response.data.data && Array.isArray(response.data.data)) {
+          return response.data.data
+        }
+      }
+      
+      return []
+    } catch (error) {
+      console.error("Erreur lors de la récupération de mes formations ODC:", error)
+      return []
+    }
+  },
+}
+
 // ============ Dashboard Services ============
 export const dashboardService = {
 
