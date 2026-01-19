@@ -203,24 +203,24 @@ export default function AdminSettingsPage() {
         </div>
 
         <Tabs defaultValue="general" className="space-y-6">
-          <TabsList className="w-full justify-start overflow-x-auto flex-nowrap gap-2">
+          <TabsList className="inline-flex h-10 items-center justify-start rounded-md bg-muted p-1 text-muted-foreground w-full">
             <TabsTrigger
               value="general"
-              className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground whitespace-nowrap"
+              className="inline-flex items-center justify-center whitespace-nowrap rounded-sm px-3 py-1.5 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm"
             >
               <Settings className="h-4 w-4 mr-2" />
               Configuration Générale
             </TabsTrigger>
             <TabsTrigger
               value="sections"
-              className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground whitespace-nowrap"
+              className="inline-flex items-center justify-center whitespace-nowrap rounded-sm px-3 py-1.5 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm"
             >
               <List className="h-4 w-4 mr-2" />
               Gestion des Sections
             </TabsTrigger>
             <TabsTrigger
               value="odc-formations"
-              className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground whitespace-nowrap"
+              className="inline-flex items-center justify-center whitespace-nowrap rounded-sm px-3 py-1.5 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm"
             >
               <GraduationCap className="h-4 w-4 mr-2" />
               ODC Formations
