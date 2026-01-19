@@ -2,6 +2,7 @@
 
 import Link from "next/link"
 import { useState, useEffect, useMemo } from "react"
+import { useRouter } from "next/navigation"
 import { Share2, Bookmark, MoreVertical, Play, Plus, Star, Clock, Users, Award, CheckCircle2, FileText, Video, BookOpen, HelpCircle, ArrowLeft, Globe, BarChart3, Infinity, Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -25,6 +26,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { moduleService, courseService } from "@/lib/api/services"
 import { adaptModule } from "@/lib/api/adapters"
 import { CourseSidebar } from "@/components/course-sidebar"
+import { useAuthStore } from "@/lib/store/auth-store"
 import type { Course, Module } from "@/lib/types"
 
 interface CourseDetailClientProps {
@@ -51,6 +53,8 @@ const getTotalLectures = (curriculum: Course["curriculum"]) => {
 }
 
 export function CourseDetailClient({ course }: CourseDetailClientProps) {
+  const router = useRouter()
+  const { user, isAuthenticated } = useAuthStore()
   const [showFullDescription, setShowFullDescription] = useState(false)
   const [activeTab, setActiveTab] = useState("content") // Par défaut, afficher l'onglet "Contenu" pour voir les modules/leçons
   const [dynamicCurriculum, setDynamicCurriculum] = useState<Module[] | null>(null)
@@ -68,6 +72,40 @@ export function CourseDetailClient({ course }: CourseDetailClientProps) {
     }
     return null
   }, [course.id])
+
+  // Vérifier si l'utilisateur a un profil apprenant
+  const hasLearnerProfile = useMemo(() => {
+    if (!user) return false
+    // Vérifier si l'utilisateur a un profil apprenant
+    const learner = (user as any)?.learner
+    return !!learner
+  }, [user])
+
+  // Handler pour l'inscription
+  const handleEnroll = () => {
+    // Vérifier l'authentification
+    if (!isAuthenticated || !user) {
+      toast.error("Authentification requise", {
+        description: "Vous devez être connecté pour vous inscrire à un cours.",
+      })
+      router.push("/auth?redirect=/courses/" + course.id)
+      return
+    }
+
+    // Vérifier le profil apprenant
+    if (!hasLearnerProfile) {
+      toast.error("Profil apprenant requis", {
+        description: "Vous devez avoir un profil apprenant pour vous inscrire à un cours. Veuillez compléter votre profil.",
+      })
+      router.push("/auth?redirect=/courses/" + course.id)
+      return
+    }
+
+    // Lancer l'inscription
+    if (courseIdNum) {
+      enrollMutation.mutate(courseIdNum)
+    }
+  }
 
   // Mutation pour s'inscrire au cours
   const enrollMutation = useMutation({
@@ -99,6 +137,12 @@ export function CourseDetailClient({ course }: CourseDetailClientProps) {
           description: "Vous pouvez accéder aux modules et leçons.",
         })
         queryClient.invalidateQueries({ queryKey: ["modules", courseIdNum] })
+      } else if (errorMessage.includes("non authentifié") || errorMessage.includes("401") || errorMessage.includes("403")) {
+        // Erreur d'authentification, rediriger vers la page d'authentification
+        toast.error("Authentification requise", {
+          description: "Vous devez être connecté pour vous inscrire à un cours.",
+        })
+        router.push("/auth?redirect=/courses/" + course.id)
       } else {
         toast.error("Erreur d'inscription", {
           description: errorMessage,
@@ -799,44 +843,36 @@ export function CourseDetailClient({ course }: CourseDetailClientProps) {
               </FadeInView>
             )}
             
-            {/* Card d'inscription */}
-            <FadeInView delay={0.3}>
-              <Card className="border-2 border-primary/40 bg-gradient-to-br from-primary/5 via-transparent to-transparent shadow-xl">
-                <CardHeader className="pb-4 border-b border-border">
-                  <CardTitle className="text-xl flex items-center gap-2">
-                    <Award className="h-5 w-5 text-primary" />
-                    Accéder au cours
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="p-6 space-y-6">
-                  {/* CTA Button */}
-                  <Button
-                    size="lg"
-                    className="w-full bg-primary text-white hover:bg-primary/90 font-bold text-lg h-14 shadow-lg hover:shadow-xl transition-all duration-300"
-                    onClick={() => {
-                      if (courseIdNum) {
-                        enrollMutation.mutate(courseIdNum)
-                      }
-                    }}
-                    disabled={enrollMutation.isPending || isEnrolled}
-                  >
-                    {enrollMutation.isPending ? (
-                      <>
-                        <Loader2 className="h-5 w-5 mr-2 animate-spin" />
-                        Inscription en cours...
-                      </>
-                    ) : isEnrolled ? (
-                      <>
-                        <CheckCircle2 className="h-5 w-5 mr-2" />
-                        Inscrit
-                      </>
-                    ) : (
-                      <>
-                        S'inscrire gratuitement
-                        <ArrowLeft className="h-5 w-5 ml-2 rotate-180" />
-                      </>
-                    )}
-                  </Button>
+            {/* Card d'inscription - Afficher uniquement si l'utilisateur n'est pas inscrit */}
+            {!isEnrolled && (
+              <FadeInView delay={0.3}>
+                <Card className="border-2 border-primary/40 bg-gradient-to-br from-primary/5 via-transparent to-transparent shadow-xl">
+                  <CardHeader className="pb-4 border-b border-border">
+                    <CardTitle className="text-xl flex items-center gap-2">
+                      <Award className="h-5 w-5 text-primary" />
+                      Accéder au cours
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="p-6 space-y-6">
+                    {/* CTA Button */}
+                    <Button
+                      size="lg"
+                      className="w-full bg-primary text-white hover:bg-primary/90 font-bold text-lg h-14 shadow-lg hover:shadow-xl transition-all duration-300"
+                      onClick={handleEnroll}
+                      disabled={enrollMutation.isPending}
+                    >
+                      {enrollMutation.isPending ? (
+                        <>
+                          <Loader2 className="h-5 w-5 mr-2 animate-spin" />
+                          Inscription en cours...
+                        </>
+                      ) : (
+                        <>
+                          S'inscrire gratuitement
+                          <ArrowLeft className="h-5 w-5 ml-2 rotate-180" />
+                        </>
+                      )}
+                    </Button>
 
                   {/* Course Info */}
                   <div className="space-y-4">
@@ -950,6 +986,7 @@ export function CourseDetailClient({ course }: CourseDetailClientProps) {
                 </CardContent>
               </Card>
             </FadeInView>
+            )}
           </div>
         </div>
       </div>
