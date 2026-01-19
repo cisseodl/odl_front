@@ -519,17 +519,19 @@ export const odcFormationService = {
       
       if (response.ok && response.data) {
         // Le backend retourne CResponse<List<OdcFormationDto>>
-        if (Array.isArray(response.data)) {
-          return response.data
-        }
         if (response.data.data && Array.isArray(response.data.data)) {
           return response.data.data
         }
+        if (Array.isArray(response.data)) {
+          return response.data
+        }
       }
       
+      // Toujours retourner un tableau pour éviter les erreurs .filter() sur undefined
       return []
     } catch (error) {
       console.error("Erreur lors de la récupération des formations ODC:", error)
+      // Toujours retourner un tableau vide en cas d'erreur
       return []
     }
   },

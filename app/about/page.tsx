@@ -30,7 +30,7 @@ export default function AboutPage() {
 
   // Charger les formations ODC depuis l'API
   const {
-    data: odcFormations = [],
+    data: odcFormationsResponse,
     isLoading: isLoadingOdcFormations,
   } = useQuery({
     queryKey: ["odcFormations"],
@@ -41,6 +41,13 @@ export default function AboutPage() {
     },
     staleTime: 10 * 60 * 1000, // Cache pendant 10 minutes
   })
+
+  // Extraire les formations du tableau, en s'assurant que c'est toujours un tableau
+  const odcFormations = Array.isArray(odcFormationsResponse?.data) 
+    ? odcFormationsResponse.data 
+    : Array.isArray(odcFormationsResponse) 
+    ? odcFormationsResponse 
+    : []
 
   // Fonction pour obtenir l'icône selon le titre de la formation
   const getIconForFormation = (titre: string) => {
