@@ -784,6 +784,11 @@ export const learnerService = {
    * Obtenir l'activité récente de l'utilisateur (dernières leçons complétées)
    * GET /api/learn/recent-activity
    */
+  /**
+   * Obtenir l'activité récente de l'apprenant
+   * GET /api/learn/recent-activity?limit={limit}
+   * Le backend retourne CResponse<List<Map<String, Object>>>
+   */
   async getRecentActivity(limit: number = 3): Promise<any[]> {
     try {
       const response = await apiClient.get<any>(
@@ -791,8 +796,19 @@ export const learnerService = {
       )
       
       if (response.ok && response.data) {
-        const data = Array.isArray(response.data) ? response.data : []
-        return data
+        // Le backend retourne CResponse<List<Map<String, Object>>>
+        if (Array.isArray(response.data)) {
+          return response.data
+        }
+        // Si c'est un CResponse, extraire le data
+        if (response.data.data && Array.isArray(response.data.data)) {
+          return response.data.data
+        }
+        // Si response.data est un objet avec une propriété data qui est un array
+        if (response.data && typeof response.data === 'object' && 'data' in response.data) {
+          const data = (response.data as any).data
+          return Array.isArray(data) ? data : []
+        }
       }
       
       return []
@@ -805,6 +821,7 @@ export const learnerService = {
   /**
    * Obtenir la progression d'apprentissage par période (week, month, year)
    * GET /api/learn/learning-progress?period=week|month|year
+   * Le backend retourne CResponse<List<Map<String, Object>>>
    */
   async getLearningProgress(period: "week" | "month" | "year" = "week"): Promise<any[]> {
     try {
@@ -813,8 +830,21 @@ export const learnerService = {
       )
       
       if (response.ok && response.data) {
-        const data = Array.isArray(response.data) ? response.data : []
-        return data
+        // Le backend retourne CResponse<List<Map<String, Object>>>
+        // Les données peuvent être dans response.data (si c'est directement un array)
+        // ou dans response.data.data (si c'est une CResponse)
+        if (Array.isArray(response.data)) {
+          return response.data
+        }
+        // Si c'est un CResponse, extraire le data
+        if (response.data.data && Array.isArray(response.data.data)) {
+          return response.data.data
+        }
+        // Si response.data est un objet avec une propriété data qui est un array
+        if (response.data && typeof response.data === 'object' && 'data' in response.data) {
+          const data = (response.data as any).data
+          return Array.isArray(data) ? data : []
+        }
       }
       
       return []
@@ -827,6 +857,7 @@ export const learnerService = {
   /**
    * Obtenir les échéances à venir (quiz non complétés)
    * GET /api/learn/upcoming-deadlines
+   * Le backend retourne CResponse<List<Map<String, Object>>>
    */
   async getUpcomingDeadlines(): Promise<any[]> {
     try {
@@ -835,8 +866,19 @@ export const learnerService = {
       )
       
       if (response.ok && response.data) {
-        const data = Array.isArray(response.data) ? response.data : []
-        return data
+        // Le backend retourne CResponse<List<Map<String, Object>>>
+        if (Array.isArray(response.data)) {
+          return response.data
+        }
+        // Si c'est un CResponse, extraire le data
+        if (response.data.data && Array.isArray(response.data.data)) {
+          return response.data.data
+        }
+        // Si response.data est un objet avec une propriété data qui est un array
+        if (response.data && typeof response.data === 'object' && 'data' in response.data) {
+          const data = (response.data as any).data
+          return Array.isArray(data) ? data : []
+        }
       }
       
       return []
@@ -849,6 +891,7 @@ export const learnerService = {
   /**
    * Obtenir les prochaines étapes suggérées
    * GET /api/learn/next-steps
+   * Le backend retourne CResponse<List<Map<String, Object>>>
    */
   async getNextSteps(): Promise<any[]> {
     try {
@@ -857,8 +900,19 @@ export const learnerService = {
       )
       
       if (response.ok && response.data) {
-        const data = Array.isArray(response.data) ? response.data : []
-        return data
+        // Le backend retourne CResponse<List<Map<String, Object>>>
+        if (Array.isArray(response.data)) {
+          return response.data
+        }
+        // Si c'est un CResponse, extraire le data
+        if (response.data.data && Array.isArray(response.data.data)) {
+          return response.data.data
+        }
+        // Si response.data est un objet avec une propriété data qui est un array
+        if (response.data && typeof response.data === 'object' && 'data' in response.data) {
+          const data = (response.data as any).data
+          return Array.isArray(data) ? data : []
+        }
       }
       
       return []
