@@ -523,6 +523,8 @@ export const dashboardService = {
     try {
       const response = await apiClient.get<any>(API_ENDPOINTS.dashboard.publicStats)
       
+      console.log("getPublicStats - Response complète:", response)
+      
       if (response.ok && response.data) {
         // Le backend retourne CResponse<Map<String, Object>>
         let stats: any = {}
@@ -535,12 +537,17 @@ export const dashboardService = {
           stats = response.data
         }
         
-        return {
+        console.log("getPublicStats - Stats extraites:", stats)
+        
+        const result = {
           totalStudents: stats.totalStudents || 0,
           totalCourses: stats.totalCourses || 0,
           mostViewedCourses: stats.mostViewedCourses || 0,
           satisfactionRate: stats.satisfactionRate || 98,
         }
+        
+        console.log("getPublicStats - Résultat final:", result)
+        return result
       }
       
       // Valeurs par défaut en cas d'erreur

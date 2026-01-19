@@ -40,7 +40,11 @@ export default function HomePage() {
     isLoading: isLoadingStats,
   } = useQuery({
     queryKey: ["publicStats"],
-    queryFn: () => dashboardService.getPublicStats(),
+    queryFn: async () => {
+      const stats = await dashboardService.getPublicStats()
+      console.log("Page d'accueil - Statistiques publiques reçues:", stats)
+      return stats
+    },
     staleTime: 10 * 60 * 1000, // 10 minutes - les stats changent moins souvent
   })
 
@@ -243,22 +247,22 @@ export default function HomePage() {
               <AnimatedStats
                 stats={[
                   { 
-                    value: publicStats?.totalStudents || 250000, 
+                    value: publicStats?.totalStudents ?? 0, 
                     label: t("stats.activeStudents"), 
                     useFormat: true 
                   },
                   { 
-                    value: publicStats?.totalCourses || 5000, 
+                    value: publicStats?.totalCourses ?? 0, 
                     label: t("stats.availableCourses"), 
                     useFormat: true 
                   },
                   { 
-                    value: publicStats?.mostViewedCourses || 1200, 
+                    value: publicStats?.mostViewedCourses ?? 0, 
                     label: t("stats.mostViewed"), 
                     useFormat: true 
                   },
                   { 
-                    value: publicStats?.satisfactionRate || 98, 
+                    value: publicStats?.satisfactionRate ?? 98, 
                     label: t("stats.satisfactionRate"), 
                     suffix: "%" 
                   },
