@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { useState, useEffect, useMemo } from "react"
-import { Share2, Bookmark, MoreVertical, Play, Plus, Star, Clock, Users, Award, CheckCircle2, FileText, Video, BookOpen, HelpCircle, ArrowLeft, Globe, BarChart3, Infinity } from "lucide-react"
+import { Share2, Bookmark, MoreVertical, Play, Plus, Star, Clock, Users, Award, CheckCircle2, FileText, Video, BookOpen, HelpCircle, ArrowLeft, Globe, BarChart3, Infinity, Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
@@ -21,8 +21,8 @@ import { toast } from "sonner"
 import { RatingStars } from "@/components/rating-stars"
 import { FadeInView } from "@/components/fade-in-view"
 import { useScrollSpy } from "@/hooks/use-scroll-spy"
-import { useQuery } from "@tanstack/react-query"
-import { moduleService } from "@/lib/api/services"
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
+import { moduleService, courseService } from "@/lib/api/services"
 import { adaptModule } from "@/lib/api/adapters"
 import type { Course, Module } from "@/lib/types"
 
@@ -53,6 +53,8 @@ export function CourseDetailClient({ course }: CourseDetailClientProps) {
   const [showFullDescription, setShowFullDescription] = useState(false)
   const [activeTab, setActiveTab] = useState("content") // Par défaut, afficher l'onglet "Contenu" pour voir les modules/leçons
   const [dynamicCurriculum, setDynamicCurriculum] = useState<Module[] | null>(null)
+  const [isEnrolled, setIsEnrolled] = useState(false)
+  const queryClient = useQueryClient()
 
   // Convertir course.id en nombre de manière sécurisée
   const courseIdNum = useMemo(() => {
@@ -66,16 +68,42 @@ export function CourseDetailClient({ course }: CourseDetailClientProps) {
     return null
   }, [course.id])
 
-  // Charger les modules depuis l'API - toujours charger pour s'assurer qu'ils sont à jour
-  // Même si le cours a déjà un curriculum, on recharge les modules pour avoir les dernières données
+  // Mutation pour s'inscrire au cours
+  const enrollMutation = useMutation({
+    mutationFn: (courseId: number) => courseService.enrollInCourse(courseId),
+    onSuccess: () => {
+      toast.success("Inscription réussie !", {
+        description: "Vous pouvez maintenant accéder aux modules et leçons du cours.",
+      })
+      setIsEnrolled(true)
+      // Recharger les modules après l'inscription
+      queryClient.invalidateQueries({ queryKey: ["modules", courseIdNum] })
+    },
+    onError: (error: any) => {
+      const errorMessage = error?.message || "Erreur lors de l'inscription"
+      toast.error("Erreur d'inscription", {
+        description: errorMessage,
+      })
+    },
+  })
+
+  // Charger les modules depuis l'API - seulement si l'utilisateur est inscrit
   const { data: modulesFromApi, isLoading: isLoadingModules, error: modulesError } = useQuery({
     queryKey: ["modules", courseIdNum],
     queryFn: () => moduleService.getModulesByCourse(courseIdNum!),
-    enabled: courseIdNum !== null && !Number.isNaN(courseIdNum!),
+    enabled: courseIdNum !== null && !Number.isNaN(courseIdNum!) && isEnrolled,
     staleTime: 5 * 60 * 1000, // Cache pendant 5 minutes
     retry: 2, // Réessayer 2 fois en cas d'erreur
-    onError: (error) => {
+    onError: (error: any) => {
       console.error("Erreur lors du chargement des modules:", error)
+      // Si l'erreur indique qu'il faut s'inscrire, mettre isEnrolled à false
+      if (error?.message?.includes("inscrire") || error?.message?.includes("inscription")) {
+        setIsEnrolled(false)
+      }
+    },
+    onSuccess: () => {
+      // Si les modules se chargent, l'utilisateur est inscrit
+      setIsEnrolled(true)
     }
   })
 
@@ -417,7 +445,15 @@ export function CourseDetailClient({ course }: CourseDetailClientProps) {
                       </div>
                     </div>
                     <Accordion type="multiple" className="w-full space-y-3" defaultValue={curriculum.length > 0 && curriculum[0]?.id ? [String(curriculum[0].id)] : []}>
-                      {isLoadingModules ? (
+                      {!isEnrolled ? (
+                        <div className="p-8 text-center text-muted-foreground">
+                          <div className="flex flex-col items-center justify-center gap-3">
+                            <BookOpen className="h-12 w-12 text-primary/50" />
+                            <p className="font-medium text-lg">Inscrivez-vous pour accéder aux modules et leçons</p>
+                            <p className="text-sm">Cliquez sur le bouton "S'inscrire gratuitement" ci-dessus pour commencer</p>
+                          </div>
+                        </div>
+                      ) : isLoadingModules ? (
                         <div className="p-8 text-center text-muted-foreground">
                           <div className="flex items-center justify-center gap-3">
                             <div className="h-5 w-5 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
@@ -714,12 +750,29 @@ export function CourseDetailClient({ course }: CourseDetailClientProps) {
                   <Button
                     size="lg"
                     className="w-full bg-primary text-white hover:bg-primary/90 font-bold text-lg h-14 shadow-lg hover:shadow-xl transition-all duration-300"
-                    asChild
+                    onClick={() => {
+                      if (courseIdNum) {
+                        enrollMutation.mutate(courseIdNum)
+                      }
+                    }}
+                    disabled={enrollMutation.isPending || isEnrolled}
                   >
-                    <Link href={`/learn/${course.id}`}>
-                      S'inscrire gratuitement
-                      <ArrowLeft className="h-5 w-5 ml-2 rotate-180" />
-                    </Link>
+                    {enrollMutation.isPending ? (
+                      <>
+                        <Loader2 className="h-5 w-5 mr-2 animate-spin" />
+                        Inscription en cours...
+                      </>
+                    ) : isEnrolled ? (
+                      <>
+                        <CheckCircle2 className="h-5 w-5 mr-2" />
+                        Inscrit
+                      </>
+                    ) : (
+                      <>
+                        S'inscrire gratuitement
+                        <ArrowLeft className="h-5 w-5 ml-2 rotate-180" />
+                      </>
+                    )}
                   </Button>
 
                   {/* Course Info */}
