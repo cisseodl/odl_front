@@ -51,7 +51,7 @@ const getTotalLectures = (curriculum: Course["curriculum"]) => {
 
 export function CourseDetailClient({ course }: CourseDetailClientProps) {
   const [showFullDescription, setShowFullDescription] = useState(false)
-  const [activeTab, setActiveTab] = useState("overview")
+  const [activeTab, setActiveTab] = useState("content") // Par défaut, afficher l'onglet "Contenu" pour voir les modules/leçons
   const [dynamicCurriculum, setDynamicCurriculum] = useState<Module[] | null>(null)
 
   // Convertir course.id en nombre de manière sécurisée
