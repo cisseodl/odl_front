@@ -134,10 +134,19 @@ export function CourseDetailClient({ course }: CourseDetailClientProps) {
 
   // Vérifier l'inscription au chargement initial
   useEffect(() => {
-    if (courseIdNum && !isLoadingModules && modulesFromApi) {
-      setIsEnrolled(true)
+    if (courseIdNum && !isLoadingModules) {
+      if (modulesFromApi && Array.isArray(modulesFromApi) && modulesFromApi.length > 0) {
+        setIsEnrolled(true)
+      } else if (modulesError) {
+        // Si erreur, vérifier si c'est une erreur d'inscription
+        const errorMessage = modulesError?.message || ""
+        if (!errorMessage.includes("inscrire") && !errorMessage.includes("inscription") && !errorMessage.includes("inscrit")) {
+          // Si ce n'est pas une erreur d'inscription, on considère que l'utilisateur est inscrit mais qu'il n'y a pas de modules
+          setIsEnrolled(true)
+        }
+      }
     }
-  }, [courseIdNum, isLoadingModules, modulesFromApi])
+  }, [courseIdNum, isLoadingModules, modulesFromApi, modulesError])
 
   // Adapter les modules de l'API si nécessaire
   useEffect(() => {

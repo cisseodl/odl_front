@@ -16,17 +16,17 @@ interface CourseSidebarProps {
 }
 
 export function CourseSidebar({ modules, courseId, currentLessonId, isLoading }: CourseSidebarProps) {
-  const [expandedModules, setExpandedModules] = useState<Set<string | number>>(new Set())
+  // Utiliser un tableau au lieu d'un Set pour éviter les problèmes de sérialisation React
+  const [expandedModules, setExpandedModules] = useState<(string | number)[]>([])
 
   const toggleModule = (moduleId: string | number) => {
     setExpandedModules((prev) => {
-      const next = new Set(prev)
-      if (next.has(moduleId)) {
-        next.delete(moduleId)
+      const moduleIdStr = String(moduleId)
+      if (prev.includes(moduleIdStr) || prev.includes(moduleId)) {
+        return prev.filter(id => String(id) !== moduleIdStr && id !== moduleId)
       } else {
-        next.add(moduleId)
+        return [...prev, moduleId]
       }
-      return next
     })
   }
 
@@ -87,7 +87,8 @@ export function CourseSidebar({ modules, courseId, currentLessonId, isLoading }:
       <ScrollArea className="flex-1">
         <div className="p-2">
           {modules.map((module, moduleIndex) => {
-            const isExpanded = expandedModules.has(module.id)
+            const moduleIdStr = String(module.id)
+            const isExpanded = expandedModules.some(id => String(id) === moduleIdStr || id === module.id)
             const moduleLessons = module.lessons || []
             const moduleDuration = moduleLessons.reduce((acc, lesson) => {
               const duration = lesson.duration || "0m"

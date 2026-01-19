@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from "react"
 import Link from "next/link"
-import { BookOpen, Clock, Award, TrendingUp, Play, Calendar, Trophy, Target, Sparkles, Zap, Flame, ArrowUpRight, FileText, Users, Star, CheckCircle2, BarChart3, MessageSquare, Share2, Download, Eye, Loader2 } from "lucide-react"
+import { BookOpen, Clock, Award, TrendingUp, Play, Calendar, Trophy, Target, Sparkles, Zap, Flame, ArrowUpRight, FileText, Star, CheckCircle2, BarChart3, Download, Eye, Loader2 } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
@@ -141,6 +141,28 @@ export default function DashboardPage() {
       }
     })
   }, [enrolledCourses, profile])
+
+  // Calculer la répartition par catégorie pour le graphique
+  const categoryDistribution = useMemo(() => {
+    if (!enrolledCourses.length) {
+      return []
+    }
+
+    // Compter les cours par catégorie
+    const categoryCount: Record<string, number> = {}
+    
+    enrolledCourses.forEach((course) => {
+      const category = course.category || "Autre"
+      categoryCount[category] = (categoryCount[category] || 0) + 1
+    })
+
+    // Convertir en tableau pour le graphique, trier par valeur décroissante
+    const distribution = Object.entries(categoryCount)
+      .map(([category, value]) => ({ category, value }))
+      .sort((a, b) => b.value - a.value)
+
+    return distribution
+  }, [enrolledCourses])
 
   const recentActivity = [
     {
@@ -842,163 +864,119 @@ export default function DashboardPage() {
                 </div>
               </CardHeader>
               <CardContent>
-                <ChartContainer
-                  config={{
-                    value: {
-                      label: "Cours",
-                      color: "hsl(var(--primary))",
-                    },
-                  }}
-                  className="h-[300px] w-full"
-                >
-                  <BarChart data={[
-                    { category: "Développement", value: 8 },
-                    { category: "Design", value: 3 },
-                    { category: "Data Science", value: 2 },
-                    { category: "DevOps", value: 1 },
-                  ]}>
-                    <CartesianGrid strokeDasharray="3 3" className="stroke-muted/30" />
-                    <XAxis
-                      dataKey="category"
-                      tickLine={false}
-                      axisLine={false}
-                      tickMargin={12}
-                      className="text-xs font-medium"
-                      tick={{ fill: "hsl(var(--muted-foreground))" }}
-                    />
-                    <YAxis
-                      tickLine={false}
-                      axisLine={false}
-                      tickMargin={12}
-                      className="text-xs font-medium"
-                      tick={{ fill: "hsl(var(--muted-foreground))" }}
-                    />
-                    <ChartTooltip
-                      cursor={{ fill: "hsl(var(--primary) / 0.1)" }}
-                      content={({ active, payload }) => {
-                        if (active && payload && payload.length) {
-                          return (
-                            <div className="rounded-lg border bg-background p-3 shadow-lg">
-                              <p className="font-bold text-sm text-primary">
-                                {payload[0].value} cours
-                              </p>
-                              <p className="text-xs text-muted-foreground">
-                                {payload[0].payload.category}
-                              </p>
-                            </div>
-                          )
-                        }
-                        return null
-                      }}
-                    />
-                    <Bar
-                      dataKey="value"
-                      fill="hsl(var(--primary))"
-                      radius={[8, 8, 0, 0]}
-                    />
-                  </BarChart>
-                </ChartContainer>
-              </CardContent>
-            </Card>
-          </FadeInView>
-        </div>
-
-        {/* Prochaines Étapes & Communauté */}
-        <div className="grid lg:grid-cols-2 gap-6">
-          {/* Prochaines Étapes */}
-          <FadeInView delay={1.2}>
-            <Card className="border-2 border-primary/40 bg-gradient-to-br from-primary/10 via-primary/5 to-transparent">
-              <CardHeader className="pb-4">
-                <div className="flex items-center gap-3">
-                  <div className="rounded-lg bg-primary/20 p-2 border border-primary/30">
-                    <Target className="h-5 w-5 text-primary" />
-                  </div>
-                  <div>
-                    <CardTitle className="text-xl">Prochaines Étapes</CardTitle>
-                    <CardDescription>Suggestions pour continuer votre apprentissage</CardDescription>
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                {[
-                  { action: "Compléter le cours React & TypeScript", progress: 75, link: "/learn/1" },
-                  { action: "Passer le quiz Next.js Module 5", progress: 0, link: "/learn/2" },
-                  { action: "Explorer les nouveaux cours disponibles", progress: 0, link: "/courses" },
-                ].map((step, index) => (
-                  <div
-                    key={index}
-                    className="group p-4 border-2 border-primary/20 rounded-xl hover:border-primary/40 hover:bg-primary/10 transition-all duration-300 cursor-pointer"
+                {categoryDistribution.length > 0 ? (
+                  <ChartContainer
+                    config={{
+                      value: {
+                        label: "Cours",
+                        color: "hsl(var(--primary))",
+                      },
+                    }}
+                    className="h-[300px] w-full"
                   >
-                    <div className="flex items-start justify-between gap-3 mb-2">
-                      <div className="flex-1">
-                        <p className="font-bold text-sm group-hover:text-primary transition-colors">
-                          {step.action}
-                        </p>
-                        {step.progress > 0 && (
-                          <div className="mt-2 space-y-1">
-                            <div className="flex items-center justify-between text-xs text-muted-foreground">
-                              <span>Progression</span>
-                              <span className="font-semibold">{step.progress}%</span>
-                            </div>
-                            <Progress value={step.progress} className="h-2" />
-                          </div>
-                        )}
-                      </div>
-                      <ArrowUpRight className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors flex-shrink-0" />
-                    </div>
+                    <BarChart data={categoryDistribution}>
+                      <CartesianGrid strokeDasharray="3 3" className="stroke-muted/30" />
+                      <XAxis
+                        dataKey="category"
+                        tickLine={false}
+                        axisLine={false}
+                        tickMargin={12}
+                        className="text-xs font-medium"
+                        tick={{ fill: "hsl(var(--muted-foreground))" }}
+                        angle={-45}
+                        textAnchor="end"
+                        height={80}
+                      />
+                      <YAxis
+                        tickLine={false}
+                        axisLine={false}
+                        tickMargin={12}
+                        className="text-xs font-medium"
+                        tick={{ fill: "hsl(var(--muted-foreground))" }}
+                      />
+                      <ChartTooltip
+                        cursor={{ fill: "hsl(var(--primary) / 0.1)" }}
+                        content={({ active, payload }) => {
+                          if (active && payload && payload.length) {
+                            return (
+                              <div className="rounded-lg border bg-background p-3 shadow-lg">
+                                <p className="font-bold text-sm text-primary">
+                                  {payload[0].value} cours
+                                </p>
+                                <p className="text-xs text-muted-foreground">
+                                  {payload[0].payload.category}
+                                </p>
+                              </div>
+                            )
+                          }
+                          return null
+                        }}
+                      />
+                      <Bar
+                        dataKey="value"
+                        fill="hsl(var(--primary))"
+                        radius={[8, 8, 0, 0]}
+                      />
+                    </BarChart>
+                  </ChartContainer>
+                ) : (
+                  <div className="flex flex-col items-center justify-center h-[300px] text-muted-foreground">
+                    <BarChart3 className="h-12 w-12 mb-3 opacity-50" />
+                    <p className="text-sm">Aucune donnée disponible</p>
+                    <p className="text-xs mt-1">Inscrivez-vous à des cours pour voir vos statistiques</p>
                   </div>
-                ))}
-              </CardContent>
-            </Card>
-          </FadeInView>
-
-          {/* Communauté & Interactions */}
-          <FadeInView delay={1.3}>
-            <Card className="border-2 hover:border-primary/20 transition-all duration-300">
-              <CardHeader className="pb-4">
-                <div className="flex items-center gap-3">
-                  <div className="rounded-lg bg-primary/10 p-2 border border-primary/20">
-                    <Users className="h-5 w-5 text-primary" />
-                  </div>
-                  <div>
-                    <CardTitle className="text-xl">Communauté</CardTitle>
-                    <CardDescription>Interactions et partages</CardDescription>
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid grid-cols-3 gap-4">
-                  {[
-                    { label: "Questions posées", value: 24, icon: MessageSquare },
-                    { label: "Réponses données", value: 18, icon: CheckCircle2 },
-                    { label: "Cours partagés", value: 12, icon: Share2 },
-                  ].map((stat, index) => (
-                    <div
-                      key={index}
-                      className="p-4 border-2 rounded-xl hover:border-primary/40 hover:bg-primary/5 transition-all duration-300 text-center"
-                    >
-                      <div className="flex justify-center mb-2">
-                        <div className="rounded-lg bg-primary/10 p-2 border border-primary/20">
-                          <stat.icon className="h-4 w-4 text-primary" />
-                        </div>
-                      </div>
-                      <p className="text-2xl font-bold mb-1">{stat.value}</p>
-                      <p className="text-xs text-muted-foreground">{stat.label}</p>
-                    </div>
-                  ))}
-                </div>
-                <div className="pt-4 border-t">
-                  <Button className="w-full bg-primary text-white hover:bg-primary/90 font-semibold" asChild>
-                    <Link href="/courses">
-                      Rejoindre la communauté
-                      <Users className="h-4 w-4 ml-2" />
-                    </Link>
-                  </Button>
-                </div>
+                )}
               </CardContent>
             </Card>
           </FadeInView>
         </div>
+
+        {/* Prochaines Étapes */}
+        <FadeInView delay={1.2}>
+          <Card className="border-2 border-primary/40 bg-gradient-to-br from-primary/10 via-primary/5 to-transparent">
+            <CardHeader className="pb-4">
+              <div className="flex items-center gap-3">
+                <div className="rounded-lg bg-primary/20 p-2 border border-primary/30">
+                  <Target className="h-5 w-5 text-primary" />
+                </div>
+                <div>
+                  <CardTitle className="text-xl">Prochaines Étapes</CardTitle>
+                  <CardDescription>Suggestions pour continuer votre apprentissage</CardDescription>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {[
+                { action: "Compléter le cours React & TypeScript", progress: 75, link: "/learn/1" },
+                { action: "Passer le quiz Next.js Module 5", progress: 0, link: "/learn/2" },
+                { action: "Explorer les nouveaux cours disponibles", progress: 0, link: "/courses" },
+              ].map((step, index) => (
+                <div
+                  key={index}
+                  className="group p-4 border-2 border-primary/20 rounded-xl hover:border-primary/40 hover:bg-primary/10 transition-all duration-300 cursor-pointer"
+                >
+                  <div className="flex items-start justify-between gap-3 mb-2">
+                    <div className="flex-1">
+                      <p className="font-bold text-sm group-hover:text-primary transition-colors">
+                        {step.action}
+                      </p>
+                      {step.progress > 0 && (
+                        <div className="mt-2 space-y-1">
+                          <div className="flex items-center justify-between text-xs text-muted-foreground">
+                            <span>Progression</span>
+                            <span className="font-semibold">{step.progress}%</span>
+                          </div>
+                          <Progress value={step.progress} className="h-2" />
+                        </div>
+                      )}
+                    </div>
+                    <ArrowUpRight className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors flex-shrink-0" />
+                  </div>
+                </div>
+              ))}
+            </CardContent>
+          </Card>
+        </FadeInView>
 
         {/* Footer CTA - Explorer Plus */}
         <FadeInView delay={1.4}>

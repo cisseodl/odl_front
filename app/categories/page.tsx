@@ -22,25 +22,29 @@ export default function CategoriesPage() {
     staleTime: 5 * 60 * 1000,
   })
 
-  // Calculate stats for each category
+  // Calculate stats for each category - only show categories with courses
   const categoryStats = useMemo(() => {
-    return categories.slice(1).map((category) => {
-      const coursesInCategory = courses.filter((course) => course.category === category)
-      const totalStudents = coursesInCategory.reduce((acc, course) => acc + course.enrolledCount, 0)
-      const avgRating = coursesInCategory.length > 0
-        ? coursesInCategory.reduce((acc, course) => acc + course.rating, 0) / coursesInCategory.length
-        : 0
+    return categories
+      .slice(1) // Exclure "Tous les cours"
+      .map((category) => {
+        const coursesInCategory = courses.filter((course) => course.category === category)
+        const totalStudents = coursesInCategory.reduce((acc, course) => acc + (course.enrolledCount || 0), 0)
+        const avgRating = coursesInCategory.length > 0
+          ? coursesInCategory.reduce((acc, course) => acc + (course.rating || 0), 0) / coursesInCategory.length
+          : 0
 
-      return {
-        name: category,
-        courseCount: coursesInCategory.length,
-        studentCount: totalStudents,
-        avgRating: avgRating.toFixed(1),
-        description: getCategoryDescription(category),
-        icon: getCategoryIcon(category),
-        color: getCategoryColor(category),
-      }
-    })
+        return {
+          name: category,
+          courseCount: coursesInCategory.length,
+          studentCount: totalStudents,
+          avgRating: avgRating.toFixed(1),
+          description: getCategoryDescription(category),
+          icon: getCategoryIcon(category),
+          color: getCategoryColor(category),
+        }
+      })
+      .filter((category) => category.courseCount > 0) // Filtrer les catégories sans cours
+      .sort((a, b) => b.courseCount - a.courseCount) // Trier par nombre de cours décroissant
   }, [courses])
 
   if (isLoading) {
@@ -77,8 +81,9 @@ export default function CategoriesPage() {
 
       {/* Categories Grid */}
       <section className="container mx-auto px-4 py-12 md:py-16">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {categoryStats.map((category) => (
+        {categoryStats.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {categoryStats.map((category) => (
             <Card
               key={category.name}
               className="group hover:shadow-xl transition-all duration-300 hover:scale-[1.02] border-2 hover:border-primary/50"
@@ -137,8 +142,23 @@ export default function CategoriesPage() {
                 </Link>
               </CardContent>
             </Card>
-          ))}
-        </div>
+            ))}
+          </div>
+        ) : (
+          <div className="text-center py-16">
+            <BookOpen className="h-16 w-16 mx-auto mb-4 text-muted-foreground opacity-50" />
+            <h3 className="text-2xl font-bold mb-2">Aucune catégorie disponible</h3>
+            <p className="text-muted-foreground mb-6">
+              Les catégories seront affichées dès que des cours seront disponibles.
+            </p>
+            <Link href="/courses">
+              <Button size="lg">
+                Voir tous les cours
+                <ArrowRight className="ml-2 h-4 w-4" />
+              </Button>
+            </Link>
+          </div>
+        )}
       </section>
 
       {/* CTA Section */}
