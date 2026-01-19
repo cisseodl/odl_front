@@ -341,12 +341,20 @@ export default function DashboardPage() {
 
   // Formater les prochaines étapes
   const nextSteps = useMemo(() => {
-    return nextStepsData.map((step: any) => ({
-      action: step.action || "Action",
-      progress: step.progress || 0,
-      link: step.link || "/courses",
-      type: step.type || "explore",
-    }))
+    console.log("nextStepsData:", nextStepsData)
+    if (!nextStepsData || nextStepsData.length === 0) {
+      return []
+    }
+    return nextStepsData.map((step: any) => {
+      const formatted = {
+        action: step.action || "Action",
+        progress: typeof step.progress === 'number' ? step.progress : parseInt(step.progress) || 0,
+        link: step.link || "/courses",
+        type: step.type || "explore",
+      }
+      console.log("Formatted step:", formatted)
+      return formatted
+    })
   }, [nextStepsData])
 
 

@@ -901,20 +901,24 @@ export const learnerService = {
       
       if (response.ok && response.data) {
         // Le backend retourne CResponse<List<Map<String, Object>>>
+        let data: any[] = []
+        
         if (Array.isArray(response.data)) {
-          return response.data
+          data = response.data
+        } else if (response.data.data && Array.isArray(response.data.data)) {
+          // Si c'est un CResponse, extraire le data
+          data = response.data.data
+        } else if (response.data && typeof response.data === 'object' && 'data' in response.data) {
+          // Si response.data est un objet avec une propriété data qui est un array
+          const extractedData = (response.data as any).data
+          data = Array.isArray(extractedData) ? extractedData : []
         }
-        // Si c'est un CResponse, extraire le data
-        if (response.data.data && Array.isArray(response.data.data)) {
-          return response.data.data
-        }
-        // Si response.data est un objet avec une propriété data qui est un array
-        if (response.data && typeof response.data === 'object' && 'data' in response.data) {
-          const data = (response.data as any).data
-          return Array.isArray(data) ? data : []
-        }
+        
+        console.log("getNextSteps: Données récupérées:", data)
+        return data
       }
       
+      console.warn("getNextSteps: Aucune donnée dans la réponse")
       return []
     } catch (error) {
       console.error("Erreur lors de la récupération des prochaines étapes:", error)
