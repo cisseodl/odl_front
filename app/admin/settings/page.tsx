@@ -203,24 +203,24 @@ export default function AdminSettingsPage() {
         </div>
 
         <Tabs defaultValue="general" className="space-y-6">
-          <TabsList className="w-full justify-start overflow-x-auto flex-nowrap">
+          <TabsList className="w-full justify-start overflow-x-auto flex-nowrap gap-2">
             <TabsTrigger
               value="general"
-              className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+              className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground whitespace-nowrap"
             >
               <Settings className="h-4 w-4 mr-2" />
               Configuration Générale
             </TabsTrigger>
             <TabsTrigger
               value="sections"
-              className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+              className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground whitespace-nowrap"
             >
               <List className="h-4 w-4 mr-2" />
               Gestion des Sections
             </TabsTrigger>
             <TabsTrigger
               value="odc-formations"
-              className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+              className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground whitespace-nowrap"
             >
               <GraduationCap className="h-4 w-4 mr-2" />
               ODC Formations
