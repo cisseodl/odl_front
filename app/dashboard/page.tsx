@@ -15,7 +15,7 @@ import { MiniPlayer } from "@/components/mini-player"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { ProtectedRoute } from "@/components/protected-route"
 import { useQuery } from "@tanstack/react-query"
-import { dashboardService, courseService, profileService, certificateService } from "@/lib/api/services"
+import { dashboardService, courseService, profileService, certificateService, learnerService, detailsCourseService } from "@/lib/api/services"
 import { useAuthStore } from "@/lib/store/auth-store"
 
 export default function DashboardPage() {
@@ -49,6 +49,22 @@ export default function DashboardPage() {
   const { data: certificates = [], isLoading: isLoadingCertificates } = useQuery({
     queryKey: ["certificates", user?.id],
     queryFn: () => certificateService.getMyCertificates(),
+    enabled: !!user,
+    staleTime: 5 * 60 * 1000,
+  })
+
+  // Récupérer l'activité récente
+  const { data: recentActivityData = [], isLoading: isLoadingRecentActivity } = useQuery({
+    queryKey: ["recentActivity", user?.id],
+    queryFn: () => learnerService.getRecentActivity(3),
+    enabled: !!user,
+    staleTime: 2 * 60 * 1000,
+  })
+
+  // Récupérer les cours complétés
+  const { data: completedCoursesData = [], isLoading: isLoadingCompletedCourses } = useQuery({
+    queryKey: ["completedCourses", user?.id],
+    queryFn: () => detailsCourseService.getMyCompletedCourses(),
     enabled: !!user,
     staleTime: 5 * 60 * 1000,
   })
@@ -164,32 +180,39 @@ export default function DashboardPage() {
     return distribution
   }, [enrolledCourses])
 
-  const recentActivity = [
-    {
-      course: "React & TypeScript",
-      lesson: "Hooks avancés",
-      progress: 75,
-      date: "Aujourd'hui",
-      time: "14:30",
-      icon: Play,
-    },
-    {
-      course: "Next.js 15",
-      lesson: "Server Actions",
-      progress: 45,
-      date: "Hier",
-      time: "16:15",
-      icon: Play,
-    },
-    {
-      course: "UI/UX Design",
-      lesson: "Principes de design",
-      progress: 90,
-      date: "Il y a 2 jours",
-      time: "10:20",
-      icon: Play,
-    },
-  ]
+  // Formater l'activité récente depuis l'API
+  const recentActivity = useMemo(() => {
+    if (!recentActivityData || recentActivityData.length === 0) {
+      return []
+    }
+
+    return recentActivityData.map((activity: any) => {
+      const completedAt = activity.completedAt ? new Date(activity.completedAt) : new Date()
+      const now = new Date()
+      const diffMs = now.getTime() - completedAt.getTime()
+      const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24))
+      
+      let dateLabel = "Aujourd'hui"
+      let timeLabel = completedAt.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })
+      
+      if (diffDays === 1) {
+        dateLabel = "Hier"
+      } else if (diffDays > 1 && diffDays <= 7) {
+        dateLabel = `Il y a ${diffDays} jours`
+      } else if (diffDays > 7) {
+        dateLabel = completedAt.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' })
+      }
+
+      return {
+        course: activity.courseTitle || "Cours",
+        lesson: activity.lessonTitle || "Leçon",
+        progress: activity.progress || 0,
+        date: dateLabel,
+        time: timeLabel,
+        icon: Play,
+      }
+    })
+  }, [recentActivityData])
 
   const weeklyProgress = [
     { day: "Lun", hours: 2.5, goal: 3 },
@@ -209,14 +232,40 @@ export default function DashboardPage() {
   ]
 
 
-  const badges = [
-    { id: 1, name: "Première Leçon", icon: "🎯", earned: true, date: "Il y a 2 semaines" },
-    { id: 2, name: "Marathon 7 jours", icon: "🔥", earned: true, date: "Il y a 1 semaine" },
-    { id: 3, name: "5 Cours Complétés", icon: "⭐", earned: true, date: "Il y a 3 jours" },
-    { id: 4, name: "Expert React", icon: "⚛️", earned: true, date: "Hier" },
-    { id: 5, name: "100 Heures", icon: "💯", earned: false, progress: 85 },
-    { id: 6, name: "Top Étudiant", icon: "👑", earned: false, progress: 60 },
-  ]
+  // Formater les cours complétés pour l'affichage
+  const completedCoursesForDisplay = useMemo(() => {
+    if (!completedCoursesData || completedCoursesData.length === 0) {
+      return []
+    }
+
+    return completedCoursesData.slice(0, 6).map((course: any, index: number) => {
+      const completedAt = course.completedAt ? new Date(course.completedAt) : new Date()
+      const diffMs = new Date().getTime() - completedAt.getTime()
+      const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24))
+      
+      let dateLabel = "Aujourd'hui"
+      if (diffDays === 1) {
+        dateLabel = "Hier"
+      } else if (diffDays > 1 && diffDays <= 7) {
+        dateLabel = `Il y a ${diffDays} jours`
+      } else if (diffDays > 7) {
+        dateLabel = completedAt.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' })
+      }
+
+      // Icônes basées sur la catégorie ou l'index
+      const icons = ["🎯", "🔥", "⭐", "⚛️", "💯", "👑"]
+      const icon = icons[index % icons.length]
+
+      return {
+        id: course.id || index,
+        name: course.title || "Cours",
+        icon: icon,
+        earned: true,
+        date: dateLabel,
+        course: course,
+      }
+    })
+  }, [completedCoursesData])
 
   const upcomingDeadlines = [
     { course: "React & TypeScript", task: "Projet Final", dueDate: "Dans 3 jours", priority: "high" },
@@ -481,50 +530,53 @@ export default function DashboardPage() {
                       <Trophy className="h-5 w-5 text-primary" />
                     </div>
                     <div>
-                      <CardTitle className="text-xl">Badges & Réalisations</CardTitle>
-                      <CardDescription>Vos accomplissements et défis</CardDescription>
+                      <CardTitle className="text-xl">Réalisations</CardTitle>
+                      <CardDescription>Vos cours complétés</CardDescription>
                     </div>
                   </div>
                 </CardHeader>
                 <CardContent className="pt-0">
-                  <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                    {badges.map((badge, index) => (
-                      <FadeInView key={badge.id} delay={0.6 + index * 0.05}>
-                        <div
-                          className={`group relative flex flex-col items-center gap-3 p-4 rounded-xl border-2 transition-all duration-300 cursor-pointer ${
-                            badge.earned
-                              ? "border-primary/40 bg-primary/5 hover:bg-primary/10 hover:scale-105 hover:shadow-lg hover:shadow-primary/20"
-                              : "border-muted bg-muted/20 opacity-60 hover:opacity-80"
-                          }`}
-                          title={badge.earned ? `Débloqué ${badge.date}` : `Progression: ${badge.progress}%`}
-                        >
-                          {badge.earned && (
-                            <div className="absolute -top-2 -right-2">
-                              <Sparkles className="h-4 w-4 text-primary animate-pulse" />
-                            </div>
-                          )}
-                          <div className={`text-4xl transition-transform duration-300 ${
-                            badge.earned ? "group-hover:scale-125 group-hover:rotate-12" : "grayscale"
-                          }`}>
-                            {badge.icon}
-                          </div>
-                          <div className="text-center space-y-1">
-                            <p className="text-xs font-bold leading-tight">{badge.name}</p>
-                            {badge.earned ? (
-                              <Badge className="bg-primary text-white text-xs border-0">
-                                Débloqué
-                              </Badge>
-                            ) : (
-                              <div className="space-y-1">
-                                <Progress value={badge.progress} className="h-1.5" />
-                                <p className="text-xs text-muted-foreground">{badge.progress}%</p>
+                  {isLoadingCompletedCourses ? (
+                    <div className="flex items-center justify-center py-8">
+                      <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                      <span className="ml-2 text-muted-foreground">Chargement...</span>
+                    </div>
+                  ) : completedCoursesForDisplay.length > 0 ? (
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                      {completedCoursesForDisplay.map((achievement, index) => (
+                        <FadeInView key={achievement.id} delay={0.6 + index * 0.05}>
+                          <Link href={`/courses/${achievement.course.id}`}>
+                            <div
+                              className="group relative flex flex-col items-center gap-3 p-4 rounded-xl border-2 transition-all duration-300 cursor-pointer border-primary/40 bg-primary/5 hover:bg-primary/10 hover:scale-105 hover:shadow-lg hover:shadow-primary/20"
+                              title={`Complété ${achievement.date}`}
+                            >
+                              <div className="absolute -top-2 -right-2">
+                                <Sparkles className="h-4 w-4 text-primary animate-pulse" />
                               </div>
-                            )}
-                          </div>
-                        </div>
-                      </FadeInView>
-                    ))}
-                  </div>
+                              <div className="text-4xl transition-transform duration-300 group-hover:scale-125 group-hover:rotate-12">
+                                {achievement.icon}
+                              </div>
+                              <div className="text-center space-y-1">
+                                <p className="text-xs font-bold leading-tight line-clamp-2">{achievement.name}</p>
+                                <Badge className="bg-primary text-white text-xs border-0">
+                                  Complété
+                                </Badge>
+                                <p className="text-xs text-muted-foreground">{achievement.date}</p>
+                              </div>
+                            </div>
+                          </Link>
+                        </FadeInView>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-center py-8 text-muted-foreground">
+                      <Trophy className="h-12 w-12 mx-auto mb-3 opacity-50" />
+                      <p className="text-sm">Aucun cours complété pour le moment</p>
+                      <Button variant="outline" size="sm" className="mt-4" asChild>
+                        <Link href="/courses">Découvrir des cours</Link>
+                      </Button>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             </FadeInView>
@@ -543,7 +595,13 @@ export default function DashboardPage() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  {recentActivity.map((activity, index) => (
+                  {isLoadingRecentActivity ? (
+                    <div className="flex items-center justify-center py-8">
+                      <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                      <span className="ml-2 text-muted-foreground">Chargement...</span>
+                    </div>
+                  ) : recentActivity.length > 0 ? (
+                    recentActivity.map((activity, index) => (
                     <FadeInView key={index} delay={0.4 + index * 0.1}>
                       <div className="group p-3 border rounded-lg hover:border-primary/40 hover:bg-primary/5 transition-all duration-300">
                         <div className="flex items-start justify-between gap-2 mb-2">
@@ -564,9 +622,16 @@ export default function DashboardPage() {
                           <span>{activity.date}</span>
                           <span>{activity.time}</span>
                         </div>
-                      </div>
-                    </FadeInView>
-                  ))}
+                        </div>
+                      </FadeInView>
+                    ))
+                  ) : (
+                    <div className="text-center py-8 text-muted-foreground">
+                      <Zap className="h-12 w-12 mx-auto mb-3 opacity-50" />
+                      <p className="text-sm">Aucune activité récente</p>
+                      <p className="text-xs mt-1">Commencez à suivre des cours pour voir votre activité</p>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             </FadeInView>

@@ -779,6 +779,53 @@ export const learnerService = {
       {}
     )
   },
+
+  /**
+   * Obtenir l'activité récente de l'utilisateur (dernières leçons complétées)
+   * GET /api/learn/recent-activity
+   */
+  async getRecentActivity(limit: number = 3): Promise<any[]> {
+    try {
+      const response = await apiClient.get<any>(
+        `${API_ENDPOINTS.learner.getRecentActivity}?limit=${limit}`
+      )
+      
+      if (response.ok && response.data) {
+        const data = Array.isArray(response.data) ? response.data : []
+        return data
+      }
+      
+      return []
+    } catch (error) {
+      console.error("Erreur lors de la récupération de l'activité récente:", error)
+      return []
+    }
+  },
+}
+
+// ============ Details Course Services ============
+export const detailsCourseService = {
+  /**
+   * Obtenir les cours complétés de l'utilisateur authentifié
+   * GET /details-course/my-completed-courses
+   */
+  async getMyCompletedCourses(): Promise<any[]> {
+    try {
+      const response = await apiClient.get<any>(
+        API_ENDPOINTS.detailsCourse.getMyCompletedCourses
+      )
+      
+      if (response.ok && response.data) {
+        const data = Array.isArray(response.data) ? response.data : []
+        return data
+      }
+      
+      return []
+    } catch (error) {
+      console.error("Erreur lors de la récupération des cours complétés:", error)
+      return []
+    }
+  },
 }
 
 // ============ Contact Services ============
