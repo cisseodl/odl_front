@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog"
-import { Plus, Edit, Trash2, ExternalLink, Loader2 } from "lucide-react"
+import { Plus, Edit, Trash2, ExternalLink, Loader2, Settings, List, GraduationCap } from "lucide-react"
 import { toast } from "sonner"
 import { ProtectedRoute } from "@/components/protected-route"
 import { useAuthStore } from "@/lib/store/auth-store"
@@ -39,6 +39,12 @@ export default function AdminSettingsPage() {
     titre: "",
     description: "",
     lien: "",
+  })
+
+  // Form state pour Configuration Générale
+  const [generalConfigForm, setGeneralConfigForm] = useState({
+    homepageText: "Commencez à prendre avec Orange Digital Learning ODL.",
+    homepageImage: null as File | null,
   })
 
   // Charger les rubriques
@@ -192,28 +198,96 @@ export default function AdminSettingsPage() {
     <ProtectedRoute>
       <div className="container mx-auto px-4 py-8">
         <div className="mb-8">
-          <h1 className="text-3xl md:text-4xl font-bold mb-2">Paramètres Administrateur</h1>
-          <p className="text-muted-foreground text-lg">Gérez les rubriques et les formations ODC</p>
+          <h1 className="text-3xl md:text-4xl font-bold mb-2">Paramètres du Site</h1>
+          <p className="text-muted-foreground text-lg">Gérez la configuration générale et les sections de contenu de la plateforme.</p>
         </div>
 
-        <Tabs defaultValue="rubriques" className="space-y-6">
-          <TabsList className="w-full justify-start overflow-x-auto flex-nowrap bg-black border border-gray-800">
+        <Tabs defaultValue="general" className="space-y-6">
+          <TabsList className="w-full justify-start overflow-x-auto flex-nowrap">
             <TabsTrigger
-              value="rubriques"
-              className="text-white data-[state=active]:bg-orange-500 data-[state=active]:text-black data-[state=active]:font-semibold"
+              value="general"
+              className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
             >
-              Rubriques
+              <Settings className="h-4 w-4 mr-2" />
+              Configuration Générale
+            </TabsTrigger>
+            <TabsTrigger
+              value="sections"
+              className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
+            >
+              <List className="h-4 w-4 mr-2" />
+              Gestion des Sections
             </TabsTrigger>
             <TabsTrigger
               value="odc-formations"
-              className="text-white data-[state=active]:bg-orange-500 data-[state=active]:text-black data-[state=active]:font-semibold"
+              className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground"
             >
+              <GraduationCap className="h-4 w-4 mr-2" />
               ODC Formations
             </TabsTrigger>
           </TabsList>
 
-          {/* Onglet Rubriques */}
-          <TabsContent value="rubriques" className="space-y-6">
+          {/* Onglet Configuration Générale */}
+          <TabsContent value="general" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <div className="flex items-center gap-2">
+                  <Settings className="h-5 w-5 text-primary" />
+                  <CardTitle>Configuration Générale du Site</CardTitle>
+                </div>
+                <p className="text-sm text-muted-foreground mt-2">
+                  Mettez à jour les paramètres généraux et images de votre plateforme.
+                </p>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div>
+                  <Label htmlFor="homepageText">Texte de la Page d'Accueil</Label>
+                  <Textarea
+                    id="homepageText"
+                    value={generalConfigForm.homepageText}
+                    onChange={(e) => setGeneralConfigForm({ ...generalConfigForm, homepageText: e.target.value })}
+                    placeholder="Texte de la page d'accueil"
+                    rows={4}
+                    className="mt-2"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="homepageImage">Image de la Page d'Accueil</Label>
+                  <div className="mt-2">
+                    <Input
+                      id="homepageImage"
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0]
+                        if (file) {
+                          setGeneralConfigForm({ ...generalConfigForm, homepageImage: file })
+                        }
+                      }}
+                      className="cursor-pointer"
+                    />
+                    {generalConfigForm.homepageImage && (
+                      <p className="text-sm text-muted-foreground mt-2">
+                        Fichier sélectionné : {generalConfigForm.homepageImage.name}
+                      </p>
+                    )}
+                  </div>
+                </div>
+                <div className="flex justify-end">
+                  <Button onClick={() => {
+                    // TODO: Implémenter la sauvegarde de la configuration générale
+                    toast.info("Fonctionnalité de sauvegarde de la configuration générale à implémenter")
+                  }}>
+                    Enregistrer les modifications
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Onglet Gestion des Sections (Rubriques) */}
+          <TabsContent value="sections" className="space-y-6">
+
             <Card>
               <CardHeader>
                 <div className="flex items-center justify-between">
