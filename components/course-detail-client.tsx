@@ -24,6 +24,7 @@ import { useScrollSpy } from "@/hooks/use-scroll-spy"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { moduleService, courseService } from "@/lib/api/services"
 import { adaptModule } from "@/lib/api/adapters"
+import { CourseSidebar } from "@/components/course-sidebar"
 import type { Course, Module } from "@/lib/types"
 
 interface CourseDetailClientProps {
@@ -71,33 +72,57 @@ export function CourseDetailClient({ course }: CourseDetailClientProps) {
   // Mutation pour s'inscrire au cours
   const enrollMutation = useMutation({
     mutationFn: (courseId: number) => courseService.enrollInCourse(courseId),
-    onSuccess: () => {
-      toast.success("Inscription réussie !", {
-        description: "Vous pouvez maintenant accéder aux modules et leçons du cours.",
-      })
-      setIsEnrolled(true)
-      // Recharger les modules après l'inscription
-      queryClient.invalidateQueries({ queryKey: ["modules", courseIdNum] })
+    onSuccess: (response: any) => {
+      // Si l'utilisateur est déjà inscrit, le backend retourne une erreur mais on considère qu'il est inscrit
+      if (response?.message?.includes("déjà inscrit")) {
+        toast.info("Vous êtes déjà inscrit à ce cours", {
+          description: "Vous pouvez accéder aux modules et leçons.",
+        })
+        setIsEnrolled(true)
+        // Recharger les modules
+        queryClient.invalidateQueries({ queryKey: ["modules", courseIdNum] })
+      } else {
+        toast.success("Inscription réussie !", {
+          description: "Vous pouvez maintenant accéder aux modules et leçons du cours.",
+        })
+        setIsEnrolled(true)
+        // Recharger les modules après l'inscription
+        queryClient.invalidateQueries({ queryKey: ["modules", courseIdNum] })
+      }
     },
     onError: (error: any) => {
       const errorMessage = error?.message || "Erreur lors de l'inscription"
-      toast.error("Erreur d'inscription", {
-        description: errorMessage,
-      })
+      // Si l'erreur indique que l'utilisateur est déjà inscrit, on considère qu'il est inscrit
+      if (errorMessage.includes("déjà inscrit")) {
+        setIsEnrolled(true)
+        toast.info("Vous êtes déjà inscrit à ce cours", {
+          description: "Vous pouvez accéder aux modules et leçons.",
+        })
+        queryClient.invalidateQueries({ queryKey: ["modules", courseIdNum] })
+      } else {
+        toast.error("Erreur d'inscription", {
+          description: errorMessage,
+        })
+      }
     },
   })
 
-  // Charger les modules depuis l'API - seulement si l'utilisateur est inscrit
+  // Vérifier l'inscription en essayant de charger les modules (même si on pense ne pas être inscrit)
+  // Cela permet de détecter si l'utilisateur est déjà inscrit au chargement de la page
   const { data: modulesFromApi, isLoading: isLoadingModules, error: modulesError } = useQuery({
     queryKey: ["modules", courseIdNum],
     queryFn: () => moduleService.getModulesByCourse(courseIdNum!),
-    enabled: courseIdNum !== null && !Number.isNaN(courseIdNum!) && isEnrolled,
+    enabled: courseIdNum !== null && !Number.isNaN(courseIdNum!),
     staleTime: 5 * 60 * 1000, // Cache pendant 5 minutes
-    retry: 2, // Réessayer 2 fois en cas d'erreur
+    retry: 1, // Réessayer 1 fois en cas d'erreur
     onError: (error: any) => {
       console.error("Erreur lors du chargement des modules:", error)
-      // Si l'erreur indique qu'il faut s'inscrire, mettre isEnrolled à false
-      if (error?.message?.includes("inscrire") || error?.message?.includes("inscription")) {
+      // Si l'erreur indique qu'il faut s'inscrire, l'utilisateur n'est pas inscrit
+      const errorMessage = error?.message || ""
+      if (errorMessage.includes("inscrire") || errorMessage.includes("inscription") || errorMessage.includes("inscrit")) {
+        setIsEnrolled(false)
+      } else {
+        // Autre erreur, on considère que l'utilisateur n'est pas inscrit
         setIsEnrolled(false)
       }
     },
@@ -106,6 +131,13 @@ export function CourseDetailClient({ course }: CourseDetailClientProps) {
       setIsEnrolled(true)
     }
   })
+
+  // Vérifier l'inscription au chargement initial
+  useEffect(() => {
+    if (courseIdNum && !isLoadingModules && modulesFromApi) {
+      setIsEnrolled(true)
+    }
+  }, [courseIdNum, isLoadingModules, modulesFromApi])
 
   // Adapter les modules de l'API si nécessaire
   useEffect(() => {
@@ -238,10 +270,20 @@ export function CourseDetailClient({ course }: CourseDetailClientProps) {
           </nav>
         </FadeInView>
 
-        {/* Main Content - Two Column Layout */}
+        {/* Main Content - Two Column Layout avec Sidebar */}
         <div className="flex flex-col lg:flex-row gap-6 lg:gap-8">
           {/* Left Column - Main Content (70%) */}
           <div className="flex-1 min-w-0 space-y-6">
+            {/* Sidebar pour les modules/leçons - Style Udemy */}
+            {isEnrolled && curriculum.length > 0 && (
+              <div className="lg:hidden mb-6">
+                <CourseSidebar 
+                  modules={curriculum} 
+                  courseId={course.id}
+                  isLoading={isLoadingModules}
+                />
+              </div>
+            )}
             {/* Header Section */}
             <FadeInView>
               <div className="space-y-4">
@@ -736,7 +778,19 @@ export function CourseDetailClient({ course }: CourseDetailClientProps) {
           </div>
 
           {/* Right Column - Sticky Sidebar (30%) */}
-          <div className="lg:w-80 lg:sticky lg:top-20 lg:self-start">
+          <div className="lg:w-80 lg:sticky lg:top-20 lg:self-start space-y-6">
+            {/* Sidebar Modules/Leçons - Style Udemy (Desktop) */}
+            {isEnrolled && curriculum.length > 0 && (
+              <FadeInView delay={0.2}>
+                <CourseSidebar 
+                  modules={curriculum} 
+                  courseId={course.id}
+                  isLoading={isLoadingModules}
+                />
+              </FadeInView>
+            )}
+            
+            {/* Card d'inscription */}
             <FadeInView delay={0.3}>
               <Card className="border-2 border-primary/40 bg-gradient-to-br from-primary/5 via-transparent to-transparent shadow-xl">
                 <CardHeader className="pb-4 border-b border-border">
