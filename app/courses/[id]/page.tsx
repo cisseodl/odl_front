@@ -15,6 +15,13 @@ export default function CoursePage({ params }: CoursePageProps) {
   const { id } = use(params)
   const courseId = Number.parseInt(id)
 
+  // Charger la liste des cours pour récupérer le titre si le détail ne charge pas
+  const { data: allCourses = [] } = useQuery({
+    queryKey: ["courses"],
+    queryFn: () => courseService.getAllCourses(),
+    staleTime: 5 * 60 * 1000,
+  })
+
   const {
     data: course,
     isLoading,
@@ -45,26 +52,35 @@ export default function CoursePage({ params }: CoursePageProps) {
   // Si le cours ne charge pas mais qu'on a un ID valide, créer un cours minimal pour permettre l'affichage des modules
   if (error || !course) {
     console.warn(`Impossible de charger le cours ${courseId}, utilisation d'un cours minimal`)
-    // Créer un cours minimal pour permettre l'affichage des modules
+    
+    // Essayer de récupérer le titre depuis la liste des cours
+    const courseFromList = allCourses.find(c => String(c.id) === String(courseId))
+    const courseTitle = courseFromList?.title || `Cours ${courseId}`
+    const courseCategory = courseFromList?.category || "Non catégorisé"
+    const courseLevel = courseFromList?.level || "Intermédiaire"
+    const courseImage = courseFromList?.imageUrl || "/placeholder.svg"
+    const courseInstructor = courseFromList?.instructor || { id: "0", name: "Instructeur", avatar: "/placeholder-user.jpg" }
+    
+    // Créer un cours minimal avec les informations disponibles depuis la liste
     const minimalCourse = {
       id: String(courseId),
-      title: "Cours",
-      subtitle: "",
-      description: "",
-      imageUrl: "/placeholder.svg",
-      instructor: { id: "0", name: "Instructeur", avatar: "/placeholder-user.jpg" },
-      category: "Non catégorisé",
-      level: "Intermédiaire",
-      rating: 0,
-      reviewCount: 0,
-      duration: "0h",
-      language: "Français",
-      lastUpdated: "",
-      bestseller: false,
-      objectives: [],
-      curriculum: [],
-      enrolledCount: 0,
-      features: [],
+      title: courseTitle,
+      subtitle: courseFromList?.subtitle || "",
+      description: courseFromList?.description || "",
+      imageUrl: courseImage,
+      instructor: courseInstructor,
+      category: courseCategory,
+      level: courseLevel,
+      rating: courseFromList?.rating || 0,
+      reviewCount: courseFromList?.reviewCount || 0,
+      duration: courseFromList?.duration || "0h",
+      language: courseFromList?.language || "Français",
+      lastUpdated: courseFromList?.lastUpdated || "",
+      bestseller: courseFromList?.bestseller || false,
+      objectives: courseFromList?.objectives || [],
+      curriculum: courseFromList?.curriculum || [],
+      enrolledCount: courseFromList?.enrolledCount || 0,
+      features: courseFromList?.features || [],
     }
     return <CourseDetailClient course={minimalCourse} />
   }
