@@ -291,19 +291,11 @@ export default function DashboardPage() {
                                     {course.instructor?.name || "Formateur"}
                                   </p>
                                 </div>
-                                <Badge className="bg-primary text-white font-semibold border-0 shadow-sm">
-                                  {course.progress || 0}%
-                                </Badge>
-                              </div>
-                              <div className="space-y-2">
-                                <div className="flex items-center justify-between text-xs text-muted-foreground">
-                                  <span>Progression</span>
-                                  <span className="font-semibold">{course.progress || 0}% complété</span>
-                                </div>
-                                <Progress 
-                                  value={course.progress || 0} 
-                                  className="h-2.5 bg-muted"
-                                />
+                                {(course.progress || 0) === 100 && (
+                                  <Badge className="bg-primary text-white font-semibold border-0 shadow-sm">
+                                    Complété
+                                  </Badge>
+                                )}
                               </div>
                             </div>
                             <div className="flex items-center gap-2">

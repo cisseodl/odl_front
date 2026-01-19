@@ -302,12 +302,6 @@ export default function HomePage() {
                       <Link href={`/learn/${course.id}`}>
                         <h3 className="font-bold text-sm line-clamp-2 mb-3 hover:text-primary transition-colors leading-snug text-black">{course.title}</h3>
                       </Link>
-                      <div className="space-y-1.5">
-                        <div className="w-full bg-muted rounded-full h-2 overflow-hidden">
-                          <div className="bg-primary h-2 rounded-full transition-all duration-500 shadow-sm" style={{ width: "45%" }} />
-                        </div>
-                        <p className="text-xs text-muted-foreground font-semibold">45% complété</p>
-                      </div>
                     </div>
                   </div>
                 </CardContent>

@@ -411,70 +411,125 @@ export function CourseDetailClient({ course }: CourseDetailClientProps) {
                         <span>{course.duration}h de contenu</span>
                       </div>
                     </div>
-                    <Accordion type="multiple" className="w-full" defaultValue={curriculum.length > 0 && curriculum[0]?.id ? [String(curriculum[0].id)] : []}>
+                    <Accordion type="multiple" className="w-full space-y-3" defaultValue={curriculum.length > 0 && curriculum[0]?.id ? [String(curriculum[0].id)] : []}>
                       {isLoadingModules ? (
-                        <div className="p-4 text-center text-muted-foreground">
-                          <div className="flex items-center justify-center gap-2">
-                            <div className="h-4 w-4 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
-                            <span>Chargement des modules et leçons...</span>
+                        <div className="p-8 text-center text-muted-foreground">
+                          <div className="flex items-center justify-center gap-3">
+                            <div className="h-5 w-5 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
+                            <span className="font-medium">Chargement des modules et leçons...</span>
                           </div>
                         </div>
                       ) : curriculum.length > 0 ? (
-                        curriculum.filter(module => module && module.id).map((module, moduleIndex) => (
-                          <AccordionItem key={String(module.id)} value={String(module.id)} className="border-2 rounded-lg mb-3 px-4 hover:border-primary/40 transition-all">
-                            <AccordionTrigger className="hover:no-underline py-4">
-                              <div className="flex items-start justify-between w-full pr-4">
-                                <div className="flex-1 text-left">
-                                  <div className="font-bold text-base text-foreground mb-2">
-                                    Section {moduleIndex + 1}: {module.title}
-                                  </div>
-                                  <div className="flex items-center gap-3 text-sm text-muted-foreground">
-                                    <span>{module.lessons.length} leçon{module.lessons.length > 1 ? "s" : ""}</span>
-                                    <span>•</span>
-                                    <span>{module.duration}</span>
-                                  </div>
-                                </div>
-                              </div>
-                            </AccordionTrigger>
-                            <AccordionContent className="pb-4">
-                              <div className="space-y-2 mt-2">
-                                {module.lessons && Array.isArray(module.lessons) ? module.lessons.filter(lesson => lesson && lesson.id).map((lesson, lessonIndex) => (
-                                  <Link
-                                    key={String(lesson.id)}
-                                    href={`/learn/${course.id}?lesson=${lesson.id}`}
-                                    className="flex items-center justify-between p-3 rounded-lg hover:bg-primary/10 hover:border-l-4 hover:border-primary transition-all group"
-                                  >
-                                    <div className="flex items-center gap-3 flex-1 min-w-0">
-                                      <span className="text-sm text-muted-foreground font-medium w-6 flex-shrink-0">
-                                        {lessonIndex + 1}.
-                                      </span>
-                                      <div className="flex items-center gap-2">
-                                        {lesson.type === "video" && <Video className="h-4 w-4 text-muted-foreground" />}
-                                        {lesson.type === "quiz" && <FileText className="h-4 w-4 text-primary" />}
-                                        <span className="text-sm text-foreground/80 group-hover:text-foreground truncate">
-                                          {lesson.title}
+                        curriculum.filter(module => module && module.id).map((module, moduleIndex) => {
+                          const totalLessons = module.lessons?.length || 0
+                          const totalDuration = module.lessons?.reduce((acc, lesson) => {
+                            const duration = lesson.duration || "0m"
+                            const minutes = parseInt(duration.replace(/[^0-9]/g, "")) || 0
+                            return acc + minutes
+                          }, 0) || 0
+                          const formattedDuration = totalDuration > 60 
+                            ? `${Math.floor(totalDuration / 60)}h ${totalDuration % 60}m`
+                            : `${totalDuration}m`
+
+                          return (
+                            <AccordionItem 
+                              key={String(module.id)} 
+                              value={String(module.id)} 
+                              className="border-2 border-border rounded-xl overflow-hidden hover:border-primary/50 transition-all duration-200 bg-card shadow-sm"
+                            >
+                              <AccordionTrigger className="hover:no-underline px-6 py-5">
+                                <div className="flex items-start justify-between w-full pr-6">
+                                  <div className="flex items-start gap-4 flex-1">
+                                    <div className="flex-shrink-0 w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center border-2 border-primary/20">
+                                      <span className="text-sm font-bold text-primary">{moduleIndex + 1}</span>
+                                    </div>
+                                    <div className="flex-1 text-left">
+                                      <div className="font-bold text-lg text-foreground mb-1.5">
+                                        {module.title}
+                                      </div>
+                                      <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                                        <span className="flex items-center gap-1.5">
+                                          <BookOpen className="h-4 w-4" />
+                                          {totalLessons} leçon{totalLessons > 1 ? "s" : ""}
+                                        </span>
+                                        <span className="flex items-center gap-1.5">
+                                          <Clock className="h-4 w-4" />
+                                          {formattedDuration}
                                         </span>
                                       </div>
-                                      {lesson.type === "quiz" && (
-                                        <Badge className="bg-primary/10 text-primary text-xs border-primary/20">
-                                          Quiz
-                                        </Badge>
-                                      )}
                                     </div>
-                                    <div className="flex items-center gap-3 flex-shrink-0">
-                                      <span className="text-xs text-muted-foreground">{lesson.duration}</span>
-                                      <Play className="h-4 w-4 text-muted-foreground/60 group-hover:text-primary transition-colors" />
+                                  </div>
+                                </div>
+                              </AccordionTrigger>
+                              <AccordionContent className="px-6 pb-5 pt-0">
+                                <div className="space-y-1.5 mt-3 ml-14">
+                                  {module.lessons && Array.isArray(module.lessons) && module.lessons.length > 0 ? (
+                                    module.lessons.filter(lesson => lesson && lesson.id).map((lesson, lessonIndex) => {
+                                      const lessonNumber = lessonIndex + 1
+                                      const isVideo = lesson.type === "video"
+                                      const isQuiz = lesson.type === "quiz"
+                                      
+                                      return (
+                                        <Link
+                                          key={String(lesson.id)}
+                                          href={`/learn/${course.id}?lesson=${lesson.id}`}
+                                          className="flex items-center justify-between p-4 rounded-lg hover:bg-primary/5 hover:border-l-4 hover:border-primary transition-all duration-200 group border border-transparent hover:border-primary/20 bg-muted/30"
+                                        >
+                                          <div className="flex items-center gap-4 flex-1 min-w-0">
+                                            <div className="flex-shrink-0 w-8 h-8 rounded-full bg-background border-2 border-border flex items-center justify-center group-hover:border-primary group-hover:bg-primary/10 transition-colors">
+                                              {isVideo ? (
+                                                <Play className="h-3.5 w-3.5 text-muted-foreground group-hover:text-primary" />
+                                              ) : isQuiz ? (
+                                                <FileText className="h-3.5 w-3.5 text-primary" />
+                                              ) : (
+                                                <span className="text-xs font-semibold text-muted-foreground group-hover:text-primary">
+                                                  {lessonNumber}
+                                                </span>
+                                              )}
+                                            </div>
+                                            <div className="flex items-center gap-3 flex-1 min-w-0">
+                                              <div className="flex items-center gap-2 flex-1 min-w-0">
+                                                {isVideo && <Video className="h-4 w-4 text-muted-foreground flex-shrink-0" />}
+                                                {isQuiz && <FileText className="h-4 w-4 text-primary flex-shrink-0" />}
+                                                <span className="text-sm font-medium text-foreground/90 group-hover:text-foreground truncate">
+                                                  {lesson.title}
+                                                </span>
+                                              </div>
+                                              {isQuiz && (
+                                                <Badge className="bg-primary/10 text-primary text-xs border-primary/20 font-medium flex-shrink-0">
+                                                  Quiz
+                                                </Badge>
+                                              )}
+                                            </div>
+                                          </div>
+                                          <div className="flex items-center gap-3 flex-shrink-0 ml-4">
+                                            {lesson.duration && (
+                                              <span className="text-xs text-muted-foreground font-medium whitespace-nowrap">
+                                                {lesson.duration}
+                                              </span>
+                                            )}
+                                            <div className="w-6 h-6 rounded-full bg-background border border-border flex items-center justify-center group-hover:border-primary group-hover:bg-primary/10 transition-colors">
+                                              <Play className="h-3 w-3 text-muted-foreground/60 group-hover:text-primary transition-colors" />
+                                            </div>
+                                          </div>
+                                        </Link>
+                                      )
+                                    })
+                                  ) : (
+                                    <div className="p-4 text-center text-sm text-muted-foreground bg-muted/50 rounded-lg">
+                                      Aucune leçon disponible dans ce module
                                     </div>
-                                  </Link>
-                                )) : null}
-                              </div>
-                            </AccordionContent>
-                          </AccordionItem>
-                        ))
+                                  )}
+                                </div>
+                              </AccordionContent>
+                            </AccordionItem>
+                          )
+                        })
                       ) : (
-                        <div className="p-4 text-center text-muted-foreground">
-                          <p className="mb-2">Aucun module disponible pour ce cours.</p>
-                          <p className="text-sm">Les modules et leçons seront ajoutés prochainement.</p>
+                        <div className="p-8 text-center border-2 border-dashed border-border rounded-xl bg-muted/30">
+                          <BookOpen className="h-12 w-12 text-muted-foreground mx-auto mb-4 opacity-50" />
+                          <p className="text-base font-medium text-foreground mb-2">Aucun module disponible pour ce cours</p>
+                          <p className="text-sm text-muted-foreground">Les modules et leçons seront ajoutés prochainement.</p>
                         </div>
                       )}
                     </Accordion>

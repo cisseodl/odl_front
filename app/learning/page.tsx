@@ -295,18 +295,14 @@ export default function LearningPage() {
                   <p className="text-xs text-gray-600 line-clamp-1">{course.instructor.name}</p>
                 </div>
 
-                {/* Progress Bar */}
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="text-foreground font-semibold">{course.progress || 0}% complété</span>
-                    {(course.progress || 0) === 100 && (
-                      <Badge variant="outline" className="text-xs bg-primary/10 text-primary border-primary/30 font-medium">
-                        Complété
-                      </Badge>
-                    )}
+                {/* Course Status */}
+                {(course.progress || 0) === 100 && (
+                  <div className="flex items-center justify-end">
+                    <Badge variant="outline" className="text-xs bg-primary/10 text-primary border-primary/30 font-medium">
+                      Complété
+                    </Badge>
                   </div>
-                  <Progress value={course.progress || 0} className="h-2.5" />
-                </div>
+                )}
 
                 {/* Rating or Leave Rating */}
                 <div className="pt-3 border-t border-border">
