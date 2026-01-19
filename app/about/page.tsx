@@ -2,10 +2,10 @@
 
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
-import { BookOpen, Users, Award, Globe, Target, Heart, Lightbulb, TrendingUp, GraduationCap, Rocket, Wrench, Video, Facebook, Twitter, Linkedin, Instagram, Loader2 } from "lucide-react"
+import { BookOpen, Users, Award, Globe, Target, Heart, Lightbulb, TrendingUp, GraduationCap, Rocket, Wrench, Video, Facebook, Twitter, Linkedin, Instagram, Loader2, ExternalLink } from "lucide-react"
 import Link from "next/link"
 import { useQuery } from "@tanstack/react-query"
-import { rubriqueService } from "@/lib/api/services"
+import { rubriqueService, odcFormationService } from "@/lib/api/services"
 import Image from "next/image"
 
 export default function AboutPage() {
@@ -27,6 +27,36 @@ export default function AboutPage() {
     },
     staleTime: 10 * 60 * 1000, // Cache pendant 10 minutes
   })
+
+  // Charger les formations ODC depuis l'API
+  const {
+    data: odcFormations = [],
+    isLoading: isLoadingOdcFormations,
+  } = useQuery({
+    queryKey: ["odcFormations"],
+    queryFn: async () => {
+      const data = await odcFormationService.getAllFormations()
+      console.log("Formations ODC chargées:", data)
+      return data
+    },
+    staleTime: 10 * 60 * 1000, // Cache pendant 10 minutes
+  })
+
+  // Fonction pour obtenir l'icône selon le titre de la formation
+  const getIconForFormation = (titre: string) => {
+    const title = titre?.toLowerCase() || ""
+    if (title.includes("formation") || title.includes("gratuit") || title.includes("gratuite")) {
+      return { icon: Target, color: "bg-primary/10", iconColor: "text-primary" }
+    }
+    if (title.includes("accompagnement") || title.includes("support") || title.includes("complet")) {
+      return { icon: Award, color: "bg-accent/10", iconColor: "text-accent" }
+    }
+    if (title.includes("innovation") || title.includes("numérique") || title.includes("digital")) {
+      return { icon: Lightbulb, color: "bg-primary/10", iconColor: "text-primary" }
+    }
+    // Icône par défaut
+    return { icon: GraduationCap, color: "bg-primary/10", iconColor: "text-primary" }
+  }
   return (
     <div className="min-h-screen">
       {/* Hero Section */}
@@ -97,35 +127,78 @@ export default function AboutPage() {
           </div>
 
           <div className="grid md:grid-cols-3 gap-8">
-            <Card className="p-6 text-center">
-              <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Target className="w-6 h-6 text-primary" />
+            {isLoadingOdcFormations ? (
+              <div className="col-span-3 flex items-center justify-center py-12">
+                <Loader2 className="w-8 h-8 animate-spin text-primary" />
               </div>
-              <h3 className="text-xl font-semibold mb-3">Formation Gratuite</h3>
-              <p className="text-muted-foreground">
-                Tous nos programmes sont 100% gratuits et ouverts à tous, sans condition de ressources financières.
-              </p>
-            </Card>
+            ) : odcFormations.length === 0 ? (
+              // Fallback vers les cartes statiques si aucune formation ODC n'est disponible
+              <>
+                <Card className="p-6 text-center">
+                  <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <Target className="w-6 h-6 text-primary" />
+                  </div>
+                  <h3 className="text-xl font-semibold mb-3">Formation Gratuite</h3>
+                  <p className="text-muted-foreground">
+                    Tous nos programmes sont 100% gratuits et ouverts à tous, sans condition de ressources financières.
+                  </p>
+                </Card>
 
-            <Card className="p-6 text-center">
-              <div className="w-12 h-12 bg-accent/10 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Award className="w-6 h-6 text-accent" />
-              </div>
-              <h3 className="text-xl font-semibold mb-3">Accompagnement Complet</h3>
-              <p className="text-muted-foreground">
-                De la formation initiale à l'accélération de start-up, nous accompagnons les jeunes tout au long de leur parcours entrepreneurial.
-              </p>
-            </Card>
+                <Card className="p-6 text-center">
+                  <div className="w-12 h-12 bg-accent/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <Award className="w-6 h-6 text-accent" />
+                  </div>
+                  <h3 className="text-xl font-semibold mb-3">Accompagnement Complet</h3>
+                  <p className="text-muted-foreground">
+                    De la formation initiale à l'accélération de start-up, nous accompagnons les jeunes tout au long de leur parcours entrepreneurial.
+                  </p>
+                </Card>
 
-            <Card className="p-6 text-center">
-              <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Lightbulb className="w-6 h-6 text-primary" />
-              </div>
-              <h3 className="text-xl font-semibold mb-3">Innovation & Numérique</h3>
-              <p className="text-muted-foreground">
-                Formation aux dernières technologies : développement web/mobile, IA, IoT, design graphique et fabrication numérique.
-              </p>
-            </Card>
+                <Card className="p-6 text-center">
+                  <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <Lightbulb className="w-6 h-6 text-primary" />
+                  </div>
+                  <h3 className="text-xl font-semibold mb-3">Innovation & Numérique</h3>
+                  <p className="text-muted-foreground">
+                    Formation aux dernières technologies : développement web/mobile, IA, IoT, design graphique et fabrication numérique.
+                  </p>
+                </Card>
+              </>
+            ) : (
+              // Afficher les formations ODC dynamiques (maximum 3)
+              odcFormations.slice(0, 3).map((formation: any) => {
+                const { icon: IconComponent, color, iconColor } = getIconForFormation(formation.titre)
+                return (
+                  <Card key={formation.id} className="p-6 text-center hover:shadow-lg transition-shadow">
+                    <div className={`w-12 h-12 ${color} rounded-full flex items-center justify-center mx-auto mb-4`}>
+                      <IconComponent className={`w-6 h-6 ${iconColor}`} />
+                    </div>
+                    <h3 className="text-xl font-semibold mb-3">{formation.titre}</h3>
+                    <p className="text-muted-foreground mb-4">
+                      {formation.description || "Découvrez nos programmes de formation."}
+                    </p>
+                    {formation.lien && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        asChild
+                        className="mt-2"
+                      >
+                        <a
+                          href={formation.lien}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center gap-2"
+                        >
+                          En savoir plus
+                          <ExternalLink className="h-4 w-4" />
+                        </a>
+                      </Button>
+                    )}
+                  </Card>
+                )
+              })
+            )}
           </div>
         </div>
       </section>
