@@ -80,7 +80,9 @@ export function EnrollmentExpectationsModal({
 
   // Réinitialiser isSubmitting quand isLoading change
   useEffect(() => {
-    if (!isLoading) {
+    if (isLoading) {
+      setIsSubmitting(true)
+    } else {
       setIsSubmitting(false)
     }
   }, [isLoading])
