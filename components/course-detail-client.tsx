@@ -102,7 +102,8 @@ export function CourseDetailClient({ course }: CourseDetailClientProps) {
 
   // Handler pour confirmer l'inscription avec les attentes
   const handleConfirmEnrollment = (expectations: string) => {
-    if (courseIdNum) {
+    // Empêcher les appels multiples
+    if (courseIdNum && !enrollMutation.isPending) {
       enrollMutation.mutate({ courseId: courseIdNum, expectations })
     }
   }
@@ -128,6 +129,10 @@ export function CourseDetailClient({ course }: CourseDetailClientProps) {
         setShowExpectationsModal(false)
         // Recharger les modules après l'inscription
         queryClient.invalidateQueries({ queryKey: ["modules", courseIdNum] })
+        // Rediriger vers la page d'apprentissage du cours
+        if (courseIdNum) {
+          router.push(`/learn/${courseIdNum}`)
+        }
       }
     },
     onError: (error: any) => {

@@ -31,18 +31,25 @@ export function EnrollmentExpectationsModal({
 }: EnrollmentExpectationsModalProps) {
   const [expectations, setExpectations] = useState("")
   const [error, setError] = useState("")
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
   // Réinitialiser le state quand le modal s'ouvre
   useEffect(() => {
     if (open) {
       setExpectations("")
       setError("")
+      setIsSubmitting(false)
     }
   }, [open])
 
   const handleSubmit = (e?: React.MouseEvent) => {
     e?.preventDefault()
     e?.stopPropagation()
+    
+    // Empêcher les clics multiples
+    if (isSubmitting || isLoading) {
+      return
+    }
     
     console.log("handleSubmit appelé, expectations:", expectations)
     
@@ -56,18 +63,27 @@ export function EnrollmentExpectationsModal({
       return
     }
 
+    setIsSubmitting(true)
     setError("")
     console.log("Appel de onConfirm avec:", expectations.trim())
     onConfirm(expectations.trim())
   }
 
   const handleClose = () => {
-    if (!isLoading) {
+    if (!isLoading && !isSubmitting) {
       setExpectations("")
       setError("")
+      setIsSubmitting(false)
       onOpenChange(false)
     }
   }
+
+  // Réinitialiser isSubmitting quand isLoading change
+  useEffect(() => {
+    if (!isLoading) {
+      setIsSubmitting(false)
+    }
+  }, [isLoading])
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
@@ -128,11 +144,11 @@ export function EnrollmentExpectationsModal({
               console.log("Bouton cliqué, expectations:", expectations)
               handleSubmit(e)
             }}
-            disabled={isLoading || !expectations.trim() || expectations.trim().length < 10}
+            disabled={isLoading || isSubmitting || !expectations.trim() || expectations.trim().length < 10}
             type="button"
             className="bg-primary hover:bg-primary/90"
           >
-            {isLoading ? (
+            {isLoading || isSubmitting ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 Inscription en cours...
