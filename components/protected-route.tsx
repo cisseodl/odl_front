@@ -10,11 +10,24 @@ interface ProtectedRouteProps {
 
 export function ProtectedRoute({ children }: ProtectedRouteProps) {
   const router = useRouter()
-  const { isAuthenticated, isLoading, checkAuth } = useAuthStore()
+  const { isAuthenticated, isLoading, checkAuth, logout } = useAuthStore()
 
   useEffect(() => {
     checkAuth()
   }, [checkAuth])
+
+  // Écouter les événements de déconnexion (quand le token est invalide)
+  useEffect(() => {
+    const handleLogout = () => {
+      logout()
+      router.push("/auth")
+    }
+
+    window.addEventListener("auth:logout", handleLogout)
+    return () => {
+      window.removeEventListener("auth:logout", handleLogout)
+    }
+  }, [logout, router])
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {

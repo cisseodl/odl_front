@@ -1,7 +1,7 @@
 import { create } from "zustand"
 import { persist } from "zustand/middleware"
 import type { User } from "../types"
-import { authService } from "../api/services"
+import { authService, profileService } from "../api/services"
 import { adaptUser } from "../api/adapters"
 import { apiClient } from "../api/client"
 
@@ -130,17 +130,58 @@ export const useAuthStore = create<AuthStore>()(
         set({ isLoading: true })
         
         try {
-          // Vérifier si un token existe
-          const token = apiClient.getToken()
+          // Vérifier si un token existe (depuis localStorage directement)
+          let token: string | null = null
+          if (typeof window !== "undefined") {
+            token = localStorage.getItem("auth_token")
+            // Mettre à jour le token dans l'instance apiClient si nécessaire
+            if (token && !apiClient.getToken()) {
+              apiClient.setToken(token)
+            }
+          }
           
           if (token) {
-            // Le token existe, on considère l'utilisateur comme authentifié
-            // Si nécessaire, on peut faire un appel API pour vérifier la validité du token
+            // Le token existe, vérifier si l'utilisateur est dans le store
             const storedUser = get().user
-            set({
-              isAuthenticated: !!storedUser,
-              isLoading: false,
-            })
+            if (storedUser) {
+              set({
+                isAuthenticated: true,
+                isLoading: false,
+              })
+            } else {
+              // Token existe mais pas d'utilisateur, essayer de récupérer le profil
+              try {
+                const profileResponse = await profileService.getMyProfile()
+                if (profileResponse.ok && profileResponse.data) {
+                  const frontendUser = adaptUser(profileResponse.data as any)
+                  set({
+                    user: frontendUser,
+                    isAuthenticated: true,
+                    isLoading: false,
+                  })
+                } else {
+                  // Token invalide, nettoyer
+                  if (typeof window !== "undefined") {
+                    localStorage.removeItem("auth_token")
+                    apiClient.setToken(null)
+                  }
+                  set({
+                    isAuthenticated: false,
+                    isLoading: false,
+                  })
+                }
+              } catch (error) {
+                // Erreur lors de la récupération du profil, token probablement invalide
+                if (typeof window !== "undefined") {
+                  localStorage.removeItem("auth_token")
+                  apiClient.setToken(null)
+                }
+                set({
+                  isAuthenticated: false,
+                  isLoading: false,
+                })
+              }
+            }
           } else {
             set({
               isAuthenticated: false,

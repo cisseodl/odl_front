@@ -21,7 +21,10 @@ class ApiClient {
     this.baseURL = baseURL
     // Récupérer le token depuis localStorage si disponible
     if (typeof window !== "undefined") {
-      this.token = localStorage.getItem("auth_token")
+      const storedToken = localStorage.getItem("auth_token")
+      if (storedToken) {
+        this.token = storedToken
+      }
     }
   }
 
@@ -40,10 +43,22 @@ class ApiClient {
   }
 
   /**
-   * Obtenir le token actuel
+   * Obtenir le token actuel (depuis l'instance ou localStorage)
    */
   getToken(): string | null {
-    return this.token
+    // D'abord vérifier l'instance
+    if (this.token) {
+      return this.token
+    }
+    // Sinon, récupérer depuis localStorage
+    if (typeof window !== "undefined") {
+      const storedToken = localStorage.getItem("auth_token")
+      if (storedToken) {
+        this.token = storedToken
+        return storedToken
+      }
+    }
+    return null
   }
 
   /**
