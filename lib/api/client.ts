@@ -44,21 +44,20 @@ class ApiClient {
 
   /**
    * Obtenir le token actuel (depuis l'instance ou localStorage)
+   * Toujours vérifier localStorage en priorité pour s'assurer d'avoir le token le plus récent
    */
   getToken(): string | null {
-    // D'abord vérifier l'instance
-    if (this.token) {
-      return this.token
-    }
-    // Sinon, récupérer depuis localStorage
+    // TOUJOURS vérifier localStorage en premier pour avoir le token le plus récent
     if (typeof window !== "undefined") {
       const storedToken = localStorage.getItem("auth_token")
       if (storedToken) {
+        // Synchroniser avec l'instance
         this.token = storedToken
         return storedToken
       }
     }
-    return null
+    // Si pas de token dans localStorage, utiliser l'instance (peut être null)
+    return this.token
   }
 
   /**
@@ -77,21 +76,20 @@ class ApiClient {
 
   /**
    * Obtenir le token actuel (depuis l'instance ou localStorage)
+   * Toujours vérifier localStorage en priorité pour s'assurer d'avoir le token le plus récent
    */
   private getCurrentToken(): string | null {
-    // D'abord vérifier l'instance
-    if (this.token) {
-      return this.token
-    }
-    // Sinon, récupérer depuis localStorage (pour les cas où le token a été mis à jour ailleurs)
+    // TOUJOURS vérifier localStorage en premier pour avoir le token le plus récent
     if (typeof window !== "undefined") {
       const storedToken = localStorage.getItem("auth_token")
       if (storedToken) {
+        // Synchroniser avec l'instance
         this.token = storedToken
         return storedToken
       }
     }
-    return null
+    // Si pas de token dans localStorage, utiliser l'instance (peut être null)
+    return this.token
   }
 
   /**
@@ -112,10 +110,23 @@ class ApiClient {
     const currentToken = this.getCurrentToken()
     if (currentToken) {
       headers["Authorization"] = `Bearer ${currentToken}`
+      console.log("🔑 [AUTH] Token trouvé et ajouté au header, longueur:", currentToken.length)
+    } else {
+      console.warn("⚠️ [AUTH] Aucun token trouvé dans localStorage ou instance")
+      // Vérifier une dernière fois dans localStorage directement
+      if (typeof window !== "undefined") {
+        const directToken = localStorage.getItem("auth_token")
+        if (directToken) {
+          console.log("🔑 [AUTH] Token trouvé directement dans localStorage, mise à jour")
+          this.token = directToken
+          headers["Authorization"] = `Bearer ${directToken}`
+        }
+      }
     }
 
     try {
-      console.log("🌐 [HTTP] Fetch request:", { url, method: options.method, hasBody: !!options.body, hasToken: !!currentToken })
+      const finalToken = headers["Authorization"] ? "présent" : "absent"
+      console.log("🌐 [HTTP] Fetch request:", { url, method: options.method, hasBody: !!options.body, token: finalToken })
       const response = await fetch(url, {
         ...options,
         headers,

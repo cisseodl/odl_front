@@ -134,9 +134,13 @@ export const useAuthStore = create<AuthStore>()(
           let token: string | null = null
           if (typeof window !== "undefined") {
             token = localStorage.getItem("auth_token")
-            // Mettre à jour le token dans l'instance apiClient si nécessaire
-            if (token && !apiClient.getToken()) {
+            console.log("🔑 [AUTH] checkAuth - Token dans localStorage:", token ? `présent (${token.length} caractères)` : "absent")
+            // TOUJOURS synchroniser le token avec apiClient
+            if (token) {
               apiClient.setToken(token)
+              console.log("🔑 [AUTH] Token synchronisé avec apiClient")
+            } else {
+              apiClient.setToken(null)
             }
           }
           

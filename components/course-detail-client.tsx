@@ -108,6 +108,26 @@ export function CourseDetailClient({ course }: CourseDetailClientProps) {
       isPending: enrollMutation.isPending 
     })
     
+    // Vérifier l'authentification et le token
+    if (!isAuthenticated || !user) {
+      console.error("🔴 [ENROLLMENT] Utilisateur non authentifié")
+      toast.error("Authentification requise", { description: "Veuillez vous connecter pour vous inscrire." })
+      router.push("/auth?redirect=/courses/" + course.id)
+      return
+    }
+    
+    // Vérifier que le token existe
+    if (typeof window !== "undefined") {
+      const token = localStorage.getItem("auth_token")
+      console.log("🔑 [ENROLLMENT] Token dans localStorage:", token ? `présent (${token.length} caractères)` : "absent")
+      if (!token) {
+        console.error("🔴 [ENROLLMENT] Aucun token trouvé dans localStorage")
+        toast.error("Session expirée", { description: "Veuillez vous reconnecter." })
+        router.push("/auth?redirect=/courses/" + course.id)
+        return
+      }
+    }
+    
     // Vérifier que courseIdNum est valide
     if (!courseIdNum) {
       console.error("🔴 [ENROLLMENT] courseIdNum est null ou undefined")
