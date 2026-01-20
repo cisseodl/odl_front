@@ -246,10 +246,11 @@ export const courseService = {
   },
 
   /**
-   * S'inscrire à un cours
+   * S'inscrire à un cours avec attentes
    */
-  async enrollInCourse(courseId: number): Promise<ApiResponse<any>> {
-    return apiClient.post(`${API_ENDPOINTS.courses.enroll}/${courseId}`)
+  async enrollInCourse(courseId: number, expectations?: string): Promise<ApiResponse<any>> {
+    const body = expectations ? { expectations } : {}
+    return apiClient.post(`${API_ENDPOINTS.courses.enroll}/${courseId}`, body)
   },
 }
 
@@ -508,6 +509,62 @@ export const rubriqueService = {
 }
 
 // ============ ODC Formations Services ============
+// ============ Evaluation (Exam) Services ============
+export const evaluationService = {
+  /**
+   * Obtenir l'examen d'un cours
+   * GET /api/evaluations/course/{courseId}
+   */
+  async getCourseExam(courseId: number): Promise<ApiResponse<any>> {
+    return apiClient.get(`${API_ENDPOINTS.evaluations.getByCourse}/${courseId}`)
+  },
+
+  /**
+   * Soumettre une tentative d'examen
+   * POST /api/evaluations/submit
+   */
+  async submitExam(evaluationId: number, answers: Record<number, number | string>): Promise<ApiResponse<any>> {
+    // Convertir les réponses au format attendu par le backend (Map<Long, Long> et Map<Long, String>)
+    const answersMap: Record<string, number> = {}
+    const textAnswersMap: Record<string, string> = {}
+    
+    Object.entries(answers).forEach(([questionId, answer]) => {
+      const qId = Number.parseInt(questionId)
+      if (typeof answer === 'number') {
+        answersMap[qId.toString()] = answer
+      } else {
+        textAnswersMap[qId.toString()] = answer
+      }
+    })
+
+    return apiClient.post(API_ENDPOINTS.evaluations.submit, {
+      evaluationId,
+      answers: answersMap,
+      textAnswers: textAnswersMap,
+    })
+  },
+
+  /**
+   * Soumettre la satisfaction après l'examen
+   * POST /api/evaluations/attempts/{attemptId}/satisfaction
+   */
+  async submitSatisfaction(attemptId: number, satisfaction: string, rating?: number): Promise<ApiResponse<any>> {
+    const body: { satisfaction: string; rating?: number } = { satisfaction }
+    if (rating !== undefined) {
+      body.rating = rating
+    }
+    return apiClient.post(`${API_ENDPOINTS.evaluations.submitSatisfaction}/${attemptId}/satisfaction`, body)
+  },
+
+  /**
+   * Récupérer les résultats d'un examen
+   * GET /api/evaluations/attempts/{attemptId}/results
+   */
+  async getExamResults(attemptId: number): Promise<ApiResponse<any>> {
+    return apiClient.get(`${API_ENDPOINTS.evaluations.getResults}/${attemptId}/results`)
+  },
+}
+
 export const odcFormationService = {
   /**
    * Obtenir toutes les formations ODC

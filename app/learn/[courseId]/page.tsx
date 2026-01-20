@@ -17,9 +17,12 @@ import { BookmarkButton } from "@/components/bookmark-button"
 import { TranscriptWithTimestamps } from "@/components/transcript-with-timestamps"
 import { cn } from "@/lib/utils"
 import { ProtectedRoute } from "@/components/protected-route"
-import { useQuery } from "@tanstack/react-query"
-import { courseService, learnerService, moduleService } from "@/lib/api/services"
+import { useQuery, useMutation } from "@tanstack/react-query"
+import { courseService, learnerService, moduleService, evaluationService } from "@/lib/api/services"
 import { adaptModule } from "@/lib/api/adapters"
+import { useRouter } from "next/navigation"
+import { FileCheck, Award, GraduationCap } from "lucide-react"
+import { toast } from "sonner"
 import type { Lesson, Module } from "@/lib/types"
 
 interface LearnPageProps {
@@ -29,6 +32,7 @@ interface LearnPageProps {
 export default function LearnPage({ params }: LearnPageProps) {
   const { courseId } = use(params)
   const courseIdNum = Number.parseInt(courseId)
+  const router = useRouter()
 
   // Charger le cours depuis l'API
   const {
@@ -118,6 +122,18 @@ export default function LearnPage({ params }: LearnPageProps) {
 
   const currentLessonData = lessons[currentLesson]
   const progress = lessons.length > 0 ? (completedLessons.length / lessons.length) * 100 : 0
+  const isCourseCompleted = progress === 100 && lessons.length > 0
+
+  // Vérifier si un examen existe pour ce cours (seulement si le cours est complété)
+  const {
+    data: courseExam,
+    isLoading: isLoadingExam,
+  } = useQuery({
+    queryKey: ["courseExam", courseIdNum],
+    queryFn: () => evaluationService.getCourseExam(courseIdNum),
+    enabled: isCourseCompleted && !Number.isNaN(courseIdNum),
+    retry: false, // Ne pas réessayer si pas d'examen
+  })
 
   // Filter lessons based on search query
   const filteredLessons = useMemo(() => {

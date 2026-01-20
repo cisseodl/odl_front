@@ -1,0 +1,400 @@
+"use client"
+
+import { use, useState, useEffect } from "react"
+import { useRouter } from "next/navigation"
+import { ChevronLeft, CheckCircle2, XCircle, Flag, Loader2, GraduationCap } from "lucide-react"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
+import { Label } from "@/components/ui/label"
+import { Checkbox } from "@/components/ui/checkbox"
+import { Progress } from "@/components/ui/progress"
+import { Badge } from "@/components/ui/badge"
+import { cn } from "@/lib/utils"
+import { ProtectedRoute } from "@/components/protected-route"
+import { useQuery, useMutation } from "@tanstack/react-query"
+import { evaluationService } from "@/lib/api/services"
+import { toast } from "sonner"
+import { SatisfactionModal } from "@/components/satisfaction-modal"
+
+interface ExamPageProps {
+  params: Promise<{ courseId: string; examId: string }>
+}
+
+export default function ExamPage({ params }: ExamPageProps) {
+  const { courseId, examId } = use(params)
+  const router = useRouter()
+  const examIdNum = Number.parseInt(examId)
+  const courseIdNum = Number.parseInt(courseId)
+
+  // Charger l'examen depuis l'API
+  const {
+    data: exam,
+    isLoading: isLoadingExam,
+    error: examError,
+  } = useQuery({
+    queryKey: ["exam", examIdNum],
+    queryFn: async () => {
+      const response = await evaluationService.getCourseExam(courseIdNum)
+      if (response.ok && response.data) {
+        return response.data
+      }
+      throw new Error(response.message || "Examen non trouvé")
+    },
+    enabled: !Number.isNaN(examIdNum) && !Number.isNaN(courseIdNum),
+  })
+
+  const [currentQuestion, setCurrentQuestion] = useState(0)
+  const [answers, setAnswers] = useState<Record<number, number[] | string>>({})
+  const [markedForReview, setMarkedForReview] = useState<number[]>([])
+  const [showSatisfactionModal, setShowSatisfactionModal] = useState(false)
+  const [submittedAttemptId, setSubmittedAttemptId] = useState<number | null>(null)
+
+  // Utiliser les questions de l'examen chargé depuis l'API
+  const questions: any[] = exam?.questions || []
+  
+  const question = questions[currentQuestion]
+  const progress = questions.length > 0 ? ((currentQuestion + 1) / questions.length) * 100 : 0
+
+  const handleAnswer = (value: string | string[]) => {
+    setAnswers((prev) => ({
+      ...prev,
+      [currentQuestion]: value,
+    }))
+  }
+
+  const handleNext = () => {
+    if (currentQuestion < questions.length - 1) {
+      setCurrentQuestion(currentQuestion + 1)
+    }
+  }
+
+  const handlePrevious = () => {
+    if (currentQuestion > 0) {
+      setCurrentQuestion(currentQuestion - 1)
+    }
+  }
+
+  const handleMarkForReview = () => {
+    if (markedForReview.includes(currentQuestion)) {
+      setMarkedForReview(markedForReview.filter((q) => q !== currentQuestion))
+    } else {
+      setMarkedForReview([...markedForReview, currentQuestion])
+    }
+  }
+
+  // Mutation pour soumettre l'examen
+  const submitExamMutation = useMutation({
+    mutationFn: async () => {
+      // Convertir les réponses au format attendu
+      // Le backend attend Map<Long, Long> pour answers et Map<Long, String> pour textAnswers
+      const answersMap: Record<number, number | string> = {}
+      Object.entries(answers).forEach(([questionId, answer]) => {
+        const qId = Number.parseInt(questionId)
+        if (Array.isArray(answer)) {
+          // Pour les questions à choix multiples, prendre le premier choix
+          answersMap[qId] = answer[0] as number
+        } else if (typeof answer === 'string') {
+          // Réponse texte
+          answersMap[qId] = answer
+        } else {
+          // Réponse numérique (ID de réponse)
+          answersMap[qId] = answer as number
+        }
+      })
+
+      const response = await evaluationService.submitExam(examIdNum, answersMap)
+      if (response.ok && response.data) {
+        // La réponse backend est dans CResponse, donc response.data contient les données
+        // Si response.data est un objet avec une propriété data, extraire celle-ci
+        const attemptData = response.data?.data || response.data
+        return attemptData
+      }
+      throw new Error(response.message || "Erreur lors de la soumission")
+    },
+    onSuccess: (data: any) => {
+      // L'examen est soumis, maintenant afficher le modal de satisfaction
+      // L'ID de la tentative peut être dans data.id, data.data.id, ou data.data
+      const attemptId = data?.id || data?.data?.id || (data?.data && typeof data.data === 'object' && data.data.id ? data.data.id : null)
+      if (attemptId) {
+        setSubmittedAttemptId(attemptId)
+        setShowSatisfactionModal(true)
+      } else {
+        // Essayer de récupérer depuis la structure de réponse CResponse
+        const responseData = data?.data || data
+        if (responseData?.id) {
+          setSubmittedAttemptId(responseData.id)
+          setShowSatisfactionModal(true)
+        } else {
+          toast.error("Erreur", {
+            description: "Impossible de récupérer l'ID de la tentative. Veuillez réessayer.",
+          })
+        }
+      }
+    },
+    onError: (error: any) => {
+      toast.error("Erreur", {
+        description: error?.message || "Erreur lors de la soumission de l'examen",
+      })
+    },
+  })
+
+  const handleSubmit = () => {
+    // Vérifier que toutes les questions ont une réponse
+    const unansweredQuestions = questions.filter((_, index) => !answers[index])
+    if (unansweredQuestions.length > 0) {
+      toast.warning("Questions non répondues", {
+        description: `Vous avez ${unansweredQuestions.length} question(s) sans réponse. Voulez-vous continuer ?`,
+      })
+    }
+    submitExamMutation.mutate()
+  }
+
+  // Mutation pour soumettre la satisfaction
+  const submitSatisfactionMutation = useMutation({
+    mutationFn: async (satisfaction: { satisfaction: string; rating?: number }) => {
+      if (!submittedAttemptId) throw new Error("ID de tentative manquant")
+      const response = await evaluationService.submitSatisfaction(
+        submittedAttemptId,
+        satisfaction.satisfaction,
+        satisfaction.rating
+      )
+      if (response.ok && response.data) {
+        return response.data
+      }
+      throw new Error(response.message || "Erreur lors de la soumission de la satisfaction")
+    },
+    onSuccess: (data: any) => {
+      toast.success("Satisfaction enregistrée", {
+        description: "Vos résultats sont maintenant disponibles.",
+      })
+      setShowSatisfactionModal(false)
+      // Récupérer l'ID de la tentative depuis la réponse ou utiliser celui stocké
+      const attemptId = data?.id || data?.data?.id || submittedAttemptId
+      if (attemptId) {
+        // Rediriger vers la page des résultats avec l'ID de la tentative
+        router.push(`/learn/${courseId}/exam/${examId}/results?attemptId=${attemptId}`)
+      } else {
+        router.push(`/learn/${courseId}/exam/${examId}/results`)
+      }
+    },
+    onError: (error: any) => {
+      toast.error("Erreur", {
+        description: error?.message || "Erreur lors de la soumission de la satisfaction",
+      })
+    },
+  })
+
+  if (Number.isNaN(examIdNum) || Number.isNaN(courseIdNum)) {
+    return <div>Paramètres invalides</div>
+  }
+
+  if (isLoadingExam) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <span className="ml-2 text-muted-foreground">Chargement de l'examen...</span>
+      </div>
+    )
+  }
+
+  if (examError || !exam) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[400px] space-y-4">
+        <XCircle className="h-12 w-12 text-destructive" />
+        <h2 className="text-xl font-semibold">Examen non trouvé</h2>
+        <p className="text-muted-foreground">Cet examen n'est pas disponible.</p>
+        <Button onClick={() => router.push(`/learn/${courseId}`)}>
+          <ChevronLeft className="h-4 w-4 mr-2" />
+          Retour au cours
+        </Button>
+      </div>
+    )
+  }
+
+  return (
+    <ProtectedRoute>
+      <div className="min-h-screen bg-muted/30">
+        <div className="container max-w-5xl mx-auto px-4 py-8">
+          {/* Header */}
+          <div className="mb-6">
+            <Button
+              variant="ghost"
+              onClick={() => router.push(`/learn/${courseId}`)}
+              className="mb-4"
+            >
+              <ChevronLeft className="h-4 w-4 mr-2" />
+              Retour au cours
+            </Button>
+            <div className="flex items-center justify-between">
+              <div>
+                <h1 className="text-2xl font-bold flex items-center gap-2">
+                  <GraduationCap className="h-6 w-6 text-primary" />
+                  {exam.title || "Examen de fin de cours"}
+                </h1>
+                <p className="text-muted-foreground mt-1">{exam.description || ""}</p>
+              </div>
+              <Badge variant="outline" className="text-sm">
+                Question {currentQuestion + 1} / {questions.length}
+              </Badge>
+            </div>
+            <Progress value={progress} className="mt-4" />
+          </div>
+
+          {/* Question Card */}
+          {question && (
+            <Card>
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-lg">Question {currentQuestion + 1}</CardTitle>
+                  {markedForReview.includes(currentQuestion) && (
+                    <Badge variant="outline" className="flex items-center gap-1">
+                      <Flag className="h-3 w-3" />
+                      À revoir
+                    </Badge>
+                  )}
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div>
+                  <p className="text-base font-medium">{question.title || question.description}</p>
+                </div>
+
+                {/* Réponses */}
+                {question.type === "QCM" || question.type === "SINGLE_CHOICE" ? (
+                  <RadioGroup
+                    value={answers[currentQuestion] as string}
+                    onValueChange={handleAnswer}
+                  >
+                    {question.reponses?.map((response: any, index: number) => (
+                      <div key={index} className="flex items-center space-x-2 p-3 border rounded-lg hover:bg-muted/50">
+                        <RadioGroupItem value={String(response.id)} id={`option-${index}`} />
+                        <Label htmlFor={`option-${index}`} className="flex-1 cursor-pointer">
+                          {response.title || response.description}
+                        </Label>
+                      </div>
+                    ))}
+                  </RadioGroup>
+                ) : question.type === "MULTIPLE_CHOICE" ? (
+                  <div className="space-y-3">
+                    {question.reponses?.map((response: any, index: number) => {
+                      const currentAnswers = (answers[currentQuestion] as number[]) || []
+                      const isChecked = currentAnswers.includes(response.id)
+                      return (
+                        <div
+                          key={index}
+                          className={cn(
+                            "flex items-center space-x-2 p-3 border rounded-lg hover:bg-muted/50 cursor-pointer",
+                            isChecked && "bg-primary/5 border-primary"
+                          )}
+                          onClick={() => {
+                            const newAnswers = isChecked
+                              ? currentAnswers.filter((id) => id !== response.id)
+                              : [...currentAnswers, response.id]
+                            handleAnswer(newAnswers)
+                          }}
+                        >
+                          <Checkbox
+                            checked={isChecked}
+                            onCheckedChange={() => {
+                              const newAnswers = isChecked
+                                ? currentAnswers.filter((id) => id !== response.id)
+                                : [...currentAnswers, response.id]
+                              handleAnswer(newAnswers)
+                            }}
+                          />
+                          <Label className="flex-1 cursor-pointer">
+                            {response.title || response.description}
+                          </Label>
+                          {isChecked && (
+                            <CheckCircle2 className="h-5 w-5 text-primary animate-in zoom-in duration-200" />
+                          )}
+                        </div>
+                      )
+                    })}
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    <Label>Votre réponse</Label>
+                    <textarea
+                      className="w-full min-h-[100px] p-3 border rounded-lg"
+                      value={(answers[currentQuestion] as string) || ""}
+                      onChange={(e) => handleAnswer(e.target.value)}
+                      placeholder="Tapez votre réponse ici..."
+                    />
+                  </div>
+                )}
+
+                {/* Actions */}
+                <div className="flex items-center justify-between gap-3 pt-6 border-t">
+                  <div className="flex gap-2">
+                    <Button variant="outline" onClick={handlePrevious} disabled={currentQuestion === 0}>
+                      Précédent
+                    </Button>
+                    <Button variant="ghost" onClick={handleMarkForReview}>
+                      <Flag className={`h-4 w-4 mr-2 ${markedForReview.includes(currentQuestion) ? "fill-current" : ""}`} />
+                      Marquer
+                    </Button>
+                  </div>
+
+                  {currentQuestion === questions.length - 1 ? (
+                    <Button
+                      onClick={handleSubmit}
+                      disabled={submitExamMutation.isPending}
+                    >
+                      {submitExamMutation.isPending ? (
+                        <>
+                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                          Soumission...
+                        </>
+                      ) : (
+                        "Soumettre l'examen"
+                      )}
+                    </Button>
+                  ) : (
+                    <Button onClick={handleNext}>Suivant</Button>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Navigation rapide */}
+          <Card className="mt-6">
+            <CardContent className="p-4">
+              <div className="flex flex-wrap gap-2">
+                {questions.map((_, index) => (
+                  <button
+                    key={index}
+                    onClick={() => setCurrentQuestion(index)}
+                    className={cn(
+                      "w-10 h-10 rounded-md border text-sm font-medium transition-colors",
+                      currentQuestion === index
+                        ? "bg-primary text-primary-foreground border-primary"
+                        : answers[index]
+                          ? "bg-primary/10 border-primary/30 text-primary"
+                          : "bg-background border-border hover:bg-muted",
+                      markedForReview.includes(index) && "ring-2 ring-yellow-500"
+                    )}
+                  >
+                    {index + 1}
+                  </button>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Modal de satisfaction */}
+        <SatisfactionModal
+          open={showSatisfactionModal}
+          onOpenChange={setShowSatisfactionModal}
+          onSubmit={(satisfaction, rating) => {
+            submitSatisfactionMutation.mutate({ satisfaction, rating })
+          }}
+          isLoading={submitSatisfactionMutation.isPending}
+        />
+      </div>
+    </ProtectedRoute>
+  )
+}

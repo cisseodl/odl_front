@@ -142,7 +142,14 @@ export const API_ENDPOINTS = {
     create: "/api/odc-formations",
     update: "/api/odc-formations",
     delete: "/api/odc-formations",
-    myFormations: "/api/odc-formations/my-formations",
+  },
+  // Evaluations (Exams)
+  evaluations: {
+    getAll: "/api/evaluations/get-all",
+    getByCourse: "/api/evaluations/course",
+    submit: "/api/evaluations/submit",
+    submitSatisfaction: "/api/evaluations/attempts",
+    getResults: "/api/evaluations/attempts",
   },
 } as const
 

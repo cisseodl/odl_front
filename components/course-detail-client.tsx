@@ -27,6 +27,7 @@ import { moduleService, courseService } from "@/lib/api/services"
 import { adaptModule } from "@/lib/api/adapters"
 import { CourseSidebar } from "@/components/course-sidebar"
 import { useAuthStore } from "@/lib/store/auth-store"
+import { EnrollmentExpectationsModal } from "@/components/enrollment-expectations-modal"
 import type { Course, Module } from "@/lib/types"
 
 interface CourseDetailClientProps {
@@ -59,6 +60,7 @@ export function CourseDetailClient({ course }: CourseDetailClientProps) {
   const [activeTab, setActiveTab] = useState("content") // Par défaut, afficher l'onglet "Contenu" pour voir les modules/leçons
   const [dynamicCurriculum, setDynamicCurriculum] = useState<Module[] | null>(null)
   const [isEnrolled, setIsEnrolled] = useState(false)
+  const [showExpectationsModal, setShowExpectationsModal] = useState(false)
   const queryClient = useQueryClient()
 
   // Convertir course.id en nombre de manière sécurisée
@@ -81,7 +83,7 @@ export function CourseDetailClient({ course }: CourseDetailClientProps) {
     return !!learner
   }, [user])
 
-  // Handler pour l'inscription
+  // Handler pour l'inscription - ouvre le modal d'attentes
   const handleEnroll = () => {
     // Vérifier l'authentification
     if (!isAuthenticated || !user) {
@@ -101,15 +103,21 @@ export function CourseDetailClient({ course }: CourseDetailClientProps) {
       return
     }
 
-    // Lancer l'inscription
+    // Ouvrir le modal d'attentes
+    setShowExpectationsModal(true)
+  }
+
+  // Handler pour confirmer l'inscription avec les attentes
+  const handleConfirmEnrollment = (expectations: string) => {
     if (courseIdNum) {
-      enrollMutation.mutate(courseIdNum)
+      enrollMutation.mutate({ courseId: courseIdNum, expectations })
     }
   }
 
-  // Mutation pour s'inscrire au cours
+  // Mutation pour s'inscrire au cours avec attentes
   const enrollMutation = useMutation({
-    mutationFn: (courseId: number) => courseService.enrollInCourse(courseId),
+    mutationFn: ({ courseId, expectations }: { courseId: number; expectations: string }) => 
+      courseService.enrollInCourse(courseId, expectations),
     onSuccess: (response: any) => {
       // Si l'utilisateur est déjà inscrit, le backend retourne une erreur mais on considère qu'il est inscrit
       if (response?.message?.includes("déjà inscrit")) {
@@ -124,6 +132,7 @@ export function CourseDetailClient({ course }: CourseDetailClientProps) {
           description: "Vous pouvez maintenant accéder aux modules et leçons du cours.",
         })
         setIsEnrolled(true)
+        setShowExpectationsModal(false)
         // Recharger les modules après l'inscription
         queryClient.invalidateQueries({ queryKey: ["modules", courseIdNum] })
       }
@@ -990,6 +999,15 @@ export function CourseDetailClient({ course }: CourseDetailClientProps) {
           </div>
         </div>
       </div>
+
+      {/* Modal d'attentes d'inscription */}
+      <EnrollmentExpectationsModal
+        open={showExpectationsModal}
+        onOpenChange={setShowExpectationsModal}
+        onConfirm={handleConfirmEnrollment}
+        courseTitle={course.title}
+        isLoading={enrollMutation.isPending}
+      />
     </div>
   )
 }
