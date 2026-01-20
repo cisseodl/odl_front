@@ -209,7 +209,7 @@ export default function DashboardPage() {
         progress: activity.progress || 0,
         date: dateLabel,
         time: timeLabel,
-        icon: Play,
+      icon: Play,
       }
     })
   }, [recentActivityData])
@@ -447,9 +447,9 @@ export default function DashboardPage() {
                                   </p>
                                 </div>
                                 {(course.progress || 0) === 100 && (
-                                  <Badge className="bg-primary text-white font-semibold border-0 shadow-sm">
+                                <Badge className="bg-primary text-white font-semibold border-0 shadow-sm">
                                     Complété
-                                  </Badge>
+                                </Badge>
                                 )}
                               </div>
                             </div>
@@ -633,7 +633,7 @@ export default function DashboardPage() {
                       <span className="ml-2 text-muted-foreground">Chargement...</span>
                     </div>
                   ) : completedCoursesForDisplay.length > 0 ? (
-                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                       {completedCoursesForDisplay.map((achievement, index) => (
                         <FadeInView key={achievement.id} delay={0.6 + index * 0.05}>
                           <Link href={`/courses/${achievement.course.id}`}>
@@ -641,24 +641,24 @@ export default function DashboardPage() {
                               className="group relative flex flex-col items-center gap-3 p-4 rounded-xl border-2 transition-all duration-300 cursor-pointer border-primary/40 bg-primary/5 hover:bg-primary/10 hover:scale-105 hover:shadow-lg hover:shadow-primary/20"
                               title={`Complété ${achievement.date}`}
                             >
-                              <div className="absolute -top-2 -right-2">
-                                <Sparkles className="h-4 w-4 text-primary animate-pulse" />
-                              </div>
+                            <div className="absolute -top-2 -right-2">
+                              <Sparkles className="h-4 w-4 text-primary animate-pulse" />
+                            </div>
                               <div className="text-4xl transition-transform duration-300 group-hover:scale-125 group-hover:rotate-12">
                                 {achievement.icon}
-                              </div>
-                              <div className="text-center space-y-1">
+                          </div>
+                          <div className="text-center space-y-1">
                                 <p className="text-xs font-bold leading-tight line-clamp-2">{achievement.name}</p>
-                                <Badge className="bg-primary text-white text-xs border-0">
+                              <Badge className="bg-primary text-white text-xs border-0">
                                   Complété
-                                </Badge>
+                              </Badge>
                                 <p className="text-xs text-muted-foreground">{achievement.date}</p>
                               </div>
-                            </div>
+                          </div>
                           </Link>
-                        </FadeInView>
-                      ))}
-                    </div>
+                      </FadeInView>
+                    ))}
+                  </div>
                   ) : (
                     <div className="text-center py-8 text-muted-foreground">
                       <Trophy className="h-12 w-12 mx-auto mb-3 opacity-50" />
@@ -713,8 +713,8 @@ export default function DashboardPage() {
                           <span>{activity.date}</span>
                           <span>{activity.time}</span>
                         </div>
-                        </div>
-                      </FadeInView>
+                      </div>
+                    </FadeInView>
                     ))
                   ) : (
                     <div className="text-center py-8 text-muted-foreground">
@@ -754,30 +754,30 @@ export default function DashboardPage() {
                     >
                       <div
                         className={`p-4 border-2 rounded-xl transition-all duration-300 hover:shadow-lg cursor-pointer ${
+                        deadline.priority === "high"
+                          ? "border-primary/40 bg-primary/10 hover:bg-primary/15"
+                          : "border-muted bg-muted/20 hover:bg-muted/30"
+                      }`}
+                    >
+                      <div className="flex items-start justify-between gap-2 mb-2">
+                        <div className="flex-1">
+                          <p className="font-bold text-sm mb-1">{deadline.course}</p>
+                          <p className="text-xs text-muted-foreground">{deadline.task}</p>
+                        </div>
+                        {deadline.priority === "high" && (
+                          <Flame className="h-4 w-4 text-primary flex-shrink-0" />
+                        )}
+                      </div>
+                      <Badge
+                        className={`text-xs font-semibold ${
                           deadline.priority === "high"
-                            ? "border-primary/40 bg-primary/10 hover:bg-primary/15"
-                            : "border-muted bg-muted/20 hover:bg-muted/30"
+                            ? "bg-primary text-white border-0"
+                            : "bg-muted text-foreground"
                         }`}
                       >
-                        <div className="flex items-start justify-between gap-2 mb-2">
-                          <div className="flex-1">
-                            <p className="font-bold text-sm mb-1">{deadline.course}</p>
-                            <p className="text-xs text-muted-foreground">{deadline.task}</p>
-                          </div>
-                          {deadline.priority === "high" && (
-                            <Flame className="h-4 w-4 text-primary flex-shrink-0" />
-                          )}
-                        </div>
-                        <Badge
-                          className={`text-xs font-semibold ${
-                            deadline.priority === "high"
-                              ? "bg-primary text-white border-0"
-                              : "bg-muted text-foreground"
-                          }`}
-                        >
-                          {deadline.dueDate}
-                        </Badge>
-                      </div>
+                        {deadline.dueDate}
+                      </Badge>
+                    </div>
                     </Link>
                     ))
                   ) : (
@@ -1015,60 +1015,60 @@ export default function DashboardPage() {
               </CardHeader>
               <CardContent>
                 {categoryDistribution.length > 0 ? (
-                  <ChartContainer
-                    config={{
-                      value: {
-                        label: "Cours",
-                        color: "hsl(var(--primary))",
-                      },
-                    }}
-                    className="h-[300px] w-full"
-                  >
+                <ChartContainer
+                  config={{
+                    value: {
+                      label: "Cours",
+                      color: "hsl(var(--primary))",
+                    },
+                  }}
+                  className="h-[300px] w-full"
+                >
                     <BarChart data={categoryDistribution}>
-                      <CartesianGrid strokeDasharray="3 3" className="stroke-muted/30" />
-                      <XAxis
-                        dataKey="category"
-                        tickLine={false}
-                        axisLine={false}
-                        tickMargin={12}
-                        className="text-xs font-medium"
-                        tick={{ fill: "hsl(var(--muted-foreground))" }}
+                    <CartesianGrid strokeDasharray="3 3" className="stroke-muted/30" />
+                    <XAxis
+                      dataKey="category"
+                      tickLine={false}
+                      axisLine={false}
+                      tickMargin={12}
+                      className="text-xs font-medium"
+                      tick={{ fill: "hsl(var(--muted-foreground))" }}
                         angle={-45}
                         textAnchor="end"
                         height={80}
-                      />
-                      <YAxis
-                        tickLine={false}
-                        axisLine={false}
-                        tickMargin={12}
-                        className="text-xs font-medium"
-                        tick={{ fill: "hsl(var(--muted-foreground))" }}
-                      />
-                      <ChartTooltip
-                        cursor={{ fill: "hsl(var(--primary) / 0.1)" }}
-                        content={({ active, payload }) => {
-                          if (active && payload && payload.length) {
-                            return (
-                              <div className="rounded-lg border bg-background p-3 shadow-lg">
-                                <p className="font-bold text-sm text-primary">
-                                  {payload[0].value} cours
-                                </p>
-                                <p className="text-xs text-muted-foreground">
-                                  {payload[0].payload.category}
-                                </p>
-                              </div>
-                            )
-                          }
-                          return null
-                        }}
-                      />
-                      <Bar
-                        dataKey="value"
-                        fill="hsl(var(--primary))"
-                        radius={[8, 8, 0, 0]}
-                      />
-                    </BarChart>
-                  </ChartContainer>
+                    />
+                    <YAxis
+                      tickLine={false}
+                      axisLine={false}
+                      tickMargin={12}
+                      className="text-xs font-medium"
+                      tick={{ fill: "hsl(var(--muted-foreground))" }}
+                    />
+                    <ChartTooltip
+                      cursor={{ fill: "hsl(var(--primary) / 0.1)" }}
+                      content={({ active, payload }) => {
+                        if (active && payload && payload.length) {
+                          return (
+                            <div className="rounded-lg border bg-background p-3 shadow-lg">
+                              <p className="font-bold text-sm text-primary">
+                                {payload[0].value} cours
+                              </p>
+                              <p className="text-xs text-muted-foreground">
+                                {payload[0].payload.category}
+                              </p>
+                            </div>
+                          )
+                        }
+                        return null
+                      }}
+                    />
+                    <Bar
+                      dataKey="value"
+                      fill="hsl(var(--primary))"
+                      radius={[8, 8, 0, 0]}
+                    />
+                  </BarChart>
+                </ChartContainer>
                 ) : (
                   <div className="flex flex-col items-center justify-center h-[300px] text-muted-foreground">
                     <BarChart3 className="h-12 w-12 mb-3 opacity-50" />
@@ -1081,21 +1081,21 @@ export default function DashboardPage() {
           </FadeInView>
         </div>
 
-        {/* Prochaines Étapes */}
-        <FadeInView delay={1.2}>
-          <Card className="border-2 border-primary/40 bg-gradient-to-br from-primary/10 via-primary/5 to-transparent">
-            <CardHeader className="pb-4">
-              <div className="flex items-center gap-3">
-                <div className="rounded-lg bg-primary/20 p-2 border border-primary/30">
-                  <Target className="h-5 w-5 text-primary" />
+          {/* Prochaines Étapes */}
+          <FadeInView delay={1.2}>
+            <Card className="border-2 border-primary/40 bg-gradient-to-br from-primary/10 via-primary/5 to-transparent">
+              <CardHeader className="pb-4">
+                <div className="flex items-center gap-3">
+                  <div className="rounded-lg bg-primary/20 p-2 border border-primary/30">
+                    <Target className="h-5 w-5 text-primary" />
+                  </div>
+                  <div>
+                    <CardTitle className="text-xl">Prochaines Étapes</CardTitle>
+                    <CardDescription>Suggestions pour continuer votre apprentissage</CardDescription>
+                  </div>
                 </div>
-                <div>
-                  <CardTitle className="text-xl">Prochaines Étapes</CardTitle>
-                  <CardDescription>Suggestions pour continuer votre apprentissage</CardDescription>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-3">
+              </CardHeader>
+              <CardContent className="space-y-3">
               {isLoadingNextSteps ? (
                 <div className="flex items-center justify-center py-8">
                   <Loader2 className="h-6 w-6 animate-spin text-primary" />
@@ -1105,27 +1105,27 @@ export default function DashboardPage() {
                 nextSteps.map((step, index) => (
                   <Link key={index} href={step.link || "/courses"}>
                     <div
-                      className="group p-4 border-2 border-primary/20 rounded-xl hover:border-primary/40 hover:bg-primary/10 transition-all duration-300 cursor-pointer"
-                    >
-                      <div className="flex items-start justify-between gap-3 mb-2">
-                        <div className="flex-1">
-                          <p className="font-bold text-sm group-hover:text-primary transition-colors">
-                            {step.action}
-                          </p>
-                          {step.progress > 0 && (
-                            <div className="mt-2 space-y-1">
-                              <div className="flex items-center justify-between text-xs text-muted-foreground">
-                                <span>Progression</span>
-                                <span className="font-semibold">{step.progress}%</span>
-                              </div>
-                              <Progress value={step.progress} className="h-2" />
+                    className="group p-4 border-2 border-primary/20 rounded-xl hover:border-primary/40 hover:bg-primary/10 transition-all duration-300 cursor-pointer"
+                  >
+                    <div className="flex items-start justify-between gap-3 mb-2">
+                      <div className="flex-1">
+                        <p className="font-bold text-sm group-hover:text-primary transition-colors">
+                          {step.action}
+                        </p>
+                        {step.progress > 0 && (
+                          <div className="mt-2 space-y-1">
+                            <div className="flex items-center justify-between text-xs text-muted-foreground">
+                              <span>Progression</span>
+                              <span className="font-semibold">{step.progress}%</span>
                             </div>
-                          )}
-                        </div>
-                        <ArrowUpRight className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors flex-shrink-0" />
+                            <Progress value={step.progress} className="h-2" />
+                          </div>
+                        )}
                       </div>
+                      <ArrowUpRight className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors flex-shrink-0" />
                     </div>
-                  </Link>
+                  </div>
+                    </Link>
                 ))
               ) : (
                 <div className="text-center py-8 text-muted-foreground">
@@ -1136,9 +1136,9 @@ export default function DashboardPage() {
                   </Button>
                 </div>
               )}
-            </CardContent>
-          </Card>
-        </FadeInView>
+              </CardContent>
+            </Card>
+          </FadeInView>
 
         {/* Footer CTA - Explorer Plus */}
         <FadeInView delay={1.4}>

@@ -606,10 +606,10 @@ export function CourseDetailClient({ course }: CourseDetailClientProps) {
                                     <div className="flex-shrink-0 w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center border-2 border-primary/20">
                                       <span className="text-sm font-bold text-primary">{moduleIndex + 1}</span>
                                     </div>
-                                    <div className="flex-1 text-left">
+                                <div className="flex-1 text-left">
                                       <div className="font-bold text-lg text-foreground mb-1.5">
                                         {module.title}
-                                      </div>
+                                  </div>
                                       <div className="flex items-center gap-4 text-sm text-muted-foreground">
                                         <span className="flex items-center gap-1.5">
                                           <BookOpen className="h-4 w-4" />
@@ -620,10 +620,10 @@ export function CourseDetailClient({ course }: CourseDetailClientProps) {
                                           {formattedDuration}
                                         </span>
                                       </div>
-                                    </div>
                                   </div>
                                 </div>
-                              </AccordionTrigger>
+                              </div>
+                            </AccordionTrigger>
                               <AccordionContent className="px-6 pb-5 pt-0">
                                 <div className="space-y-1.5 mt-3 ml-14">
                                   {module.lessons && Array.isArray(module.lessons) && module.lessons.length > 0 ? (
@@ -633,9 +633,9 @@ export function CourseDetailClient({ course }: CourseDetailClientProps) {
                                       const isQuiz = lesson.type === "quiz"
                                       
                                       return (
-                                        <Link
-                                          key={String(lesson.id)}
-                                          href={`/learn/${course.id}?lesson=${lesson.id}`}
+                                  <Link
+                                    key={String(lesson.id)}
+                                    href={`/learn/${course.id}?lesson=${lesson.id}`}
                                           className="flex items-center justify-between p-4 rounded-lg hover:bg-primary/5 hover:border-l-4 hover:border-primary transition-all duration-200 group border border-transparent hover:border-primary/20 bg-muted/30"
                                         >
                                           <div className="flex items-center gap-4 flex-1 min-w-0">
@@ -647,7 +647,7 @@ export function CourseDetailClient({ course }: CourseDetailClientProps) {
                                               ) : (
                                                 <span className="text-xs font-semibold text-muted-foreground group-hover:text-primary">
                                                   {lessonNumber}
-                                                </span>
+                                      </span>
                                               )}
                                             </div>
                                             <div className="flex items-center gap-3 flex-1 min-w-0">
@@ -655,15 +655,15 @@ export function CourseDetailClient({ course }: CourseDetailClientProps) {
                                                 {isVideo && <Video className="h-4 w-4 text-muted-foreground flex-shrink-0" />}
                                                 {isQuiz && <FileText className="h-4 w-4 text-primary flex-shrink-0" />}
                                                 <span className="text-sm font-medium text-foreground/90 group-hover:text-foreground truncate">
-                                                  {lesson.title}
-                                                </span>
-                                              </div>
+                                          {lesson.title}
+                                        </span>
+                                      </div>
                                               {isQuiz && (
                                                 <Badge className="bg-primary/10 text-primary text-xs border-primary/20 font-medium flex-shrink-0">
-                                                  Quiz
-                                                </Badge>
-                                              )}
-                                            </div>
+                                          Quiz
+                                        </Badge>
+                                      )}
+                                    </div>
                                           </div>
                                           <div className="flex items-center gap-3 flex-shrink-0 ml-4">
                                             {lesson.duration && (
@@ -674,8 +674,8 @@ export function CourseDetailClient({ course }: CourseDetailClientProps) {
                                             <div className="w-6 h-6 rounded-full bg-background border border-border flex items-center justify-center group-hover:border-primary group-hover:bg-primary/10 transition-colors">
                                               <Play className="h-3 w-3 text-muted-foreground/60 group-hover:text-primary transition-colors" />
                                             </div>
-                                          </div>
-                                        </Link>
+                                    </div>
+                                  </Link>
                                       )
                                     })
                                   ) : (
@@ -683,9 +683,9 @@ export function CourseDetailClient({ course }: CourseDetailClientProps) {
                                       Aucune leçon disponible dans ce module
                                     </div>
                                   )}
-                                </div>
-                              </AccordionContent>
-                            </AccordionItem>
+                              </div>
+                            </AccordionContent>
+                          </AccordionItem>
                           )
                         })
                       ) : (
@@ -872,19 +872,19 @@ export function CourseDetailClient({ course }: CourseDetailClientProps) {
             
             {/* Card d'inscription - Afficher uniquement si l'utilisateur n'est pas inscrit */}
             {!isEnrolled && (
-              <FadeInView delay={0.3}>
-                <Card className="border-2 border-primary/40 bg-gradient-to-br from-primary/5 via-transparent to-transparent shadow-xl">
-                  <CardHeader className="pb-4 border-b border-border">
-                    <CardTitle className="text-xl flex items-center gap-2">
-                      <Award className="h-5 w-5 text-primary" />
-                      Accéder au cours
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="p-6 space-y-6">
-                    {/* CTA Button */}
-                    <Button
-                      size="lg"
-                      className="w-full bg-primary text-white hover:bg-primary/90 font-bold text-lg h-14 shadow-lg hover:shadow-xl transition-all duration-300"
+            <FadeInView delay={0.3}>
+              <Card className="border-2 border-primary/40 bg-gradient-to-br from-primary/5 via-transparent to-transparent shadow-xl">
+                <CardHeader className="pb-4 border-b border-border">
+                  <CardTitle className="text-xl flex items-center gap-2">
+                    <Award className="h-5 w-5 text-primary" />
+                    Accéder au cours
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="p-6 space-y-6">
+                  {/* CTA Button */}
+                  <Button
+                    size="lg"
+                    className="w-full bg-primary text-white hover:bg-primary/90 font-bold text-lg h-14 shadow-lg hover:shadow-xl transition-all duration-300"
                       onClick={handleEnroll}
                       disabled={enrollMutation.isPending}
                     >
@@ -895,11 +895,11 @@ export function CourseDetailClient({ course }: CourseDetailClientProps) {
                         </>
                       ) : (
                         <>
-                          S'inscrire gratuitement
-                          <ArrowLeft className="h-5 w-5 ml-2 rotate-180" />
+                      S'inscrire gratuitement
+                      <ArrowLeft className="h-5 w-5 ml-2 rotate-180" />
                         </>
                       )}
-                    </Button>
+                  </Button>
 
                   {/* Course Info */}
                   <div className="space-y-4">

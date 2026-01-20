@@ -12,6 +12,7 @@ import { useQuery } from "@tanstack/react-query"
 import { evaluationService, certificateService } from "@/lib/api/services"
 import { toast } from "sonner"
 import Link from "next/link"
+import { serializeData } from "@/lib/utils/serialize"
 
 interface ExamResultsPageProps {
   params: Promise<{ courseId: string; examId: string }>
@@ -35,7 +36,8 @@ export default function ExamResultsPage({ params }: ExamResultsPageProps) {
     queryFn: async () => {
       const response = await evaluationService.getExamResults(attemptId)
       if (response.ok && response.data) {
-        return response.data
+        // Sérialiser les données pour éviter les erreurs React #185
+        return serializeData(response.data)
       }
       throw new Error(response.message || "Résultats non disponibles")
     },
@@ -187,7 +189,13 @@ export default function ExamResultsPage({ params }: ExamResultsPageProps) {
               {attempt.createdAt && (
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Date de soumission :</span>
-                  <span>{new Date(attempt.createdAt).toLocaleDateString("fr-FR")}</span>
+                  <span>
+                    {typeof attempt.createdAt === 'string' 
+                      ? new Date(attempt.createdAt).toLocaleDateString("fr-FR")
+                      : attempt.createdAt instanceof Date
+                        ? attempt.createdAt.toLocaleDateString("fr-FR")
+                        : String(attempt.createdAt)}
+                  </span>
                 </div>
               )}
             </CardContent>

@@ -16,6 +16,7 @@ import { useQuery, useMutation } from "@tanstack/react-query"
 import { evaluationService } from "@/lib/api/services"
 import { toast } from "sonner"
 import { SatisfactionModal } from "@/components/satisfaction-modal"
+import { serializeData } from "@/lib/utils/serialize"
 
 interface ExamPageProps {
   params: Promise<{ courseId: string; examId: string }>
@@ -37,7 +38,8 @@ export default function ExamPage({ params }: ExamPageProps) {
     queryFn: async () => {
       const response = await evaluationService.getCourseExam(courseIdNum)
       if (response.ok && response.data) {
-        return response.data
+        // Sérialiser les données pour éviter les erreurs React #185
+        return serializeData(response.data)
       }
       throw new Error(response.message || "Examen non trouvé")
     },

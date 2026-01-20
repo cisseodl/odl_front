@@ -1,6 +1,5 @@
 import type React from "react"
 import type { Metadata } from "next"
-import { Analytics } from "@vercel/analytics/next"
 import { Toaster } from "@/components/ui/toaster"
 import { Header } from "@/components/header"
 import { Footer } from "@/components/footer"
@@ -11,6 +10,17 @@ import { ThemeProvider } from "@/components/theme-provider"
 import { StoreProvider } from "@/components/store-provider"
 import { LanguageProvider } from "@/lib/contexts/language-context"
 import "./globals.css"
+
+// Conditionner Vercel Analytics uniquement en production Vercel
+let Analytics: React.ComponentType | null = null
+if (process.env.NEXT_PUBLIC_VERCEL_ENV === "production") {
+  try {
+    const analyticsModule = require("@vercel/analytics/next")
+    Analytics = analyticsModule.Analytics
+  } catch (e) {
+    // Analytics non disponible, ignorer silencieusement
+  }
+}
 
 // Using CSS variables for fonts to avoid Turbopack issues
 // Fonts are defined in globals.css via @theme inline
@@ -60,7 +70,7 @@ export default function RootLayout({
           </StoreProvider>
           </LanguageProvider>
         </ThemeProvider>
-        <Analytics />
+        {Analytics && <Analytics />}
       </body>
     </html>
   )
