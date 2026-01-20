@@ -136,7 +136,14 @@ export function CourseDetailClient({ course }: CourseDetailClientProps) {
       }
       
       try {
-        const response = await courseService.enrollInCourse(courseId, expectations.trim())
+        // Ajouter un timeout pour éviter un blocage infini
+        const timeoutPromise = new Promise((_, reject) => {
+          setTimeout(() => reject(new Error("Timeout: La requête a pris trop de temps")), 30000) // 30 secondes
+        })
+        
+        const enrollmentPromise = courseService.enrollInCourse(courseId, expectations.trim())
+        
+        const response = await Promise.race([enrollmentPromise, timeoutPromise]) as any
         console.log("🟢 [ENROLLMENT] Réponse de l'API:", { 
           ok: response.ok, 
           message: response.message,
@@ -154,7 +161,8 @@ export function CourseDetailClient({ course }: CourseDetailClientProps) {
         return response
       } catch (error: any) {
         console.error("🔴 [ENROLLMENT] Erreur lors de l'inscription:", error)
-        throw error
+        // S'assurer que l'erreur est bien propagée
+        throw error instanceof Error ? error : new Error(String(error))
       }
     },
     onSuccess: (response: any) => {

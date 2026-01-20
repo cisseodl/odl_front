@@ -80,10 +80,15 @@ export function EnrollmentExpectationsModal({
 
   // Réinitialiser isSubmitting quand isLoading change
   useEffect(() => {
+    console.log("🔄 [MODAL] isLoading changed:", isLoading)
     if (isLoading) {
       setIsSubmitting(true)
     } else {
-      setIsSubmitting(false)
+      // Délai pour permettre à la mutation de se terminer
+      const timer = setTimeout(() => {
+        setIsSubmitting(false)
+      }, 100)
+      return () => clearTimeout(timer)
     }
   }, [isLoading])
 
