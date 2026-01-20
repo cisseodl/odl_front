@@ -86,6 +86,7 @@ export function CourseDetailClient({ course }: CourseDetailClientProps) {
   // Handler pour l'inscription - ouvre le modal d'attentes
   const handleEnroll = () => {
     // Vérifier l'authentification
+    // Si l'utilisateur n'est PAS connecté, rediriger vers le login
     if (!isAuthenticated || !user) {
       toast.error("Authentification requise", {
         description: "Vous devez être connecté pour vous inscrire à un cours.",
@@ -94,16 +95,8 @@ export function CourseDetailClient({ course }: CourseDetailClientProps) {
       return
     }
 
-    // Vérifier le profil apprenant
-    if (!hasLearnerProfile) {
-      toast.error("Profil apprenant requis", {
-        description: "Vous devez avoir un profil apprenant pour vous inscrire à un cours. Veuillez compléter votre profil.",
-      })
-      router.push("/auth?redirect=/courses/" + course.id)
-      return
-    }
-
-    // Ouvrir le modal d'attentes
+    // Si l'utilisateur est connecté (même sans profil apprenant), ouvrir directement le modal d'attentes
+    // Le backend gérera la vérification du profil apprenant lors de l'inscription
     setShowExpectationsModal(true)
   }
 
