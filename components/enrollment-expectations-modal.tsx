@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import {
   Dialog,
   DialogContent,
@@ -32,7 +32,20 @@ export function EnrollmentExpectationsModal({
   const [expectations, setExpectations] = useState("")
   const [error, setError] = useState("")
 
-  const handleSubmit = () => {
+  // Réinitialiser le state quand le modal s'ouvre
+  useEffect(() => {
+    if (open) {
+      setExpectations("")
+      setError("")
+    }
+  }, [open])
+
+  const handleSubmit = (e?: React.MouseEvent) => {
+    e?.preventDefault()
+    e?.stopPropagation()
+    
+    console.log("handleSubmit appelé, expectations:", expectations)
+    
     if (!expectations.trim()) {
       setError("Veuillez remplir vos attentes concernant ce cours")
       return
@@ -44,6 +57,7 @@ export function EnrollmentExpectationsModal({
     }
 
     setError("")
+    console.log("Appel de onConfirm avec:", expectations.trim())
     onConfirm(expectations.trim())
   }
 
@@ -82,6 +96,13 @@ export function EnrollmentExpectationsModal({
                 setExpectations(e.target.value)
                 setError("")
               }}
+              onKeyDown={(e) => {
+                // Permettre la soumission avec Ctrl+Enter ou Cmd+Enter
+                if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
+                  e.preventDefault()
+                  handleSubmit()
+                }
+              }}
               rows={6}
               className="resize-none"
               disabled={isLoading}
@@ -90,7 +111,7 @@ export function EnrollmentExpectationsModal({
               <p className="text-sm text-destructive">{error}</p>
             )}
             <p className="text-xs text-muted-foreground">
-              Minimum 10 caractères requis
+              Minimum 10 caractères requis ({expectations.trim().length}/10)
             </p>
           </div>
         </div>
@@ -103,8 +124,13 @@ export function EnrollmentExpectationsModal({
             Annuler
           </Button>
           <Button
-            onClick={handleSubmit}
-            disabled={isLoading || !expectations.trim()}
+            onClick={(e) => {
+              console.log("Bouton cliqué, expectations:", expectations)
+              handleSubmit(e)
+            }}
+            disabled={isLoading || !expectations.trim() || expectations.trim().length < 10}
+            type="button"
+            className="bg-primary hover:bg-primary/90"
           >
             {isLoading ? (
               <>
