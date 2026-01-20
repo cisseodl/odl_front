@@ -65,15 +65,35 @@ export function CourseDetailClient({ course }: CourseDetailClientProps) {
 
   // Convertir course.id en nombre de manière sécurisée
   const courseIdNum = useMemo(() => {
+    console.log("🔍 [COURSE] Conversion de course.id:", { 
+      courseId: course.id, 
+      type: typeof course.id,
+      course: course 
+    })
+    
+    if (!course || !course.id) {
+      console.error("🔴 [COURSE] course ou course.id est undefined/null")
+      return null
+    }
+    
+    // Essayer de convertir en nombre
+    let numId: number | null = null
+    
     if (typeof course.id === 'string') {
       const parsed = parseInt(course.id, 10)
-      return Number.isNaN(parsed) ? null : parsed
+      numId = Number.isNaN(parsed) ? null : parsed
+    } else if (typeof course.id === 'number') {
+      numId = Number.isNaN(course.id) ? null : course.id
+    } else {
+      // Essayer de convertir en string puis en nombre
+      const strId = String(course.id)
+      const parsed = parseInt(strId, 10)
+      numId = Number.isNaN(parsed) ? null : parsed
     }
-    if (typeof course.id === 'number') {
-      return Number.isNaN(course.id) ? null : course.id
-    }
-    return null
-  }, [course.id])
+    
+    console.log("🔍 [COURSE] courseIdNum calculé:", numId)
+    return numId
+  }, [course, course.id])
 
   // Vérifier si l'utilisateur a un profil apprenant
   const hasLearnerProfile = useMemo(() => {
@@ -130,8 +150,24 @@ export function CourseDetailClient({ course }: CourseDetailClientProps) {
     
     // Vérifier que courseIdNum est valide
     if (!courseIdNum) {
-      console.error("🔴 [ENROLLMENT] courseIdNum est null ou undefined")
-      toast.error("Erreur", { description: "ID du cours invalide" })
+      console.error("🔴 [ENROLLMENT] courseIdNum est null ou undefined", {
+        courseId: course.id,
+        courseIdType: typeof course.id,
+        courseIdNum,
+        course: course
+      })
+      // Essayer de récupérer l'ID depuis l'URL si disponible
+      const urlPath = window.location.pathname
+      const urlMatch = urlPath.match(/\/courses\/(\d+)/)
+      if (urlMatch && urlMatch[1]) {
+        const urlCourseId = parseInt(urlMatch[1], 10)
+        console.log("🟢 [ENROLLMENT] ID récupéré depuis l'URL:", urlCourseId)
+        if (!Number.isNaN(urlCourseId)) {
+          enrollMutation.mutate({ courseId: urlCourseId, expectations })
+          return
+        }
+      }
+      toast.error("Erreur", { description: "ID du cours invalide. Veuillez rafraîchir la page." })
       return
     }
     
