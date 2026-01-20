@@ -187,7 +187,9 @@ export default function DashboardPage() {
     }
 
     return recentActivityData.map((activity: any) => {
-      const completedAt = activity.completedAt ? new Date(activity.completedAt) : new Date()
+      // Convertir la date en string ISO pour éviter les erreurs de sérialisation
+      const completedAtStr = activity.completedAt || new Date().toISOString()
+      const completedAt = new Date(completedAtStr)
       const now = new Date()
       const diffMs = now.getTime() - completedAt.getTime()
       const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24))
@@ -203,13 +205,14 @@ export default function DashboardPage() {
         dateLabel = completedAt.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' })
       }
 
+      // Retourner uniquement des valeurs sérialisables (pas d'objets Date)
       return {
         course: activity.courseTitle || "Cours",
         lesson: activity.lessonTitle || "Leçon",
         progress: activity.progress || 0,
-        date: dateLabel,
-        time: timeLabel,
-      icon: Play,
+        date: dateLabel, // String sérialisable
+        time: timeLabel, // String sérialisable
+        icon: Play, // Composant React, mais ne sera pas sérialisé dans le state
       }
     })
   }, [recentActivityData])

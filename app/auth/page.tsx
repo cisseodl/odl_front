@@ -237,6 +237,7 @@ export default function AuthPage() {
                       type={showPassword ? "text" : "password"}
                       placeholder="••••••••"
                       className="pl-10 pr-10"
+                      autoComplete="current-password"
                       required
                     />
                     <Button
@@ -320,6 +321,7 @@ export default function AuthPage() {
                       type={showPassword ? "text" : "password"}
                       placeholder="••••••••"
                       className="pl-10 pr-10"
+                      autoComplete="new-password"
                       required
                       minLength={6}
                     />
@@ -344,6 +346,7 @@ export default function AuthPage() {
                       type={showConfirmPassword ? "text" : "password"}
                       placeholder="••••••••"
                       className="pl-10 pr-10"
+                      autoComplete="new-password"
                       required
                       minLength={6}
                     />
@@ -512,6 +515,7 @@ export default function AuthPage() {
                       type={showPassword ? "text" : "password"}
                       placeholder="••••••••"
                       className="pl-10 pr-10"
+                      autoComplete="new-password"
                       required
                       minLength={6}
                     />
@@ -536,6 +540,7 @@ export default function AuthPage() {
                       type={showConfirmPassword ? "text" : "password"}
                       placeholder="••••••••"
                       className="pl-10 pr-10"
+                      autoComplete="new-password"
                       required
                       minLength={6}
                     />
