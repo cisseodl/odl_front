@@ -121,42 +121,76 @@ export const courseService = {
    */
   async getAllCourses(): Promise<Course[]> {
     try {
+      console.log("📚 [COURSES] Début de getAllCourses, endpoint:", API_ENDPOINTS.courses.getAll)
       const response = await apiClient.get<{ data: BackendCourse[] } | BackendCourse[]>(
         API_ENDPOINTS.courses.getAll
       )
       
+      console.log("📚 [COURSES] Réponse reçue:", {
+        ok: response.ok,
+        ko: response.ko,
+        message: response.message,
+        hasData: !!response.data,
+        dataType: typeof response.data,
+        isArray: Array.isArray(response.data),
+        dataKeys: response.data && typeof response.data === 'object' ? Object.keys(response.data) : null
+      })
+      
       if (response.ok && response.data) {
-        // Le backend peut retourner soit directement un array, soit dans { data: [...] }
+        // Le backend retourne CResponse<List<CourseDto>> avec la structure { ok: true, data: [...], message: "..." }
         let courses: BackendCourse[] = []
         
+        // Cas 1: response.data est directement un array
         if (Array.isArray(response.data)) {
           courses = response.data
-        } else if (response.data && typeof response.data === 'object') {
-          // Si c'est un CResponse, extraire le data
+          console.log("📚 [COURSES] Données trouvées directement dans response.data (array)")
+        } 
+        // Cas 2: response.data est un objet CResponse avec une propriété data
+        else if (response.data && typeof response.data === 'object') {
+          // Vérifier si c'est un CResponse avec { data: [...] }
           if ('data' in response.data && Array.isArray((response.data as any).data)) {
             courses = (response.data as any).data
-          } else if (Array.isArray((response.data as any))) {
-            courses = response.data as BackendCourse[]
+            console.log("📚 [COURSES] Données trouvées dans response.data.data (CResponse)")
+          } 
+          // Vérifier si response.data est un objet avec une propriété qui est un array
+          else {
+            // Chercher toutes les propriétés qui sont des arrays
+            for (const key in response.data) {
+              if (Array.isArray((response.data as any)[key])) {
+                courses = (response.data as any)[key]
+                console.log(`📚 [COURSES] Données trouvées dans response.data.${key}`)
+                break
+              }
+            }
           }
         }
         
-        console.log("getAllCourses: Nombre de cours récupérés:", courses.length)
+        console.log("📚 [COURSES] Nombre de cours récupérés:", courses.length)
         if (courses.length > 0) {
-          console.log("getAllCourses: Premier cours:", {
+          console.log("📚 [COURSES] Premier cours:", {
             id: courses[0].id,
             title: courses[0].title,
             hasCurriculum: !!courses[0].curriculum,
             curriculumLength: courses[0].curriculum?.length || 0
           })
+        } else {
+          console.warn("📚 [COURSES] Aucun cours dans le tableau extrait")
         }
         
-        return adaptCourses(courses)
+        const adaptedCourses = adaptCourses(courses)
+        console.log("📚 [COURSES] Cours adaptés:", adaptedCourses.length)
+        return adaptedCourses
       }
       
-      console.warn("getAllCourses: Aucun cours trouvé ou réponse invalide", response)
+      console.warn("📚 [COURSES] Réponse invalide ou erreur:", {
+        ok: response.ok,
+        ko: response.ko,
+        message: response.message,
+        data: response.data
+      })
       return []
     } catch (error) {
-      console.error("Erreur lors de la récupération des cours:", error)
+      console.error("📚 [COURSES] Erreur lors de la récupération des cours:", error)
       return []
     }
   },

@@ -36,8 +36,20 @@ export default function CoursesPage() {
     refetch,
   } = useQuery({
     queryKey: ["courses"],
-    queryFn: () => courseService.getAllCourses(),
+    queryFn: async () => {
+      console.log("📚 [PAGE] Chargement des cours...")
+      const result = await courseService.getAllCourses()
+      console.log("📚 [PAGE] Cours chargés:", result.length)
+      return result
+    },
     staleTime: 5 * 60 * 1000, // 5 minutes
+    retry: 2, // Réessayer 2 fois en cas d'erreur
+    onError: (error) => {
+      console.error("📚 [PAGE] Erreur lors du chargement des cours:", error)
+    },
+    onSuccess: (data) => {
+      console.log("📚 [PAGE] Cours chargés avec succès:", data.length)
+    }
   })
   
   // Load view preference from localStorage
