@@ -98,7 +98,7 @@ export interface QuizQuestion {
   correctAnswers: string[] // IDs des réponses correctes
   explanation: string
   points: number
-  optionToIdMap?: Map<string, number> // Mapping option texte -> ID de réponse
+  optionToIdMap?: Record<string, number> // Mapping option texte -> ID de réponse (objet sérialisable)
 }
 
 export interface UserProgress {

@@ -132,11 +132,11 @@ export default function QuizPage({ params }: QuizPageProps) {
           if (Array.isArray(answer)) {
             // Multiple choice: convertir chaque option texte en ID
             selectedIds = answer
-              .map((optionText) => q.optionToIdMap?.get(optionText))
+              .map((optionText) => q.optionToIdMap?.[optionText])
               .filter((id): id is number => id !== undefined)
           } else if (typeof answer === "string") {
             // Single choice: convertir l'option texte en ID
-            const id = q.optionToIdMap.get(answer)
+            const id = q.optionToIdMap[answer]
             if (id !== undefined) {
               selectedIds = [id]
             }

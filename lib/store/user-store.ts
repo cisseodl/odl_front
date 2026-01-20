@@ -93,6 +93,56 @@ export const useUserStore = create<UserStore>()(
     }),
     {
       name: "user-storage",
+      // Sérialiser les Dates en strings pour éviter l'erreur React #185
+      partialize: (state) => ({
+        ...state,
+        lastLoginDate: state.lastLoginDate ? state.lastLoginDate.toISOString() : null,
+        achievements: state.achievements.map(achievement => ({
+          ...achievement,
+          unlockedAt: achievement.unlockedAt instanceof Date 
+            ? achievement.unlockedAt.toISOString() 
+            : achievement.unlockedAt,
+        })),
+        progress: Object.fromEntries(
+          Object.entries(state.progress).map(([courseId, progress]) => [
+            courseId,
+            {
+              ...progress,
+              lastAccessedAt: progress.lastAccessedAt instanceof Date
+                ? progress.lastAccessedAt.toISOString()
+                : progress.lastAccessedAt,
+            },
+          ])
+        ),
+      }),
+      // Désérialiser les strings en Dates
+      onRehydrateStorage: () => (state) => {
+        if (state) {
+          // Convertir lastLoginDate
+          if (state.lastLoginDate && typeof state.lastLoginDate === 'string') {
+            state.lastLoginDate = new Date(state.lastLoginDate)
+          }
+          // Convertir achievements.unlockedAt
+          state.achievements = state.achievements.map(achievement => ({
+            ...achievement,
+            unlockedAt: achievement.unlockedAt && typeof achievement.unlockedAt === 'string'
+              ? new Date(achievement.unlockedAt)
+              : achievement.unlockedAt,
+          }))
+          // Convertir progress.lastAccessedAt
+          state.progress = Object.fromEntries(
+            Object.entries(state.progress).map(([courseId, progress]) => [
+              courseId,
+              {
+                ...progress,
+                lastAccessedAt: progress.lastAccessedAt && typeof progress.lastAccessedAt === 'string'
+                  ? new Date(progress.lastAccessedAt)
+                  : progress.lastAccessedAt,
+              },
+            ])
+          )
+        }
+      },
     },
   ),
 )

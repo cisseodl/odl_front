@@ -186,14 +186,14 @@ export function adaptQuiz(quizDTO: QuizDTO): Quiz {
  * Convertir une question backend en question frontend
  * Note: Les options sont les textes des réponses, mais correctAnswers contient les IDs des réponses correctes
  */
-export function adaptQuestion(questionDTO: QuestionDTO): QuizQuestion & { optionToIdMap?: Map<string, number> } {
+export function adaptQuestion(questionDTO: QuestionDTO): QuizQuestion & { optionToIdMap?: Record<string, number> } {
   const isQCM = questionDTO.type === "SINGLE_CHOICE" || questionDTO.type === "MULTIPLE_CHOICE"
   const reponses = questionDTO.reponses || []
 
-  // Créer un mapping option texte -> ID de réponse
-  const optionToIdMap = new Map<string, number>()
+  // Créer un mapping option texte -> ID de réponse (utiliser un objet au lieu d'un Map pour éviter l'erreur React #185)
+  const optionToIdMap: Record<string, number> = {}
   reponses.forEach((r) => {
-    optionToIdMap.set(r.text, r.id)
+    optionToIdMap[r.text] = r.id
   })
 
   return {
@@ -206,9 +206,9 @@ export function adaptQuestion(questionDTO: QuestionDTO): QuizQuestion & { option
     correctAnswers: reponses.filter((r) => r.isCorrect).map((r) => String(r.id)), // IDs des réponses correctes
     explanation: "",
     points: questionDTO.points || 1,
-    // Mapping pour convertir option texte -> ID de réponse
+    // Mapping pour convertir option texte -> ID de réponse (objet sérialisable)
     optionToIdMap: optionToIdMap,
-  } as QuizQuestion & { optionToIdMap?: Map<string, number> }
+  } as QuizQuestion & { optionToIdMap?: Record<string, number> }
 }
 
 /**
