@@ -111,38 +111,56 @@ export function CourseDetailClient({ course }: CourseDetailClientProps) {
   // Mutation pour s'inscrire au cours avec attentes
   const enrollMutation = useMutation({
     mutationFn: async ({ courseId, expectations }: { courseId: number; expectations: string }) => {
-      console.log("enrollMutation.mutationFn appelé avec:", { courseId, expectations })
+      console.log("🔵 [ENROLLMENT] Début de l'inscription:", { courseId, expectationsLength: expectations?.length })
+      
+      // Vérifier que les attentes sont bien fournies
+      if (!expectations || expectations.trim().length < 10) {
+        throw new Error("Les attentes doivent contenir au moins 10 caractères")
+      }
+      
       try {
-        const response = await courseService.enrollInCourse(courseId, expectations)
-        console.log("enrollMutation.mutationFn réponse:", response)
+        const response = await courseService.enrollInCourse(courseId, expectations.trim())
+        console.log("🟢 [ENROLLMENT] Réponse de l'API:", { 
+          ok: response.ok, 
+          message: response.message,
+          hasData: !!response.data 
+        })
         
         // Si la réponse indique une erreur (ok: false), lancer une erreur pour déclencher onError
         if (!response.ok) {
           const errorMessage = response.message || "Erreur lors de l'inscription"
+          console.error("🔴 [ENROLLMENT] Erreur de l'API:", errorMessage)
           throw new Error(errorMessage)
         }
         
+        console.log("✅ [ENROLLMENT] Inscription réussie, données:", response.data)
         return response
       } catch (error: any) {
-        console.error("enrollMutation.mutationFn erreur:", error)
+        console.error("🔴 [ENROLLMENT] Erreur lors de l'inscription:", error)
         throw error
       }
     },
     onSuccess: (response: any) => {
       console.log("enrollMutation.onSuccess appelé avec:", response)
+      
+      // Fermer le modal immédiatement
       setShowExpectationsModal(false)
       
+      // Afficher le message de succès
       toast.success("Inscription réussie !", {
-        description: "Vous pouvez maintenant accéder aux modules et leçons du cours.",
+        description: "Vous êtes maintenant inscrit au cours. Redirection vers le contenu...",
       })
+      
+      // Mettre à jour l'état local
       setIsEnrolled(true)
-      // Recharger les modules après l'inscription
+      
+      // Invalider les caches pour recharger les données
       queryClient.invalidateQueries({ queryKey: ["modules", courseIdNum] })
-      // Rediriger vers la page d'apprentissage du cours
+      queryClient.invalidateQueries({ queryKey: ["course", courseIdNum] })
+      
+      // Rediriger immédiatement vers la page d'apprentissage du cours (modules/leçons)
       if (courseIdNum) {
-        setTimeout(() => {
-          router.push(`/learn/${courseIdNum}`)
-        }, 500)
+        router.push(`/learn/${courseIdNum}`)
       }
     },
     onError: (error: any) => {
