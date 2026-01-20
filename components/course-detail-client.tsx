@@ -110,40 +110,60 @@ export function CourseDetailClient({ course }: CourseDetailClientProps) {
 
   // Mutation pour s'inscrire au cours avec attentes
   const enrollMutation = useMutation({
-    mutationFn: ({ courseId, expectations }: { courseId: number; expectations: string }) => 
-      courseService.enrollInCourse(courseId, expectations),
-    onSuccess: (response: any) => {
-      // Si l'utilisateur est déjà inscrit, le backend retourne une erreur mais on considère qu'il est inscrit
-      if (response?.message?.includes("déjà inscrit")) {
-        toast.info("Vous êtes déjà inscrit à ce cours", {
-          description: "Vous pouvez accéder aux modules et leçons.",
-        })
-        setIsEnrolled(true)
-        // Recharger les modules
-        queryClient.invalidateQueries({ queryKey: ["modules", courseIdNum] })
-      } else {
-        toast.success("Inscription réussie !", {
-          description: "Vous pouvez maintenant accéder aux modules et leçons du cours.",
-        })
-        setIsEnrolled(true)
-        setShowExpectationsModal(false)
-        // Recharger les modules après l'inscription
-        queryClient.invalidateQueries({ queryKey: ["modules", courseIdNum] })
-        // Rediriger vers la page d'apprentissage du cours
-        if (courseIdNum) {
-          router.push(`/learn/${courseIdNum}`)
+    mutationFn: async ({ courseId, expectations }: { courseId: number; expectations: string }) => {
+      console.log("enrollMutation.mutationFn appelé avec:", { courseId, expectations })
+      try {
+        const response = await courseService.enrollInCourse(courseId, expectations)
+        console.log("enrollMutation.mutationFn réponse:", response)
+        
+        // Si la réponse indique une erreur (ok: false), lancer une erreur pour déclencher onError
+        if (!response.ok) {
+          const errorMessage = response.message || "Erreur lors de l'inscription"
+          throw new Error(errorMessage)
         }
+        
+        return response
+      } catch (error: any) {
+        console.error("enrollMutation.mutationFn erreur:", error)
+        throw error
+      }
+    },
+    onSuccess: (response: any) => {
+      console.log("enrollMutation.onSuccess appelé avec:", response)
+      setShowExpectationsModal(false)
+      
+      toast.success("Inscription réussie !", {
+        description: "Vous pouvez maintenant accéder aux modules et leçons du cours.",
+      })
+      setIsEnrolled(true)
+      // Recharger les modules après l'inscription
+      queryClient.invalidateQueries({ queryKey: ["modules", courseIdNum] })
+      // Rediriger vers la page d'apprentissage du cours
+      if (courseIdNum) {
+        setTimeout(() => {
+          router.push(`/learn/${courseIdNum}`)
+        }, 500)
       }
     },
     onError: (error: any) => {
-      const errorMessage = error?.message || "Erreur lors de l'inscription"
+      console.log("enrollMutation.onError appelé avec:", error)
+      setShowExpectationsModal(false)
+      const errorMessage = error?.message || error?.response?.data?.message || "Erreur lors de l'inscription"
+      console.log("errorMessage:", errorMessage)
+      
       // Si l'erreur indique que l'utilisateur est déjà inscrit, on considère qu'il est inscrit
-      if (errorMessage.includes("déjà inscrit")) {
+      if (errorMessage.includes("déjà inscrit") || errorMessage.includes("déjà inscrit")) {
         setIsEnrolled(true)
         toast.info("Vous êtes déjà inscrit à ce cours", {
           description: "Vous pouvez accéder aux modules et leçons.",
         })
         queryClient.invalidateQueries({ queryKey: ["modules", courseIdNum] })
+        // Rediriger vers la page d'apprentissage du cours
+        if (courseIdNum) {
+          setTimeout(() => {
+            router.push(`/learn/${courseIdNum}`)
+          }, 500)
+        }
       } else if (errorMessage.includes("non authentifié") || errorMessage.includes("401") || errorMessage.includes("403")) {
         // Erreur d'authentification, rediriger vers la page d'authentification
         toast.error("Authentification requise", {
@@ -1001,7 +1021,13 @@ export function CourseDetailClient({ course }: CourseDetailClientProps) {
       {/* Modal d'attentes d'inscription */}
       <EnrollmentExpectationsModal
         open={showExpectationsModal}
-        onOpenChange={setShowExpectationsModal}
+        onOpenChange={(open) => {
+          setShowExpectationsModal(open)
+          // Si le modal se ferme et que la mutation est en cours, annuler la mutation
+          if (!open && enrollMutation.isPending) {
+            enrollMutation.reset()
+          }
+        }}
         onConfirm={handleConfirmEnrollment}
         courseTitle={course.title}
         isLoading={enrollMutation.isPending}
