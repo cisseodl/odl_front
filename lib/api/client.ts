@@ -115,10 +115,12 @@ class ApiClient {
     }
 
     try {
+      console.log("🌐 [HTTP] Fetch request:", { url, method: options.method, hasBody: !!options.body, hasToken: !!currentToken })
       const response = await fetch(url, {
         ...options,
         headers,
       })
+      console.log("🌐 [HTTP] Response status:", response.status, response.statusText)
 
       // Gérer les réponses non-JSON (comme les fichiers)
       const contentType = response.headers.get("content-type")
@@ -233,9 +235,12 @@ class ApiClient {
    * POST request
    */
   async post<T>(endpoint: string, body?: any): Promise<ApiResponse<T>> {
+    console.log("🌐 [HTTP] POST request:", { endpoint, body })
+    const bodyString = body ? JSON.stringify(body) : undefined
+    console.log("🌐 [HTTP] Body stringifié:", bodyString)
     return this.request<T>(endpoint, {
       method: "POST",
-      body: body ? JSON.stringify(body) : undefined,
+      body: bodyString,
     })
   }
 

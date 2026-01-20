@@ -102,10 +102,27 @@ export function CourseDetailClient({ course }: CourseDetailClientProps) {
 
   // Handler pour confirmer l'inscription avec les attentes
   const handleConfirmEnrollment = (expectations: string) => {
-    // Empêcher les appels multiples
-    if (courseIdNum && !enrollMutation.isPending) {
-      enrollMutation.mutate({ courseId: courseIdNum, expectations })
+    console.log("🟡 [ENROLLMENT] handleConfirmEnrollment appelé:", { 
+      courseIdNum, 
+      expectationsLength: expectations?.length,
+      isPending: enrollMutation.isPending 
+    })
+    
+    // Vérifier que courseIdNum est valide
+    if (!courseIdNum) {
+      console.error("🔴 [ENROLLMENT] courseIdNum est null ou undefined")
+      toast.error("Erreur", { description: "ID du cours invalide" })
+      return
     }
+    
+    // Empêcher les appels multiples
+    if (enrollMutation.isPending) {
+      console.warn("🟡 [ENROLLMENT] Mutation déjà en cours, ignore la nouvelle demande")
+      return
+    }
+    
+    console.log("🟢 [ENROLLMENT] Appel de enrollMutation.mutate avec:", { courseId: courseIdNum, expectations })
+    enrollMutation.mutate({ courseId: courseIdNum, expectations })
   }
 
   // Mutation pour s'inscrire au cours avec attentes

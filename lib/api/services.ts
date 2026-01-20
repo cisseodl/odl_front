@@ -249,8 +249,14 @@ export const courseService = {
    * S'inscrire à un cours avec attentes
    */
   async enrollInCourse(courseId: number, expectations?: string): Promise<ApiResponse<any>> {
+    console.log("📡 [API] enrollInCourse appelé:", { courseId, expectations, expectationsLength: expectations?.length })
     const body = expectations ? { expectations } : {}
-    return apiClient.post(`${API_ENDPOINTS.courses.enroll}/${courseId}`, body)
+    console.log("📡 [API] Body de la requête:", body)
+    const endpoint = `${API_ENDPOINTS.courses.enroll}/${courseId}`
+    console.log("📡 [API] Endpoint:", endpoint)
+    const response = await apiClient.post(endpoint, body)
+    console.log("📡 [API] Réponse reçue:", { ok: response.ok, message: response.message, hasData: !!response.data })
+    return response
   },
 }
 
