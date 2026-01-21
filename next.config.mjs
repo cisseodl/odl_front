@@ -36,6 +36,9 @@ const nextConfig = {
       },
     ]
   },
+  // Optimisation du preload CSS pour éviter les avertissements
+  // Désactiver le preload automatique des CSS chunks non critiques
+  optimizeFonts: true,
   // Fix for Turbopack chunk loading issues
   experimental: {
     turbo: {
@@ -43,6 +46,15 @@ const nextConfig = {
         // Ensure consistent module resolution
       },
     },
+    // Optimiser le chargement CSS
+    optimizeCss: true,
+  },
+  // Compiler options pour optimiser le bundle
+  compiler: {
+    // Supprimer les console.log en production (optionnel)
+    removeConsole: process.env.NODE_ENV === 'production' ? {
+      exclude: ['error', 'warn'],
+    } : false,
   },
 }
 

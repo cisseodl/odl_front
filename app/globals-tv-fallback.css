@@ -1,5 +1,6 @@
 /* Fallback CSS pour navigateurs TV (Huawei, etc.) qui ne supportent pas oklch() */
 /* Ce fichier utilise uniquement des couleurs hex et des fonctionnalités CSS de base */
+/* IMPORTANT: Ce fichier est chargé APRÈS globals.css pour servir de fallback */
 
 /* Variables CSS avec couleurs hex (compatibles TV) */
 :root {

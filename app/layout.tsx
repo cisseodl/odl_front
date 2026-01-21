@@ -9,7 +9,10 @@ import { ReactQueryProvider } from "@/lib/react-query-provider"
 import { ThemeProvider } from "@/components/theme-provider"
 import { StoreProvider } from "@/components/store-provider"
 import { LanguageProvider } from "@/lib/contexts/language-context"
+// Importer globals.css en premier (contient Tailwind et les variables oklch)
 import "./globals.css"
+// Importer globals-tv-fallback.css après (fallback pour navigateurs TV)
+// Note: Next.js optimisera automatiquement le chargement de ces fichiers
 import "./globals-tv-fallback.css"
 
 // Conditionner Vercel Analytics uniquement en production Vercel
