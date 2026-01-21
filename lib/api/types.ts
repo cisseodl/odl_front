@@ -156,6 +156,7 @@ export interface LessonDto {
   id: number
   title: string
   type: "VIDEO" | "QUIZ" | "DOCUMENT" | "LAB" // Enum LessonType
+  contentUrl?: string // URL du contenu stocké sur S3
   duration: string // Format: "15 min"
   completed?: boolean
   locked?: boolean

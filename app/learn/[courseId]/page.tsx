@@ -15,6 +15,7 @@ import { MiniPlayer } from "@/components/mini-player"
 import { ContentSearch } from "@/components/content-search"
 import { BookmarkButton } from "@/components/bookmark-button"
 import { TranscriptWithTimestamps } from "@/components/transcript-with-timestamps"
+import { LessonContentViewer } from "@/components/lesson-content-viewer"
 import { cn } from "@/lib/utils"
 import { ProtectedRoute } from "@/components/protected-route"
 import { useQuery, useMutation } from "@tanstack/react-query"
@@ -409,13 +410,20 @@ export default function LearnPage({ params }: LearnPageProps) {
             {/* Video Player */}
             {currentLessonData?.type === "video" && (
               <div className="space-y-4">
-                <div className="relative">
-                  <VideoPlayer 
-                    title={currentLessonData?.title || "Vidéo"}
-                    src={undefined}
-                    thumbnail={course?.imageUrl}
-                    videoRef={videoRef}
+                {currentLessonData?.contentUrl ? (
+                  <LessonContentViewer
+                    contentUrl={currentLessonData.contentUrl}
+                    title={currentLessonData.title || "Vidéo"}
+                    type="video"
                   />
+                ) : (
+                  <div className="relative">
+                    <VideoPlayer 
+                      title={currentLessonData?.title || "Vidéo"}
+                      src={undefined}
+                      thumbnail={course?.imageUrl}
+                      videoRef={videoRef}
+                    />
                   <div className="absolute top-4 right-4 z-10">
                     <BookmarkButton
                       timestamp={0}
@@ -426,21 +434,20 @@ export default function LearnPage({ params }: LearnPageProps) {
                       }}
                     />
                   </div>
-                </div>
-
-                <div className="flex items-center justify-between">
-                  <h2 className="text-xl md:text-2xl font-bold">{currentLessonData?.title || "Leçon"}</h2>
-                  <Button onClick={handleMarkComplete} disabled={completedLessons.includes(currentLesson)}>
-                    {completedLessons.includes(currentLesson) ? (
-                      <>
-                        <CheckCircle2 className="h-4 w-4 mr-2" />
-                        Terminé
-                      </>
-                    ) : (
-                      "Marquer comme terminé"
-                    )}
-                  </Button>
-                </div>
+                  <div className="flex items-center justify-between mt-4">
+                    <h2 className="text-xl md:text-2xl font-bold">{currentLessonData?.title || "Leçon"}</h2>
+                    <Button onClick={handleMarkComplete} disabled={completedLessons.includes(currentLesson)}>
+                      {completedLessons.includes(currentLesson) ? (
+                        <>
+                          <CheckCircle2 className="h-4 w-4 mr-2" />
+                          Terminé
+                        </>
+                      ) : (
+                        "Marquer comme terminé"
+                      )}
+                    </Button>
+                  </div>
+                )}
               </div>
             )}
 
@@ -486,22 +493,30 @@ export default function LearnPage({ params }: LearnPageProps) {
 
             {/* Document */}
             {currentLessonData?.type === "document" && (
-              <Card className="p-6">
-                <div className="flex items-center gap-3 mb-6">
-                  <div className="rounded-full bg-muted p-3">
-                    <FileText className="h-6 w-6" />
+              currentLessonData?.contentUrl ? (
+                <LessonContentViewer
+                  contentUrl={currentLessonData.contentUrl}
+                  title={currentLessonData.title || "Document"}
+                  type="document"
+                />
+              ) : (
+                <Card className="p-6">
+                  <div className="flex items-center gap-3 mb-6">
+                    <div className="rounded-full bg-muted p-3">
+                      <FileText className="h-6 w-6" />
+                    </div>
+                    <div>
+                      <h2 className="text-xl font-bold">{currentLessonData?.title || "Document"}</h2>
+                      <p className="text-sm text-muted-foreground">Ressource consultable</p>
+                    </div>
                   </div>
-                  <div>
-                    <h2 className="text-xl font-bold">{currentLessonData?.title || "Document"}</h2>
-                    <p className="text-sm text-muted-foreground">Ressource consultable</p>
+                  <div className="bg-muted/50 rounded-lg p-6 border border-border">
+                    <p className="text-muted-foreground text-center">
+                      Ce document est disponible uniquement en lecture. Vous pouvez le consulter directement dans cette section.
+                    </p>
                   </div>
-                </div>
-                <div className="bg-muted/50 rounded-lg p-6 border border-border">
-                  <p className="text-muted-foreground text-center">
-                    Ce document est disponible uniquement en lecture. Vous pouvez le consulter directement dans cette section.
-                  </p>
-                </div>
-              </Card>
+                </Card>
+              )
             )}
 
             {/* Tabs: Transcription, Resources, Notes */}

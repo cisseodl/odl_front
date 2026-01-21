@@ -89,6 +89,7 @@ export function adaptLesson(lessonDto: LessonDto): Lesson {
     id: String(lessonDto.id),
     title: lessonDto.title,
     type: lessonTypeMapping[lessonDto.type] || "video",
+    contentUrl: lessonDto.contentUrl || undefined,
     duration: lessonDto.duration || "0 min",
     completed: lessonDto.completed || false,
     locked: lessonDto.locked || false,

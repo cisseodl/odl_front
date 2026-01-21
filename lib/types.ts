@@ -41,6 +41,7 @@ export interface Lesson {
   id: string
   title: string
   type: "video" | "quiz" | "document" | "lab"
+  contentUrl?: string // URL du contenu stocké sur S3
   duration: string
   completed?: boolean
   locked?: boolean
