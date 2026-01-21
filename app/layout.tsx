@@ -10,6 +10,7 @@ import { ThemeProvider } from "@/components/theme-provider"
 import { StoreProvider } from "@/components/store-provider"
 import { LanguageProvider } from "@/lib/contexts/language-context"
 import "./globals.css"
+import "./globals-tv-fallback.css"
 
 // Conditionner Vercel Analytics uniquement en production Vercel
 let Analytics: React.ComponentType | null = null
@@ -30,6 +31,12 @@ export const metadata: Metadata = {
   description:
     "Apprenez de nouvelles compétences avec des cours en ligne de qualité. Développement web, data science, design et plus encore.",
   generator: "v0.app",
+  viewport: {
+    width: "device-width",
+    initialScale: 1,
+    maximumScale: 5,
+    userScalable: true,
+  },
   icons: {
     icon: [
       {
@@ -47,6 +54,34 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="fr" suppressHydrationWarning>
+      <head>
+        {/* Viewport meta tag pour compatibilité TV et mobile */}
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes" />
+        {/* Fallback CSS inline pour les navigateurs TV qui ne supportent pas oklch() */}
+        <style dangerouslySetInnerHTML={{
+          __html: `
+            /* Fallback pour navigateurs TV - Variables CSS avec couleurs hex */
+            :root {
+              --background: #FFFFFF;
+              --foreground: #000000;
+              --primary: #FF7900;
+              --primary-foreground: #FFFFFF;
+              --secondary: #1A1A1A;
+              --secondary-foreground: #FFFFFF;
+              --muted: #F5F5F5;
+              --muted-foreground: #525252;
+              --border: #E5E5E5;
+              --card: #FFFFFF;
+              --card-foreground: #000000;
+            }
+            body {
+              background-color: var(--background, #FFFFFF) !important;
+              color: var(--foreground, #000000) !important;
+              font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+            }
+          `
+        }} />
+      </head>
       <body className={`font-sans antialiased`}>
         <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false}>
           <LanguageProvider>
