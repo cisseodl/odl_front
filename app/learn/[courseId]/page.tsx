@@ -68,6 +68,7 @@ export default function LearnPage({ params }: LearnPageProps) {
   })
 
   // Rediriger vers /courses/[id] si l'utilisateur n'est pas inscrit
+  // WORKFLOW: /learn/id → Si non inscrit → rediriger vers /courses/id, sinon afficher le contenu
   useEffect(() => {
     // Attendre que le chargement soit terminé
     if (isLoadingModules) return
@@ -86,7 +87,7 @@ export default function LearnPage({ params }: LearnPageProps) {
                                 errorMessage.includes("Unauthorized")
       
       if (isEnrollmentError) {
-        console.log("❌ [ENROLLMENT] Utilisateur non inscrit détecté dans /learn, redirection vers /courses")
+        console.log("❌ [ENROLLMENT] Utilisateur non inscrit détecté dans /learn, redirection vers /courses/id")
         router.replace(`/courses/${courseIdNum}`)
         return
       }
@@ -96,7 +97,7 @@ export default function LearnPage({ params }: LearnPageProps) {
     // et qu'il n'y a pas d'erreur explicite, vérifier si c'est parce que l'utilisateur n'est pas inscrit
     if ((!course?.curriculum || course.curriculum.length === 0) && !isLoadingModules && !modulesFromApi) {
       // Si le cours existe mais qu'on ne peut pas charger les modules, c'est probablement une erreur d'inscription
-      console.log("⚠️ [ENROLLMENT] Aucun module chargé et pas de curriculum, redirection vers /courses")
+      console.log("⚠️ [ENROLLMENT] Aucun module chargé et pas de curriculum, redirection vers /courses/id")
       router.replace(`/courses/${courseIdNum}`)
       return
     }

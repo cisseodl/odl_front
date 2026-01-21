@@ -81,6 +81,7 @@ export default function CoursePage({ params }: CoursePageProps) {
 
   // Rediriger vers /learn UNIQUEMENT si l'utilisateur est inscrit
   // Si l'utilisateur n'est pas inscrit, afficher la page d'inscription (CourseDetailClient)
+  // WORKFLOW: /courses/id → Si inscrit → rediriger vers /learn/id, sinon afficher page d'inscription
   useEffect(() => {
     // Attendre que le chargement soit terminé
     if (isLoadingModules) return
@@ -107,7 +108,7 @@ export default function CoursePage({ params }: CoursePageProps) {
       
       if (isEnrollmentError) {
         // L'utilisateur n'est PAS inscrit, afficher la page d'inscription (CourseDetailClient)
-        console.log("❌ [ENROLLMENT] Erreur d'inscription détectée, l'utilisateur n'est pas inscrit - Affichage de la page d'inscription")
+        console.log("❌ [ENROLLMENT] Utilisateur non inscrit - Affichage de la page d'inscription (/courses/id)")
         // Ne pas rediriger, laisser CourseDetailClient s'afficher avec le bouton "S'inscrire gratuitement"
         return
       } else {
