@@ -17,6 +17,7 @@ import { apprenantService, cohorteService } from "@/lib/api/services"
 import { toast } from "sonner"
 import type { ApprenantCreateRequest } from "@/lib/api/types"
 import { useQuery } from "@tanstack/react-query"
+import { RegistrationResultDialog } from "@/components/registration-result-dialog"
 
 export default function AuthPage() {
   const router = useRouter()
@@ -25,6 +26,13 @@ export default function AuthPage() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [apprenantType, setApprenantType] = useState<"new" | "existing">("new") // Type d'apprenant : nouveau ou ancien
   const { login, register } = useAuthStore()
+  
+  // État pour le dialogue de résultat d'inscription
+  const [showResultDialog, setShowResultDialog] = useState(false)
+  const [resultDialogType, setResultDialogType] = useState<"success" | "error" | "warning">("success")
+  const [resultDialogTitle, setResultDialogTitle] = useState("")
+  const [resultDialogDescription, setResultDialogDescription] = useState("")
+  const [resultDialogEmail, setResultDialogEmail] = useState<string | undefined>(undefined)
 
   // Charger les cohortes pour le formulaire (nécessite authentification, mais on peut les charger publiquement si l'endpoint le permet)
   const { data: cohortes = [] } = useQuery({
