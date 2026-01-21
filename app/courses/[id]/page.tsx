@@ -49,17 +49,28 @@ export default function CoursePage({ params }: CoursePageProps) {
     queryFn: async () => {
       try {
         const modules = await moduleService.getModulesByCourse(courseId)
-        console.log("📚 [ENROLLMENT] Modules chargés:", modules?.length || 0)
-        return modules
+        console.log("📚 [ENROLLMENT] Modules chargés avec succès:", modules?.length || 0)
+        // Si les modules sont chargés (même tableau vide), l'utilisateur est inscrit
+        return modules || []
       } catch (error: any) {
-        console.log("📚 [ENROLLMENT] Erreur lors du chargement des modules:", error?.message || error)
-        // Si l'erreur est 403 ou 401, l'utilisateur n'est pas inscrit
-        const errorMessage = String(error?.message || "")
-        if (errorMessage.includes("403") || errorMessage.includes("401") || 
-            errorMessage.includes("inscrire") || errorMessage.includes("inscription")) {
+        const errorMessage = String(error?.message || error?.response?.data?.message || "")
+        console.log("📚 [ENROLLMENT] Erreur lors du chargement des modules:", errorMessage)
+        
+        // Si l'erreur indique qu'il faut s'inscrire, l'utilisateur n'est pas inscrit
+        const isEnrollmentError = errorMessage.includes("inscrire") || 
+                                  errorMessage.includes("inscription") || 
+                                  errorMessage.includes("inscrit") ||
+                                  errorMessage.includes("authentifié") ||
+                                  errorMessage.includes("403") ||
+                                  errorMessage.includes("401")
+        
+        if (isEnrollmentError) {
+          console.log("❌ [ENROLLMENT] Erreur d'inscription détectée, l'utilisateur n'est pas inscrit")
           throw error // Re-lancer l'erreur pour que React Query la gère
         }
-        // Autre erreur, peut-être que l'utilisateur est inscrit mais qu'il n'y a pas de modules
+        
+        // Autre erreur, peut-être que l'utilisateur est inscrit mais qu'il y a un problème technique
+        console.log("⚠️ [ENROLLMENT] Erreur non liée à l'inscription, considérer comme inscrit")
         return [] // Retourner un tableau vide pour indiquer que l'utilisateur est peut-être inscrit
       }
     },
