@@ -301,9 +301,16 @@ export function CourseDetailClient({ course }: CourseDetailClientProps) {
         setIsEnrolled(false)
       }
     },
-    onSuccess: () => {
-      // Si les modules se chargent, l'utilisateur est inscrit
-      setIsEnrolled(true)
+    onSuccess: (data) => {
+      // Seulement si les modules se chargent AVEC DU CONTENU, l'utilisateur est inscrit
+      if (data && Array.isArray(data) && data.length > 0) {
+        setIsEnrolled(true)
+        console.log("✅ [ENROLLMENT] Modules chargés avec succès (contenu présent), utilisateur inscrit")
+      } else {
+        // Tableau vide = pas de modules, considérer comme NON inscrit pour afficher le bouton
+        setIsEnrolled(false)
+        console.log("⚠️ [ENROLLMENT] Modules chargés mais tableau vide, isEnrolled = false (BOUTON VISIBLE)")
+      }
     }
   })
 
