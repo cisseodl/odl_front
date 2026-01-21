@@ -41,12 +41,18 @@ export function CourseCard({ course, showPreview = true }: CourseCardProps) {
   
   // Vérifier si l'utilisateur est inscrit à ce cours
   const isEnrolled = useMemo(() => {
-    if (!isAuthenticated || !profile?.enrolledCourses || !course?.title) {
+    if (!isAuthenticated || !profile?.enrolledCourses || !course?.id) {
       return false
     }
-    // Vérifier si le titre du cours est dans la liste des cours inscrits
-    return profile.enrolledCourses.includes(course.title)
-  }, [isAuthenticated, profile, course.title])
+    // Vérifier si le cours est dans la liste des cours inscrits
+    // enrolledCourses peut contenir des IDs (nombres) ou des titres (strings)
+    const courseIdStr = String(course.id)
+    return profile.enrolledCourses.some((enrolled: string | number) => {
+      const enrolledStr = String(enrolled)
+      // Vérifier par ID ou par titre
+      return enrolledStr === courseIdStr || enrolledStr === course.title
+    })
+  }, [isAuthenticated, profile, course.id, course.title])
   
   // Déterminer l'URL de redirection
   // Si inscrit → /learn/id, sinon → /courses/id
