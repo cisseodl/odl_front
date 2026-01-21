@@ -44,7 +44,7 @@ export default function CoursePage({ params }: CoursePageProps) {
   })
 
   // Vérifier si l'utilisateur est inscrit au cours en essayant de charger les modules
-  const { data: modulesFromApi } = useQuery({
+  const { data: modulesFromApi, error: modulesError, isLoading: isLoadingModules } = useQuery({
     queryKey: ["modules", courseId],
     queryFn: () => moduleService.getModulesByCourse(courseId),
     enabled: !Number.isNaN(courseId) && !!course,
@@ -52,13 +52,35 @@ export default function CoursePage({ params }: CoursePageProps) {
     retry: 1,
   })
 
-  // Rediriger vers /learn si l'utilisateur est inscrit (modules chargés avec succès)
+  // Rediriger vers /learn si l'utilisateur est inscrit
   useEffect(() => {
-    if (modulesFromApi && Array.isArray(modulesFromApi) && modulesFromApi.length > 0) {
+    // Attendre que le chargement soit terminé
+    if (isLoadingModules) return
+    
+    // Si les modules sont chargés (même tableau vide), l'utilisateur est inscrit
+    if (modulesFromApi !== undefined && Array.isArray(modulesFromApi)) {
       // L'utilisateur est inscrit, rediriger vers la page d'apprentissage
+      console.log("✅ [ENROLLMENT] Utilisateur inscrit détecté, redirection vers /learn")
       router.replace(`/learn/${courseId}`)
+      return
     }
-  }, [modulesFromApi, courseId, router])
+    
+    // Si erreur mais ce n'est pas une erreur d'inscription (403/401), l'utilisateur est peut-être inscrit
+    if (modulesError) {
+      const errorMessage = String(modulesError?.message || "")
+      const isEnrollmentError = errorMessage.includes("inscrire") || 
+                                errorMessage.includes("inscription") || 
+                                errorMessage.includes("inscrit") ||
+                                errorMessage.includes("403") ||
+                                errorMessage.includes("401")
+      
+      if (!isEnrollmentError) {
+        // Ce n'est pas une erreur d'inscription, l'utilisateur est probablement inscrit
+        console.log("✅ [ENROLLMENT] Erreur non liée à l'inscription, redirection vers /learn")
+        router.replace(`/learn/${courseId}`)
+      }
+    }
+  }, [modulesFromApi, modulesError, isLoadingModules, courseId, router])
 
   if (Number.isNaN(courseId)) {
     notFound()

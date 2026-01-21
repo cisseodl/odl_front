@@ -307,21 +307,35 @@ export function CourseDetailClient({ course }: CourseDetailClientProps) {
     }
   })
 
-  // Vérifier l'inscription au chargement initial
+  // Vérifier l'inscription au chargement initial et rediriger si inscrit
   useEffect(() => {
     if (courseIdNum && !isLoadingModules) {
-      if (modulesFromApi && Array.isArray(modulesFromApi) && modulesFromApi.length > 0) {
+      // Si les modules sont chargés (même tableau vide), l'utilisateur est inscrit
+      if (modulesFromApi !== undefined && Array.isArray(modulesFromApi)) {
         setIsEnrolled(true)
+        // Rediriger immédiatement vers la page d'apprentissage
+        console.log("✅ [ENROLLMENT] Utilisateur inscrit détecté dans course-detail-client, redirection vers /learn")
+        router.replace(`/learn/${courseIdNum}`)
+        return
       } else if (modulesError) {
         // Si erreur, vérifier si c'est une erreur d'inscription
-        const errorMessage = modulesError?.message || ""
-        if (!errorMessage.includes("inscrire") && !errorMessage.includes("inscription") && !errorMessage.includes("inscrit")) {
+        const errorMessage = String(modulesError?.message || "")
+        const isEnrollmentError = errorMessage.includes("inscrire") || 
+                                  errorMessage.includes("inscription") || 
+                                  errorMessage.includes("inscrit") ||
+                                  errorMessage.includes("403") ||
+                                  errorMessage.includes("401")
+        
+        if (!isEnrollmentError) {
           // Si ce n'est pas une erreur d'inscription, on considère que l'utilisateur est inscrit mais qu'il n'y a pas de modules
           setIsEnrolled(true)
+          // Rediriger vers la page d'apprentissage
+          console.log("✅ [ENROLLMENT] Erreur non liée à l'inscription, redirection vers /learn")
+          router.replace(`/learn/${courseIdNum}`)
         }
       }
     }
-  }, [courseIdNum, isLoadingModules, modulesFromApi, modulesError])
+  }, [courseIdNum, isLoadingModules, modulesFromApi, modulesError, router])
 
   // Adapter les modules de l'API si nécessaire
   useEffect(() => {
