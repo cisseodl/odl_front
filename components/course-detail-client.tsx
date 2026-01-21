@@ -79,13 +79,26 @@ export function CourseDetailClient({ course }: CourseDetailClientProps) {
     // Essayer de convertir en nombre
     let numId: number | null = null
     
-    if (typeof course.id === 'string') {
+    // Si c'est déjà un nombre
+    if (typeof course.id === 'number') {
+      numId = Number.isNaN(course.id) ? null : course.id
+    }
+    // Si c'est une string
+    else if (typeof course.id === 'string') {
       const parsed = parseInt(course.id, 10)
       numId = Number.isNaN(parsed) ? null : parsed
-    } else if (typeof course.id === 'number') {
-      numId = Number.isNaN(course.id) ? null : course.id
-    } else {
-      // Essayer de convertir en string puis en nombre
+    }
+    // Si c'est un objet, essayer d'extraire la valeur
+    else if (typeof course.id === 'object' && course.id !== null) {
+      const idObj = course.id as any
+      // Essayer différentes propriétés possibles
+      const idValue = idObj.id || idObj.value || idObj.toString?.() || JSON.stringify(idObj)
+      const parsed = parseInt(String(idValue), 10)
+      numId = Number.isNaN(parsed) ? null : parsed
+      console.log("🔍 [COURSE] ID extrait depuis objet:", { idObj, idValue, parsed, numId })
+    }
+    // Sinon, essayer de convertir en string puis en nombre
+    else {
       const strId = String(course.id)
       const parsed = parseInt(strId, 10)
       numId = Number.isNaN(parsed) ? null : parsed
