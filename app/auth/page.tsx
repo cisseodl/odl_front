@@ -715,6 +715,22 @@ export default function AuthPage() {
           </Tabs>
         </CardContent>
       </Card>
+
+      {/* Dialogue de résultat d'inscription */}
+      <RegistrationResultDialog
+        open={showResultDialog}
+        onOpenChange={setShowResultDialog}
+        type={resultDialogType}
+        title={resultDialogTitle}
+        description={resultDialogDescription}
+        onContinue={() => {
+          setShowResultDialog(false)
+          if (resultDialogType === "success") {
+            router.push("/dashboard")
+            router.refresh()
+          }
+        }}
+      />
     </div>
   )
 }
