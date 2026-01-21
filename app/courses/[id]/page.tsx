@@ -79,34 +79,41 @@ export default function CoursePage({ params }: CoursePageProps) {
     retry: 1,
   })
 
-  // Rediriger vers /learn si l'utilisateur est inscrit
+  // Rediriger vers /learn UNIQUEMENT si l'utilisateur est inscrit
+  // Si l'utilisateur n'est pas inscrit, afficher la page d'inscription (CourseDetailClient)
   useEffect(() => {
     // Attendre que le chargement soit terminé
     if (isLoadingModules) return
     
-    // Si les modules sont chargés (même tableau vide), l'utilisateur est inscrit
-    if (modulesFromApi !== undefined && Array.isArray(modulesFromApi)) {
+    // Si les modules sont chargés avec succès (même tableau vide), l'utilisateur est inscrit
+    if (modulesFromApi !== undefined && Array.isArray(modulesFromApi) && !modulesError) {
       // L'utilisateur est inscrit, rediriger vers la page d'apprentissage
       console.log("✅ [ENROLLMENT] Utilisateur inscrit détecté (modules chargés), redirection vers /learn")
       router.replace(`/learn/${courseId}`)
       return
     }
     
-    // Si erreur mais ce n'est pas une erreur d'inscription (403/401), l'utilisateur est peut-être inscrit
+    // Si erreur, vérifier si c'est une erreur d'inscription
     if (modulesError) {
       const errorMessage = String(modulesError?.message || "")
       const isEnrollmentError = errorMessage.includes("inscrire") || 
                                 errorMessage.includes("inscription") || 
                                 errorMessage.includes("inscrit") ||
+                                errorMessage.includes("non inscrit") ||
                                 errorMessage.includes("403") ||
-                                errorMessage.includes("401")
+                                errorMessage.includes("401") ||
+                                errorMessage.includes("Forbidden") ||
+                                errorMessage.includes("Unauthorized")
       
-      if (!isEnrollmentError) {
-        // Ce n'est pas une erreur d'inscription, l'utilisateur est probablement inscrit
-        console.log("✅ [ENROLLMENT] Erreur non liée à l'inscription, redirection vers /learn")
-        router.replace(`/learn/${courseId}`)
+      if (isEnrollmentError) {
+        // L'utilisateur n'est PAS inscrit, afficher la page d'inscription (CourseDetailClient)
+        console.log("❌ [ENROLLMENT] Erreur d'inscription détectée, l'utilisateur n'est pas inscrit - Affichage de la page d'inscription")
+        // Ne pas rediriger, laisser CourseDetailClient s'afficher avec le bouton "S'inscrire gratuitement"
+        return
       } else {
-        console.log("❌ [ENROLLMENT] Erreur d'inscription détectée, l'utilisateur n'est pas inscrit")
+        // Ce n'est pas une erreur d'inscription, peut-être une erreur technique
+        // Dans ce cas, on ne redirige pas vers /learn pour éviter les boucles
+        console.log("⚠️ [ENROLLMENT] Erreur technique non liée à l'inscription, ne pas rediriger")
       }
     }
   }, [modulesFromApi, modulesError, isLoadingModules, courseId, router])
