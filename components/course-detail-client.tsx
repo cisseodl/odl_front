@@ -318,32 +318,51 @@ export function CourseDetailClient({ course }: CourseDetailClientProps) {
   // - Après inscription réussie → /learn/id (via enrollMutation.onSuccess)
   
   // Mettre à jour isEnrolled uniquement pour l'affichage du bouton, SANS redirection
+  // IMPORTANT: Par défaut, considérer que l'utilisateur n'est PAS inscrit pour afficher le bouton
   useEffect(() => {
     if (courseIdNum && !isLoadingModules) {
-      // Si les modules sont chargés avec succès (même tableau vide), l'utilisateur est inscrit
-      if (modulesFromApi !== undefined && Array.isArray(modulesFromApi) && !modulesError) {
+      // Si les modules sont chargés avec succès ET qu'il y a au moins un module, l'utilisateur est inscrit
+      if (modulesFromApi !== undefined && Array.isArray(modulesFromApi) && !modulesError && modulesFromApi.length > 0) {
         setIsEnrolled(true)
-        console.log("✅ [ENROLLMENT] Utilisateur inscrit détecté (modules chargés), mais NE PAS rediriger automatiquement")
+        console.log("✅ [ENROLLMENT] Utilisateur inscrit détecté (modules chargés avec contenu), mais NE PAS rediriger automatiquement")
         // NE PAS rediriger - laisser l'utilisateur voir la page d'inscription s'il le souhaite
+      } else if (modulesFromApi !== undefined && Array.isArray(modulesFromApi) && !modulesError && modulesFromApi.length === 0) {
+        // Tableau vide = pas de modules, mais peut-être que l'utilisateur est inscrit mais le cours n'a pas encore de modules
+        // Dans ce cas, on considère qu'il est inscrit pour éviter d'afficher le bouton d'inscription
+        setIsEnrolled(true)
+        console.log("⚠️ [ENROLLMENT] Modules chargés mais tableau vide, considérer comme inscrit")
       } else if (modulesError) {
         // Si erreur, vérifier si c'est une erreur d'inscription
         const errorMessage = String(modulesError?.message || "")
         const isEnrollmentError = errorMessage.includes("inscrire") || 
                                   errorMessage.includes("inscription") || 
                                   errorMessage.includes("inscrit") ||
+                                  errorMessage.includes("non inscrit") ||
                                   errorMessage.includes("403") ||
-                                  errorMessage.includes("401")
+                                  errorMessage.includes("401") ||
+                                  errorMessage.includes("Forbidden") ||
+                                  errorMessage.includes("Unauthorized")
         
         if (isEnrollmentError) {
-          // L'utilisateur n'est PAS inscrit
+          // L'utilisateur n'est PAS inscrit - AFFICHER LE BOUTON
           setIsEnrolled(false)
-          console.log("❌ [ENROLLMENT] Utilisateur non inscrit détecté, affichage de la page d'inscription")
+          console.log("❌ [ENROLLMENT] Utilisateur non inscrit détecté, affichage du bouton d'inscription")
         } else {
-          // Erreur technique, considérer comme inscrit pour l'affichage
-          setIsEnrolled(true)
-          console.log("⚠️ [ENROLLMENT] Erreur technique, considérer comme inscrit mais NE PAS rediriger")
+          // Erreur technique, par défaut considérer comme NON inscrit pour afficher le bouton
+          setIsEnrolled(false)
+          console.log("⚠️ [ENROLLMENT] Erreur technique, considérer comme NON inscrit pour afficher le bouton")
         }
+      } else {
+        // Aucune donnée chargée, considérer comme NON inscrit par défaut
+        setIsEnrolled(false)
+        console.log("⚠️ [ENROLLMENT] Aucune donnée chargée, considérer comme NON inscrit par défaut")
       }
+    } else if (courseIdNum && isLoadingModules) {
+      // Pendant le chargement, garder l'état actuel (ne pas changer isEnrolled)
+      console.log("⏳ [ENROLLMENT] Chargement des modules en cours...")
+    } else {
+      // Pas de courseIdNum valide, considérer comme NON inscrit
+      setIsEnrolled(false)
     }
   }, [courseIdNum, isLoadingModules, modulesFromApi, modulesError])
 
