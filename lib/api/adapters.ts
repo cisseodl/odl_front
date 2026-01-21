@@ -134,7 +134,7 @@ export function adaptCourse(backendCourse: BackendCourse): Course {
     description: backendCourse.description || "",
     imageUrl: backendCourse.imageUrl || "/placeholder.jpg",
     instructor: adaptInstructor(backendCourse.instructor),
-    category: backendCourse.category || "Non catégorisé",
+    category: backendCourse.category && backendCourse.category.trim() !== "" ? backendCourse.category : "Non catégorisé",
     level: levelMapping[backendCourse.level] || "Intermédiaire",
     rating: backendCourse.rating || 0,
     reviewCount: backendCourse.reviewCount || 0,

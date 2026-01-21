@@ -1,8 +1,9 @@
 "use client"
 
-import { use } from "react"
+import { use, useEffect } from "react"
 import { useQuery } from "@tanstack/react-query"
-import { courseService } from "@/lib/api/services"
+import { useRouter } from "next/navigation"
+import { courseService, moduleService } from "@/lib/api/services"
 import { CourseDetailClient } from "@/components/course-detail-client"
 import { Loader2 } from "lucide-react"
 import { notFound } from "next/navigation"
@@ -15,6 +16,7 @@ interface CoursePageProps {
 export default function CoursePage({ params }: CoursePageProps) {
   const { id } = use(params)
   const courseId = Number.parseInt(id)
+  const router = useRouter()
 
   // Charger la liste des cours pour récupérer le titre si le détail ne charge pas
   const { data: allCourses = [] } = useQuery({
@@ -40,6 +42,23 @@ export default function CoursePage({ params }: CoursePageProps) {
       console.error("Erreur lors du chargement du cours:", error)
     }
   })
+
+  // Vérifier si l'utilisateur est inscrit au cours en essayant de charger les modules
+  const { data: modulesFromApi } = useQuery({
+    queryKey: ["modules", courseId],
+    queryFn: () => moduleService.getModulesByCourse(courseId),
+    enabled: !Number.isNaN(courseId) && !!course,
+    staleTime: 5 * 60 * 1000,
+    retry: 1,
+  })
+
+  // Rediriger vers /learn si l'utilisateur est inscrit (modules chargés avec succès)
+  useEffect(() => {
+    if (modulesFromApi && Array.isArray(modulesFromApi) && modulesFromApi.length > 0) {
+      // L'utilisateur est inscrit, rediriger vers la page d'apprentissage
+      router.replace(`/learn/${courseId}`)
+    }
+  }, [modulesFromApi, courseId, router])
 
   if (Number.isNaN(courseId)) {
     notFound()
