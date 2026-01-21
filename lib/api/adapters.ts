@@ -83,13 +83,18 @@ export function adaptInstructor(instructorDto?: InstructorDto): Instructor {
 
 /**
  * Convertir un LessonDto backend en Lesson frontend
+ * Note: Le backend retourne parfois les entités Lesson directement (pas des DTOs),
+ * donc contentUrl peut être présent même s'il n'est pas dans le type LessonDto
  */
-export function adaptLesson(lessonDto: LessonDto): Lesson {
+export function adaptLesson(lessonDto: LessonDto | any): Lesson {
+  // Le backend peut retourner les entités directement avec contentUrl
+  // même si ce n'est pas dans le type LessonDto
   return {
     id: String(lessonDto.id),
     title: lessonDto.title,
     type: lessonTypeMapping[lessonDto.type] || "video",
-    contentUrl: lessonDto.contentUrl || undefined,
+    // Récupérer contentUrl depuis la réponse brute (peut être présent même si pas dans le type)
+    contentUrl: (lessonDto as any).contentUrl || lessonDto.contentUrl || undefined,
     duration: lessonDto.duration || "0 min",
     completed: lessonDto.completed || false,
     locked: lessonDto.locked || false,

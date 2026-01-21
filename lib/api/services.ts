@@ -384,8 +384,21 @@ export const moduleService = {
       )
       
       if (response.ok && response.data) {
-        // Le backend retourne CResponse<List<ModuleDto>> avec data contenant la liste
+        // Le backend retourne CResponse<List<Module>> avec data contenant la liste
+        // Les entités Module sont sérialisées directement, donc contentUrl est présent dans les leçons
         const modules = Array.isArray(response.data) ? response.data : []
+        
+        // Log pour vérifier si contentUrl est présent dans les leçons
+        if (modules.length > 0 && modules[0]?.lessons?.length > 0) {
+          const firstLesson = modules[0].lessons[0]
+          console.log(`getModulesByCourse(${courseId}): Exemple de leçon brute:`, {
+            title: firstLesson.title,
+            type: firstLesson.type,
+            contentUrl: firstLesson.contentUrl,
+            allKeys: Object.keys(firstLesson)
+          })
+        }
+        
         console.log(`getModulesByCourse(${courseId}): ${modules.length} modules récupérés`)
         return modules
       }
