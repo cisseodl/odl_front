@@ -533,10 +533,10 @@ export default function LearnPage({ params }: LearnPageProps) {
       </div>
 
       {/* Mini Player */}
-      {currentLessonData.type === "video" && showMiniPlayer && (
+      {currentLessonData?.type === "video" && showMiniPlayer && (
         <MiniPlayer
           title={currentLessonData?.title || "Leçon"}
-          thumbnail={course.imageUrl}
+          thumbnail={course?.imageUrl}
           videoRef={videoRef}
           onExpand={() => {
             // Scroll to top to show full player
