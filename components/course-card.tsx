@@ -25,6 +25,12 @@ export function CourseCard({ course, showPreview = true }: CourseCardProps) {
   const { user, isAuthenticated } = useAuthStore()
   const [isMounted, setIsMounted] = useState(false)
   
+  // IMPORTANT: useEffect doit être appelé AVANT les hooks qui dépendent de isMounted
+  // pour respecter les règles des hooks React (même ordre à chaque rendu)
+  useEffect(() => {
+    setIsMounted(true)
+  }, [])
+  
   // Charger le profil pour vérifier les cours inscrits
   const { data: profile } = useQuery({
     queryKey: ["profile", user?.id],
@@ -47,10 +53,6 @@ export function CourseCard({ course, showPreview = true }: CourseCardProps) {
   const courseUrl = useMemo(() => {
     return isEnrolled ? `/learn/${course.id}` : `/courses/${course.id}`
   }, [isEnrolled, course.id])
-  
-  useEffect(() => {
-    setIsMounted(true)
-  }, [])
   
   const isFav = isMounted ? isFavorite(course.id) : false
   
