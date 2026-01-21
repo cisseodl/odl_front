@@ -493,30 +493,32 @@ export default function LearnPage({ params }: LearnPageProps) {
 
             {/* Document */}
             {currentLessonData?.type === "document" && (
-              currentLessonData?.contentUrl ? (
-                <LessonContentViewer
-                  contentUrl={currentLessonData.contentUrl}
-                  title={currentLessonData.title || "Document"}
-                  type="document"
-                />
-              ) : (
-                <Card className="p-6">
-                  <div className="flex items-center gap-3 mb-6">
-                    <div className="rounded-full bg-muted p-3">
-                      <FileText className="h-6 w-6" />
+              <>
+                {currentLessonData?.contentUrl ? (
+                  <LessonContentViewer
+                    contentUrl={currentLessonData.contentUrl}
+                    title={currentLessonData.title || "Document"}
+                    type="document"
+                  />
+                ) : (
+                  <Card className="p-6">
+                    <div className="flex items-center gap-3 mb-6">
+                      <div className="rounded-full bg-muted p-3">
+                        <FileText className="h-6 w-6" />
+                      </div>
+                      <div>
+                        <h2 className="text-xl font-bold">{currentLessonData?.title || "Document"}</h2>
+                        <p className="text-sm text-muted-foreground">Ressource consultable</p>
+                      </div>
                     </div>
-                    <div>
-                      <h2 className="text-xl font-bold">{currentLessonData?.title || "Document"}</h2>
-                      <p className="text-sm text-muted-foreground">Ressource consultable</p>
+                    <div className="bg-muted/50 rounded-lg p-6 border border-border">
+                      <p className="text-muted-foreground text-center">
+                        Ce document est disponible uniquement en lecture. Vous pouvez le consulter directement dans cette section.
+                      </p>
                     </div>
-                  </div>
-                  <div className="bg-muted/50 rounded-lg p-6 border border-border">
-                    <p className="text-muted-foreground text-center">
-                      Ce document est disponible uniquement en lecture. Vous pouvez le consulter directement dans cette section.
-                    </p>
-                  </div>
-                </Card>
-              )
+                  </Card>
+                )}
+              </>
             )}
 
             {/* Tabs: Transcription, Resources, Notes */}
