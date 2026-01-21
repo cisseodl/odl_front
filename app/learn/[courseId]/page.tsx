@@ -142,6 +142,12 @@ export default function LearnPage({ params }: LearnPageProps) {
     return allLessons
   }, [curriculum])
 
+  // Calculer currentLessonData et progress pour déterminer si le cours est complété
+  // (doit être fait avant le useQuery pour courseExam)
+  const currentLessonDataForExam = lessons.find(lesson => lesson.id === currentLesson) || lessons[0]
+  const progressForExam = lessons.length > 0 ? (completedLessons.length / lessons.length) * 100 : 0
+  const isCourseCompletedForExam = progressForExam === 100 && lessons.length > 0
+
   // Vérifier si un examen existe pour ce cours (seulement si le cours est complété)
   const {
     data: courseExam,
@@ -149,7 +155,7 @@ export default function LearnPage({ params }: LearnPageProps) {
   } = useQuery({
     queryKey: ["courseExam", courseIdNum],
     queryFn: () => evaluationService.getCourseExam(courseIdNum),
-    enabled: false, // Désactivé pour l'instant, sera activé quand le cours est complété
+    enabled: isCourseCompletedForExam && !Number.isNaN(courseIdNum),
     retry: false,
   })
 
