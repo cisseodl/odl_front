@@ -118,12 +118,37 @@ export function adaptLesson(lessonDto: LessonDto | any): Lesson {
 /**
  * Convertir un ModuleDto backend en Module frontend
  */
-export function adaptModule(moduleDto: ModuleDto): Module {
+export function adaptModule(moduleDto: ModuleDto | any): Module {
+  // Le backend peut retourner les entités Module directement avec les leçons
+  // Vérifier si lessons est présent et adapter chaque leçon
+  const lessons = moduleDto.lessons || (moduleDto as any).lessons || []
+  
+  // Log pour déboguer les modules avec documents
+  if (lessons.length > 0) {
+    const documentLessons = lessons.filter((l: any) => 
+      l.type === "DOCUMENT" || l.type === "document" || 
+      (l.type && l.type.toLowerCase() === "document")
+    )
+    if (documentLessons.length > 0) {
+      console.log("📚 [ADAPTER] adaptModule - Leçons document trouvées:", {
+        moduleId: moduleDto.id,
+        moduleTitle: moduleDto.title,
+        documentLessons: documentLessons.map((l: any) => ({
+          id: l.id,
+          title: l.title,
+          type: l.type,
+          contentUrl: l.contentUrl || (l as any).contentUrl,
+          allKeys: Object.keys(l)
+        }))
+      })
+    }
+  }
+  
   return {
     id: String(moduleDto.id),
     title: moduleDto.title,
     duration: moduleDto.duration || "0h 0m",
-    lessons: moduleDto.lessons?.map(adaptLesson) || [],
+    lessons: lessons.map(adaptLesson),
   }
 }
 
