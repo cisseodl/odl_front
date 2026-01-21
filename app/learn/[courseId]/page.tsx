@@ -1,6 +1,6 @@
 "use client"
 
-import { use, useState, useRef, useMemo } from "react"
+import { use, useState, useRef, useMemo, useEffect } from "react"
 import { notFound } from "next/navigation"
 import Link from "next/link"
 import { ChevronLeft, ChevronRight, CheckCircle2, Circle, Play, FileText, Code, FlaskConical, Menu, Loader2 } from "lucide-react"
@@ -59,11 +59,48 @@ export default function LearnPage({ params }: LearnPageProps) {
   const {
     data: modulesFromApi,
     isLoading: isLoadingModules,
+    error: modulesError,
   } = useQuery({
     queryKey: ["modules", courseIdNum],
     queryFn: () => moduleService.getModulesByCourse(courseIdNum),
     enabled: !Number.isNaN(courseIdNum) && !!course && (!course.curriculum || course.curriculum.length === 0),
+    retry: false, // Ne pas réessayer si erreur d'inscription
   })
+
+  // Rediriger vers /courses/[id] si l'utilisateur n'est pas inscrit
+  useEffect(() => {
+    // Attendre que le chargement soit terminé
+    if (isLoadingModules) return
+    
+    // Si le cours n'a pas de curriculum et qu'il y a une erreur lors du chargement des modules
+    // cela signifie probablement que l'utilisateur n'est pas inscrit
+    if ((!course?.curriculum || course.curriculum.length === 0) && modulesError) {
+      const errorMessage = String(modulesError?.message || "")
+      const isEnrollmentError = errorMessage.includes("inscrire") || 
+                                errorMessage.includes("inscription") || 
+                                errorMessage.includes("inscrit") ||
+                                errorMessage.includes("non inscrit") ||
+                                errorMessage.includes("403") ||
+                                errorMessage.includes("401") ||
+                                errorMessage.includes("Forbidden") ||
+                                errorMessage.includes("Unauthorized")
+      
+      if (isEnrollmentError) {
+        console.log("❌ [ENROLLMENT] Utilisateur non inscrit détecté dans /learn, redirection vers /courses")
+        router.replace(`/courses/${courseIdNum}`)
+        return
+      }
+    }
+    
+    // Si le cours n'a pas de curriculum et qu'aucun module n'a été chargé (même après chargement)
+    // et qu'il n'y a pas d'erreur explicite, vérifier si c'est parce que l'utilisateur n'est pas inscrit
+    if ((!course?.curriculum || course.curriculum.length === 0) && !isLoadingModules && !modulesFromApi) {
+      // Si le cours existe mais qu'on ne peut pas charger les modules, c'est probablement une erreur d'inscription
+      console.log("⚠️ [ENROLLMENT] Aucun module chargé et pas de curriculum, redirection vers /courses")
+      router.replace(`/courses/${courseIdNum}`)
+      return
+    }
+  }, [course?.curriculum, modulesFromApi, modulesError, isLoadingModules, courseIdNum, router])
 
   const [currentLesson, setCurrentLesson] = useState(0)
   const [sidebarOpen, setSidebarOpen] = useState(true)
