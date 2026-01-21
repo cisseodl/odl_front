@@ -332,51 +332,6 @@ export default function LearnPage({ params }: LearnPageProps) {
     )
   }
 
-  // Calculer currentLessonData et progress APRÈS tous les hooks
-  const currentLessonData = lessons.find(lesson => lesson.id === currentLesson) || lessons[0]
-  const progress = lessons.length > 0 ? (completedLessons.length / lessons.length) * 100 : 0
-  const isCourseCompleted = progress === 100 && lessons.length > 0
-
-  // Vérifier si un examen existe pour ce cours (seulement si le cours est complété)
-  const {
-    data: courseExam,
-    isLoading: isLoadingExam,
-  } = useQuery({
-    queryKey: ["courseExam", courseIdNum],
-    queryFn: () => evaluationService.getCourseExam(courseIdNum),
-    enabled: isCourseCompleted && !Number.isNaN(courseIdNum),
-    retry: false, // Ne pas réessayer si pas d'examen
-  })
-
-  // Filter lessons based on search query
-  const filteredLessons = useMemo(() => {
-    if (!searchQuery.trim()) return lessons
-
-    const query = searchQuery.toLowerCase()
-    return lessons.filter(
-      (lesson) =>
-        lesson.title.toLowerCase().includes(query) ||
-        lesson.moduleTitle.toLowerCase().includes(query)
-    )
-  }, [lessons, searchQuery])
-
-  // Group lessons by module for display
-  const groupedLessons = useMemo(() => {
-    if (!curriculum || curriculum.length === 0) return []
-    
-    return curriculum.map((module) => ({
-      module: module.title,
-      lessons: module.lessons.filter((lesson) => {
-        if (!searchQuery.trim()) return true
-        const query = searchQuery.toLowerCase()
-        return (
-          lesson.title.toLowerCase().includes(query) ||
-          module.title.toLowerCase().includes(query)
-        )
-      }),
-    }))
-  }, [curriculum, searchQuery])
-
   // MAINTENANT on peut faire les retours conditionnels
   // Si pas de leçons, afficher un message
   if (lessons.length === 0) {
