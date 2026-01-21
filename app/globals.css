@@ -3,6 +3,11 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/* ============================================
+   FALLBACK CSS POUR NAVIGATEURS TV (Huawei, etc.)
+   Ce fichier contient aussi les fallbacks hex pour oklch()
+   ============================================ */
+
 /* Charte Graphique - Palette Orange Mali Stricte */
 /* Couleurs autorisées uniquement : Noir, Blanc, Orange, Gris */
 /* Le noir et le blanc sont les couleurs primaires */
