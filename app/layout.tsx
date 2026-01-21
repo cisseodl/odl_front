@@ -58,26 +58,62 @@ export default function RootLayout({
         {/* Viewport meta tag pour compatibilité TV et mobile */}
         <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes" />
         {/* Fallback CSS inline pour les navigateurs TV qui ne supportent pas oklch() */}
+        {/* Ce style est chargé en premier et sert de fallback si oklch() n'est pas supporté */}
         <style dangerouslySetInnerHTML={{
           __html: `
             /* Fallback pour navigateurs TV - Variables CSS avec couleurs hex */
+            /* Ces valeurs sont utilisées si oklch() n'est pas supporté */
             :root {
-              --background: #FFFFFF;
-              --foreground: #000000;
-              --primary: #FF7900;
-              --primary-foreground: #FFFFFF;
-              --secondary: #1A1A1A;
-              --secondary-foreground: #FFFFFF;
-              --muted: #F5F5F5;
-              --muted-foreground: #525252;
-              --border: #E5E5E5;
-              --card: #FFFFFF;
-              --card-foreground: #000000;
+              --background: #FFFFFF !important;
+              --foreground: #000000 !important;
+              --primary: #FF7900 !important;
+              --primary-foreground: #FFFFFF !important;
+              --secondary: #1A1A1A !important;
+              --secondary-foreground: #FFFFFF !important;
+              --accent: #F16E00 !important;
+              --accent-foreground: #FFFFFF !important;
+              --muted: #F5F5F5 !important;
+              --muted-foreground: #525252 !important;
+              --destructive: #000000 !important;
+              --destructive-foreground: #FFFFFF !important;
+              --success: #FF7900 !important;
+              --success-foreground: #FFFFFF !important;
+              --warning: #FF7900 !important;
+              --warning-foreground: #000000 !important;
+              --border: #E5E5E5 !important;
+              --input: #E5E5E5 !important;
+              --ring: #FF7900 !important;
+              --card: #FFFFFF !important;
+              --card-foreground: #000000 !important;
+              --popover: #FFFFFF !important;
+              --popover-foreground: #000000 !important;
+              --radius: 0.75rem !important;
+            }
+            .dark {
+              --background: #000000 !important;
+              --foreground: #FFFFFF !important;
+              --card: #1A1A1A !important;
+              --card-foreground: #FFFFFF !important;
+              --popover: #1A1A1A !important;
+              --popover-foreground: #FFFFFF !important;
+              --primary: #FFA64D !important;
+              --primary-foreground: #000000 !important;
+              --secondary: #FAFAFA !important;
+              --secondary-foreground: #000000 !important;
+              --muted: #404040 !important;
+              --muted-foreground: #B3B3B3 !important;
+              --border: #595959 !important;
+              --input: #595959 !important;
+              --ring: #FFA64D !important;
             }
             body {
-              background-color: var(--background, #FFFFFF) !important;
-              color: var(--foreground, #000000) !important;
-              font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+              background-color: var(--background) !important;
+              color: var(--foreground) !important;
+              font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif !important;
+            }
+            /* Test de visibilité - si ce style s'applique, le CSS fonctionne */
+            html {
+              background-color: var(--background) !important;
             }
           `
         }} />

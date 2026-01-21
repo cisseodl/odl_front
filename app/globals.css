@@ -11,65 +11,102 @@
 
 :root {
   /* Background & Surface - Blanc (Couleur Primaire) */
+  /* Fallback hex pour navigateurs TV qui ne supportent pas oklch() */
+  --background: #FFFFFF; /* Fallback */
   --background: oklch(1 0 0); /* #FFFFFF - Blanc pur */
+  --foreground: #000000; /* Fallback */
   --foreground: oklch(0 0 0); /* #000000 - Noir pur */
+  --card: #FFFFFF; /* Fallback */
   --card: oklch(1 0 0); /* #FFFFFF - Blanc pur */
+  --card-foreground: #000000; /* Fallback */
   --card-foreground: oklch(0 0 0); /* #000000 - Noir pur */
+  --popover: #FFFFFF; /* Fallback */
   --popover: oklch(1 0 0); /* #FFFFFF - Blanc pur */
+  --popover-foreground: #000000; /* Fallback */
   --popover-foreground: oklch(0 0 0); /* #000000 - Noir pur */
   
   /* Primary - Orange Digital (Couleur d'Impact) - Maximiser l'impact */
+  --primary: #FF7900; /* Fallback */
   --primary: oklch(0.65 0.18 55); /* #FF7900 - Orange Digital 1 */
+  --primary-foreground: #FFFFFF; /* Fallback */
   --primary-foreground: oklch(1 0 0); /* #FFFFFF - Blanc */
   
   /* Secondary - Noir (Couleur Primaire) pour éléments secondaires */
+  --secondary: #1A1A1A; /* Fallback */
   --secondary: oklch(0.15 0 0); /* #1A1A1A - Noir 900 */
+  --secondary-foreground: #FFFFFF; /* Fallback */
   --secondary-foreground: oklch(1 0 0); /* #FFFFFF - Blanc */
   
   /* Accent - Orange variante pour accents */
+  --accent: #F16E00; /* Fallback */
   --accent: oklch(0.58 0.18 55); /* #F16E00 - Orange Digital 2 */
+  --accent-foreground: #FFFFFF; /* Fallback */
   --accent-foreground: oklch(1 0 0); /* #FFFFFF - Blanc */
   
   /* Muted - Gris modéré uniquement */
+  --muted: #F5F5F5; /* Fallback */
   --muted: oklch(0.96 0.002 260); /* #F5F5F5 - Gris 100 */
+  --muted-foreground: #525252; /* Fallback */
   --muted-foreground: oklch(0.45 0.002 260); /* #525252 - Gris 600 */
   
   /* Semantic Colors - Utiliser uniquement la palette stricte */
   /* Destructive - Noir pour erreurs */
+  --destructive: #000000; /* Fallback */
   --destructive: oklch(0 0 0); /* #000000 - Noir pur */
+  --destructive-foreground: #FFFFFF; /* Fallback */
   --destructive-foreground: oklch(1 0 0); /* #FFFFFF - Blanc */
   
   /* Success - Orange pour succès (maximiser l'impact) */
+  --success: #FF7900; /* Fallback */
   --success: oklch(0.65 0.18 55); /* #FF7900 - Orange Digital 1 */
+  --success-foreground: #FFFFFF; /* Fallback */
   --success-foreground: oklch(1 0 0); /* #FFFFFF - Blanc */
   
   /* Warning - Orange pour attention (maximiser l'impact) */
+  --warning: #FF7900; /* Fallback */
   --warning: oklch(0.65 0.18 55); /* #FF7900 - Orange Digital 1 */
+  --warning-foreground: #000000; /* Fallback */
   --warning-foreground: oklch(0 0 0); /* #000000 - Noir */
   
   /* Borders & Inputs - Gris modéré */
+  --border: #E5E5E5; /* Fallback */
   --border: oklch(0.92 0.002 260); /* #E5E5E5 - Gris 200 */
+  --input: #E5E5E5; /* Fallback */
   --input: oklch(0.92 0.002 260); /* #E5E5E5 - Gris 200 */
+  --ring: #FF7900; /* Fallback */
   --ring: oklch(0.65 0.18 55); /* #FF7900 - Orange pour focus (maximiser l'impact) */
   
   /* Radius */
   --radius: 0.75rem;
   
   /* Chart Colors - Uniquement palette stricte */
+  --chart-1: #FF7900; /* Fallback */
   --chart-1: oklch(0.65 0.18 55); /* Orange Digital 1 */
+  --chart-2: #F16E00; /* Fallback */
   --chart-2: oklch(0.58 0.18 55); /* Orange Digital 2 */
+  --chart-3: #FFA64D; /* Fallback */
   --chart-3: oklch(0.73 0.15 55); /* Orange clair */
+  --chart-4: #E55A00; /* Fallback */
   --chart-4: oklch(0.50 0.18 55); /* Orange foncé */
+  --chart-5: #525252; /* Fallback */
   --chart-5: oklch(0.45 0.002 260); /* Gris 600 */
   
   /* Sidebar */
+  --sidebar: #FAFAFA; /* Fallback */
   --sidebar: oklch(0.98 0 0); /* #FAFAFA - Blanc cassé */
+  --sidebar-foreground: #000000; /* Fallback */
   --sidebar-foreground: oklch(0 0 0); /* #000000 - Noir */
+  --sidebar-primary: #FF7900; /* Fallback */
   --sidebar-primary: oklch(0.65 0.18 55); /* #FF7900 - Orange */
+  --sidebar-primary-foreground: #FFFFFF; /* Fallback */
   --sidebar-primary-foreground: oklch(1 0 0); /* #FFFFFF - Blanc */
+  --sidebar-accent: #F5F5F5; /* Fallback */
   --sidebar-accent: oklch(0.96 0.002 260); /* #F5F5F5 - Gris 100 */
+  --sidebar-accent-foreground: #000000; /* Fallback */
   --sidebar-accent-foreground: oklch(0 0 0); /* #000000 - Noir */
+  --sidebar-border: #E5E5E5; /* Fallback */
   --sidebar-border: oklch(0.92 0.002 260); /* #E5E5E5 - Gris 200 */
+  --sidebar-ring: #FF7900; /* Fallback */
   --sidebar-ring: oklch(0.65 0.18 55); /* #FF7900 - Orange */
 }
 
