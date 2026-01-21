@@ -156,7 +156,7 @@ export function adaptModule(moduleDto: ModuleDto | any): Module {
  * Convertir un cours backend en cours frontend
  * Utilise maintenant la structure complète du CourseDto
  */
-export function adaptCourse(backendCourse: BackendCourse): Course {
+export function adaptCourse(backendCourse: BackendCourse | any): Course {
   // Gérer différents formats d'ID (number, string, ou objet)
   let courseId: string
   if (typeof backendCourse.id === 'number') {
@@ -172,6 +172,39 @@ export function adaptCourse(backendCourse: BackendCourse): Course {
     courseId = String(backendCourse.id || '')
   }
   
+  // Gérer la catégorie - peut être une string, un objet avec title, ou null/undefined
+  let category: string = "Non catégorisé"
+  
+  if (backendCourse.category) {
+    if (typeof backendCourse.category === 'string') {
+      // Si c'est une string, vérifier qu'elle n'est pas vide
+      const trimmedCategory = backendCourse.category.trim()
+      if (trimmedCategory !== "" && trimmedCategory.toLowerCase() !== "null") {
+        category = trimmedCategory
+      }
+    } else if (typeof backendCourse.category === 'object') {
+      // Si c'est un objet, essayer d'extraire le titre
+      const categoryTitle = (backendCourse.category as any).title || 
+                           (backendCourse.category as any).name || 
+                           (backendCourse.category as any).label ||
+                           String(backendCourse.category)
+      if (categoryTitle && typeof categoryTitle === 'string' && categoryTitle.trim() !== "" && categoryTitle.toLowerCase() !== "null") {
+        category = categoryTitle.trim()
+      }
+    }
+  }
+  
+  // Log pour déboguer les catégories
+  if (category === "Non catégorisé") {
+    console.log("⚠️ [ADAPTER] Catégorie par défaut utilisée pour le cours:", {
+      courseId,
+      title: backendCourse.title,
+      rawCategory: backendCourse.category,
+      categoryType: typeof backendCourse.category,
+      categoryKeys: backendCourse.category && typeof backendCourse.category === 'object' ? Object.keys(backendCourse.category) : null
+    })
+  }
+  
   return {
     id: courseId,
     title: backendCourse.title,
@@ -179,7 +212,7 @@ export function adaptCourse(backendCourse: BackendCourse): Course {
     description: backendCourse.description || "",
     imageUrl: backendCourse.imageUrl || "/placeholder.jpg",
     instructor: adaptInstructor(backendCourse.instructor),
-    category: backendCourse.category && backendCourse.category.trim() !== "" ? backendCourse.category : "Non catégorisé",
+    category: category,
     level: levelMapping[backendCourse.level] || "Intermédiaire",
     rating: backendCourse.rating || 0,
     reviewCount: backendCourse.reviewCount || 0,

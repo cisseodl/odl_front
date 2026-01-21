@@ -144,6 +144,15 @@ export const courseService = {
         if (Array.isArray(response.data)) {
           courses = response.data
           console.log("📚 [COURSES] Données trouvées directement dans response.data (array)")
+          // Log des catégories pour déboguer
+          if (courses.length > 0) {
+            console.log("📚 [COURSES] Exemple de catégorie du premier cours:", {
+              title: courses[0].title,
+              category: courses[0].category,
+              categoryType: typeof courses[0].category,
+              categoryKeys: courses[0].category && typeof courses[0].category === 'object' ? Object.keys(courses[0].category) : null
+            })
+          }
         } 
         // Cas 2: response.data est un objet CResponse avec une propriété data
         else if (response.data && typeof response.data === 'object') {
@@ -151,6 +160,15 @@ export const courseService = {
           if ('data' in response.data && Array.isArray((response.data as any).data)) {
             courses = (response.data as any).data
             console.log("📚 [COURSES] Données trouvées dans response.data.data (CResponse)")
+            // Log des catégories pour déboguer
+            if (courses.length > 0) {
+              console.log("📚 [COURSES] Exemple de catégorie du premier cours:", {
+                title: courses[0].title,
+                category: courses[0].category,
+                categoryType: typeof courses[0].category,
+                categoryKeys: courses[0].category && typeof courses[0].category === 'object' ? Object.keys(courses[0].category) : null
+              })
+            }
           } 
           // Vérifier si response.data est un objet avec une propriété qui est un array
           else {
