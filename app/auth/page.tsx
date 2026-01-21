@@ -32,7 +32,6 @@ export default function AuthPage() {
   const [resultDialogType, setResultDialogType] = useState<"success" | "error" | "warning">("success")
   const [resultDialogTitle, setResultDialogTitle] = useState("")
   const [resultDialogDescription, setResultDialogDescription] = useState("")
-  const [resultDialogEmail, setResultDialogEmail] = useState<string | undefined>(undefined)
 
   // Charger les cohortes pour le formulaire (nécessite authentification, mais on peut les charger publiquement si l'endpoint le permet)
   const { data: cohortes = [] } = useQuery({
@@ -112,21 +111,26 @@ export default function AuthPage() {
         const apprenantResponse = await apprenantService.createApprenant(apprenantData)
         
         if (!apprenantResponse.ok) {
-          toast.warning("Compte créé mais erreur lors de la création du profil apprenant", {
-            description: "Vous pourrez compléter votre profil plus tard",
-          })
+          setResultDialogType("warning")
+          setResultDialogTitle("Inscription partielle")
+          setResultDialogDescription("Votre compte a été créé avec succès, mais une erreur est survenue lors de la création de votre profil apprenant. Vous pourrez compléter votre profil plus tard depuis votre espace personnel.")
+          setShowResultDialog(true)
+          setIsLoading(false)
+          return
         }
       }
 
-      toast.success("Inscription réussie !", {
-        description: "Bienvenue sur Orange Digital Learning",
-      })
-      router.push("/dashboard")
-      router.refresh()
+      // Succès complet
+      setResultDialogType("success")
+      setResultDialogTitle("Inscription réussie !")
+      setResultDialogDescription("Bienvenue sur Orange Digital Learning ! Votre compte apprenant a été créé avec succès. Un email de bienvenue vous a été envoyé. Vous pouvez maintenant accéder à tous nos cours et commencer votre parcours d'apprentissage.")
+      setShowResultDialog(true)
     } catch (error) {
-      toast.error("Erreur d'inscription", {
-        description: error instanceof Error ? error.message : "Une erreur est survenue",
-      })
+      // Erreur
+      setResultDialogType("error")
+      setResultDialogTitle("Erreur d'inscription")
+      setResultDialogDescription(error instanceof Error ? error.message : "Une erreur est survenue lors de votre inscription. Veuillez réessayer ou contacter le support si le problème persiste.")
+      setShowResultDialog(true)
     } finally {
       setIsLoading(false)
     }
@@ -185,21 +189,26 @@ export default function AuthPage() {
         const apprenantResponse = await apprenantService.createApprenant(apprenantData)
         
         if (!apprenantResponse.ok) {
-          toast.warning("Compte créé mais erreur lors de la création du profil apprenant", {
-            description: "Vous pourrez compléter votre profil plus tard",
-          })
+          setResultDialogType("warning")
+          setResultDialogTitle("Inscription partielle")
+          setResultDialogDescription("Votre compte a été créé avec succès, mais une erreur est survenue lors de la création de votre profil apprenant. Vous pourrez compléter votre profil plus tard depuis votre espace personnel.")
+          setShowResultDialog(true)
+          setIsLoading(false)
+          return
         }
       }
 
-      toast.success("Inscription réussie !", {
-        description: "Bienvenue sur Orange Digital Learning",
-      })
-      router.push("/dashboard")
-      router.refresh()
+      // Succès complet
+      setResultDialogType("success")
+      setResultDialogTitle("Inscription réussie !")
+      setResultDialogDescription("Bienvenue sur Orange Digital Learning ! Votre compte apprenant a été créé avec succès. Un email de bienvenue vous a été envoyé. Vous pouvez maintenant accéder à tous nos cours et commencer votre parcours d'apprentissage.")
+      setShowResultDialog(true)
     } catch (error) {
-      toast.error("Erreur d'inscription", {
-        description: error instanceof Error ? error.message : "Une erreur est survenue",
-      })
+      // Erreur
+      setResultDialogType("error")
+      setResultDialogTitle("Erreur d'inscription")
+      setResultDialogDescription(error instanceof Error ? error.message : "Une erreur est survenue lors de votre inscription. Veuillez réessayer ou contacter le support si le problème persiste.")
+      setShowResultDialog(true)
     } finally {
       setIsLoading(false)
     }
