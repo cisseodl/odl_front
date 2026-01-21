@@ -112,8 +112,23 @@ export function adaptModule(moduleDto: ModuleDto): Module {
  * Utilise maintenant la structure complète du CourseDto
  */
 export function adaptCourse(backendCourse: BackendCourse): Course {
+  // Gérer différents formats d'ID (number, string, ou objet)
+  let courseId: string
+  if (typeof backendCourse.id === 'number') {
+    courseId = String(backendCourse.id)
+  } else if (typeof backendCourse.id === 'string') {
+    courseId = backendCourse.id
+  } else if (backendCourse.id && typeof backendCourse.id === 'object') {
+    // Si l'ID est un objet, essayer d'extraire la valeur
+    const idValue = (backendCourse.id as any).id || (backendCourse.id as any).value || (backendCourse.id as any)
+    courseId = String(idValue)
+  } else {
+    // Fallback
+    courseId = String(backendCourse.id || '')
+  }
+  
   return {
-    id: String(backendCourse.id),
+    id: courseId,
     title: backendCourse.title,
     subtitle: backendCourse.subtitle || backendCourse.description?.substring(0, 100) || "",
     description: backendCourse.description || "",
