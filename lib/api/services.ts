@@ -206,13 +206,35 @@ export const courseService = {
       )
       
       if (response.ok && response.data) {
-        // Le backend retourne CResponse<CourseDto> avec data contenant le cours
-        const course = Array.isArray(response.data)
-          ? null
-          : response.data
-        
-        if (course) {
-          return adaptCourse(course as BackendCourse)
+        // Le backend peut retourner:
+        // - CourseDto directement dans response.data
+        // - CResponse<CourseDto> dans response.data (avec le cours dans response.data.data)
+        // - CResponse enveloppé dans response.data.data (double enveloppe)
+        let rawCourse: any = null
+
+        // Cas 1: response.data.data est présent (CResponse)
+        if (response.data && typeof response.data === "object" && (response.data as any).data) {
+          rawCourse = (response.data as any).data
+        } else {
+          // Cas 2: response.data est directement le cours
+          rawCourse = response.data
+        }
+
+        // Cas 3: double enveloppe (data.data)
+        if (rawCourse && typeof rawCourse === "object" && (rawCourse as any).data) {
+          rawCourse = (rawCourse as any).data
+        }
+
+        // Éviter les tableaux inattendus
+        if (rawCourse && !Array.isArray(rawCourse)) {
+          const adapted = adaptCourse(rawCourse as BackendCourse)
+          // Log minimal pour vérifier la cohérence
+          console.log(`getCourseById(${id}): cours adapté`, {
+            id: adapted.id,
+            title: adapted.title,
+            curriculumLength: adapted.curriculum?.length || 0,
+          })
+          return adapted
         }
       }
       

@@ -120,12 +120,17 @@ export default function LearnPage({ params }: LearnPageProps) {
     notFound()
   }
 
-  // Vérifier que le cours a un titre avant de continuer
+  // Si le cours est présent mais incomplet, ne pas boucler sur un "loading" infini
+  // (cela arrive quand le backend/adapter renvoie un objet sans titre)
   if (!course?.title) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        <span className="ml-2 text-muted-foreground">Chargement des détails du cours...</span>
+      <div className="flex items-center justify-center min-h-[400px] px-4">
+        <div className="text-center max-w-md">
+          <p className="font-medium">Impossible de charger les détails du cours.</p>
+          <p className="text-sm text-muted-foreground mt-1">
+            Veuillez rafraîchir la page. Si le problème persiste, reconnectez-vous.
+          </p>
+        </div>
       </div>
     )
   }
