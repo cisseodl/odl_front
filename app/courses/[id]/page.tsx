@@ -6,6 +6,7 @@ import { courseService } from "@/lib/api/services"
 import { CourseDetailClient } from "@/components/course-detail-client"
 import { Loader2 } from "lucide-react"
 import { notFound } from "next/navigation"
+import { serializeData } from "@/lib/utils/serialize"
 
 interface CoursePageProps {
   params: Promise<{ id: string }>
@@ -28,7 +29,11 @@ export default function CoursePage({ params }: CoursePageProps) {
     error,
   } = useQuery({
     queryKey: ["course", courseId],
-    queryFn: () => courseService.getCourseById(courseId),
+    queryFn: async () => {
+      const courseData = await courseService.getCourseById(courseId)
+      // Sérialiser le cours pour éviter les erreurs React #185
+      return courseData ? serializeData(courseData) : null
+    },
     enabled: !Number.isNaN(courseId),
     retry: 1, // Réessayer une fois en cas d'erreur
     onError: (error) => {
@@ -54,7 +59,10 @@ export default function CoursePage({ params }: CoursePageProps) {
     console.warn(`Impossible de charger le cours ${courseId}, utilisation d'un cours minimal`)
     
     // Essayer de récupérer le titre depuis la liste des cours
-    const courseFromList = allCourses.find(c => String(c.id) === String(courseId))
+    const courseFromList = allCourses.find(c => {
+      const cId = typeof c.id === 'string' ? parseInt(c.id, 10) : (typeof c.id === 'number' ? c.id : null)
+      return cId === courseId
+    })
     const courseTitle = courseFromList?.title || `Cours ${courseId}`
     const courseCategory = courseFromList?.category || "Non catégorisé"
     const courseLevel = courseFromList?.level || "Intermédiaire"
@@ -62,7 +70,7 @@ export default function CoursePage({ params }: CoursePageProps) {
     const courseInstructor = courseFromList?.instructor || { id: "0", name: "Instructeur", avatar: "/placeholder-user.jpg" }
     
     // Créer un cours minimal avec les informations disponibles depuis la liste
-    const minimalCourse = {
+    const minimalCourse = serializeData({
       id: String(courseId),
       title: courseTitle,
       subtitle: courseFromList?.subtitle || "",
@@ -81,9 +89,11 @@ export default function CoursePage({ params }: CoursePageProps) {
       curriculum: courseFromList?.curriculum || [],
       enrolledCount: courseFromList?.enrolledCount || 0,
       features: courseFromList?.features || [],
-    }
+    })
     return <CourseDetailClient course={minimalCourse} />
   }
 
-  return <CourseDetailClient course={course} />
+  // S'assurer que le cours est sérialisé avant de le passer au composant
+  const serializedCourse = serializeData(course)
+  return <CourseDetailClient course={serializedCourse} />
 }

@@ -64,15 +64,9 @@ export function CourseDetailClient({ course }: CourseDetailClientProps) {
   const queryClient = useQueryClient()
 
   // Convertir course.id en nombre de manière sécurisée
+  // Utiliser une valeur stable pour éviter les re-renders infinis
   const courseIdNum = useMemo(() => {
-    console.log("🔍 [COURSE] Conversion de course.id:", { 
-      courseId: course.id, 
-      type: typeof course.id,
-      course: course 
-    })
-    
-    if (!course || !course.id) {
-      console.error("🔴 [COURSE] course ou course.id est undefined/null")
+    if (!course || course.id === undefined || course.id === null) {
       return null
     }
     
@@ -95,7 +89,6 @@ export function CourseDetailClient({ course }: CourseDetailClientProps) {
       const idValue = idObj.id || idObj.value || idObj.toString?.() || JSON.stringify(idObj)
       const parsed = parseInt(String(idValue), 10)
       numId = Number.isNaN(parsed) ? null : parsed
-      console.log("🔍 [COURSE] ID extrait depuis objet:", { idObj, idValue, parsed, numId })
     }
     // Sinon, essayer de convertir en string puis en nombre
     else {
@@ -104,9 +97,8 @@ export function CourseDetailClient({ course }: CourseDetailClientProps) {
       numId = Number.isNaN(parsed) ? null : parsed
     }
     
-    console.log("🔍 [COURSE] courseIdNum calculé:", numId)
     return numId
-  }, [course, course.id])
+  }, [course?.id]) // Ne dépendre que de course.id, pas de tout l'objet course
 
   // Vérifier si l'utilisateur a un profil apprenant
   const hasLearnerProfile = useMemo(() => {
