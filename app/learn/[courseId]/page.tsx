@@ -535,7 +535,7 @@ export default function LearnPage({ params }: LearnPageProps) {
       {/* Mini Player */}
       {currentLessonData.type === "video" && showMiniPlayer && (
         <MiniPlayer
-          title={currentLessonData.title}
+          title={currentLessonData?.title || "Leçon"}
           thumbnail={course.imageUrl}
           videoRef={videoRef}
           onExpand={() => {
