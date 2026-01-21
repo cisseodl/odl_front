@@ -183,9 +183,9 @@ export default function LearnPage({ params }: LearnPageProps) {
   }, [curriculum, searchQuery])
 
   // Utiliser les valeurs calculées (ou recalculer si nécessaire)
-  const currentLessonData = currentLessonDataTemp
-  const progress = progressTemp
-  const isCourseCompleted = isCourseCompletedTemp
+  const currentLessonData = currentLessonDataForExam
+  const progress = progressForExam
+  const isCourseCompleted = isCourseCompletedForExam
 
   // MAINTENANT on peut faire les retours conditionnels
   if (Number.isNaN(courseIdNum)) {
