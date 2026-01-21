@@ -368,17 +368,42 @@ export const moduleService = {
         return modules
       }
       
-      // Logger l'erreur pour le débogage
-      if (!response.ok) {
+      // Si la réponse indique une erreur, vérifier si c'est une erreur d'inscription
+      if (!response.ok && response.message) {
+        const errorMessage = String(response.message)
+        const isEnrollmentError = errorMessage.includes("inscrire") || 
+                                  errorMessage.includes("inscription") || 
+                                  errorMessage.includes("inscrit") ||
+                                  errorMessage.includes("authentifié")
+        
         console.error(`getModulesByCourse(${courseId}) failed:`, {
           status: response.ko ? "error" : "ok",
           message: response.message,
-          data: response.data
+          isEnrollmentError: isEnrollmentError
         })
+        
+        // Si c'est une erreur d'inscription, lancer une erreur pour que React Query la gère
+        if (isEnrollmentError) {
+          throw new Error(response.message || "Vous devez vous inscrire à ce cours pour accéder aux modules")
+        }
       }
       
+      // Si ce n'est pas une erreur d'inscription, retourner un tableau vide
       return []
-    } catch (error) {
+    } catch (error: any) {
+      // Si c'est une erreur d'inscription, la re-lancer
+      const errorMessage = String(error?.message || "")
+      const isEnrollmentError = errorMessage.includes("inscrire") || 
+                                errorMessage.includes("inscription") || 
+                                errorMessage.includes("inscrit") ||
+                                errorMessage.includes("authentifié")
+      
+      if (isEnrollmentError) {
+        console.error(`getModulesByCourse(${courseId}): Erreur d'inscription détectée`)
+        throw error
+      }
+      
+      // Autre erreur, logger et retourner un tableau vide
       console.error(`Erreur lors de la récupération des modules pour le cours ${courseId}:`, error)
       return []
     }
