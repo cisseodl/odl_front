@@ -120,9 +120,41 @@ export default function LearnPage({ params }: LearnPageProps) {
     notFound()
   }
 
-  const currentLessonData = lessons[currentLesson]
+  // Vérifier que le cours a un titre avant de continuer
+  if (!course?.title) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <span className="ml-2 text-muted-foreground">Chargement des détails du cours...</span>
+      </div>
+    )
+  }
+
+  // Si pas de leçons, afficher un message
+  if (lessons.length === 0) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="text-center">
+          <p className="text-muted-foreground">Aucune leçon disponible pour ce cours.</p>
+        </div>
+      </div>
+    )
+  }
+
+  // Trouver la leçon actuelle par ID
+  const currentLessonData = lessons.find(lesson => lesson.id === currentLesson) || lessons[0]
   const progress = lessons.length > 0 ? (completedLessons.length / lessons.length) * 100 : 0
   const isCourseCompleted = progress === 100 && lessons.length > 0
+
+  // Si currentLessonData n'existe toujours pas, utiliser la première leçon
+  if (!currentLessonData) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <span className="ml-2 text-muted-foreground">Chargement de la leçon...</span>
+      </div>
+    )
+  }
 
   // Vérifier si un examen existe pour ce cours (seulement si le cours est complété)
   const {
@@ -196,7 +228,7 @@ export default function LearnPage({ params }: LearnPageProps) {
           <ChevronLeft className="h-4 w-4" />
           Retour au cours
         </Link>
-        <h2 className="font-bold line-clamp-2 text-sm leading-tight">{course.title}</h2>
+        <h2 className="font-bold line-clamp-2 text-sm leading-tight">{course?.title || "Cours"}</h2>
         <div className="mt-3">
           <div className="flex items-center justify-between text-xs text-muted-foreground mb-2">
             <span>Progression</span>
@@ -298,8 +330,8 @@ export default function LearnPage({ params }: LearnPageProps) {
             </Button>
 
             <div className="hidden sm:block">
-              <h1 className="font-semibold text-sm line-clamp-1">{currentLessonData.title}</h1>
-              <p className="text-xs text-muted-foreground">{currentLessonData.moduleTitle}</p>
+              <h1 className="font-semibold text-sm line-clamp-1">{currentLessonData?.title || "Leçon"}</h1>
+              <p className="text-xs text-muted-foreground">{currentLessonData?.moduleTitle || ""}</p>
             </div>
           </div>
 
@@ -332,13 +364,13 @@ export default function LearnPage({ params }: LearnPageProps) {
         <div className="flex-1 overflow-y-auto bg-muted/30">
           <div className="container max-w-6xl mx-auto p-4 md:p-6 space-y-6">
             {/* Video Player */}
-            {currentLessonData.type === "video" && (
+            {currentLessonData?.type === "video" && (
               <div className="space-y-4">
                 <div className="relative">
                   <VideoPlayer 
-                    title={currentLessonData.title}
+                    title={currentLessonData?.title || "Vidéo"}
                     src={undefined}
-                    thumbnail={course.imageUrl}
+                    thumbnail={course?.imageUrl}
                     videoRef={videoRef}
                   />
                   <div className="absolute top-4 right-4 z-10">
@@ -354,7 +386,7 @@ export default function LearnPage({ params }: LearnPageProps) {
                 </div>
 
                 <div className="flex items-center justify-between">
-                  <h2 className="text-xl md:text-2xl font-bold">{currentLessonData.title}</h2>
+                  <h2 className="text-xl md:text-2xl font-bold">{currentLessonData?.title || "Leçon"}</h2>
                   <Button onClick={handleMarkComplete} disabled={completedLessons.includes(currentLesson)}>
                     {completedLessons.includes(currentLesson) ? (
                       <>
@@ -370,7 +402,7 @@ export default function LearnPage({ params }: LearnPageProps) {
             )}
 
             {/* Quiz */}
-            {currentLessonData.type === "quiz" && (
+            {currentLessonData?.type === "quiz" && (
               <Card className="p-6">
                 <div className="flex items-center gap-3 mb-6">
                   <div className="rounded-full bg-primary/10 p-3">
@@ -390,7 +422,7 @@ export default function LearnPage({ params }: LearnPageProps) {
             )}
 
             {/* Lab */}
-            {currentLessonData.type === "lab" && (
+            {currentLessonData?.type === "lab" && (
               <Card className="p-6">
                 <div className="flex items-center gap-3 mb-6">
                   <div className="rounded-full bg-secondary/10 p-3">
@@ -410,14 +442,14 @@ export default function LearnPage({ params }: LearnPageProps) {
             )}
 
             {/* Document */}
-            {currentLessonData.type === "document" && (
+            {currentLessonData?.type === "document" && (
               <Card className="p-6">
                 <div className="flex items-center gap-3 mb-6">
                   <div className="rounded-full bg-muted p-3">
                     <FileText className="h-6 w-6" />
                   </div>
                   <div>
-                    <h2 className="text-xl font-bold">{currentLessonData.title}</h2>
+                    <h2 className="text-xl font-bold">{currentLessonData?.title || "Document"}</h2>
                     <p className="text-sm text-muted-foreground">Ressource consultable</p>
                   </div>
                 </div>

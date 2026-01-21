@@ -224,6 +224,7 @@ export default function AuthPage() {
                       placeholder="votre@email.com"
                       className="pl-10"
                       required
+                      autoComplete="username"
                     />
                   </div>
                 </div>
