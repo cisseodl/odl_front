@@ -54,7 +54,8 @@ export interface Apprenant {
   createdAt?: string
   lastModifiedAt?: string
   attentes?: string
-  satisfaction?: boolean
+  conditionsAccepted?: boolean // Acceptation des conditions (anciennement satisfaction)
+  satisfaction?: boolean // @deprecated - Utiliser conditionsAccepted à la place
 }
 
 // Request pour créer un apprenant

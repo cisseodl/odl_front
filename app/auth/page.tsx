@@ -83,7 +83,7 @@ export default function AuthPage() {
       const niveauEtude = formData.get("niveauEtude") as string
       const filiere = formData.get("filiere") as string
       const attentes = formData.get("attentes") as string
-      const satisfaction = formData.get("satisfaction") === "true"
+      const conditionsAccepted = formData.get("conditionsAccepted") === "true" || formData.get("satisfaction") === "true" // Compatibilité avec l'ancien nom
 
       // Utiliser le "name" du User comme "username" pour l'apprenant
       // Note: cohorteId n'est pas inclus pour les nouveaux apprenants
@@ -95,7 +95,8 @@ export default function AuthPage() {
           niveauEtude: niveauEtude || undefined,
           filiere: filiere?.trim() || undefined,
           attentes: attentes?.trim() || undefined,
-          satisfaction: satisfaction,
+          conditionsAccepted: conditionsAccepted,
+          satisfaction: conditionsAccepted, // Compatibilité avec l'ancien nom
           // cohorteId n'est pas inclus pour les nouveaux apprenants
           activate: true,
         }
@@ -156,7 +157,7 @@ export default function AuthPage() {
       const niveauEtude = formData.get("niveauEtude") as string
       const filiere = formData.get("filiere") as string
       const attentes = formData.get("attentes") as string
-      const satisfaction = formData.get("satisfaction") === "true"
+      const conditionsAccepted = formData.get("conditionsAccepted") === "true" || formData.get("satisfaction") === "true" // Compatibilité avec l'ancien nom
 
       // Utiliser le "name" du User comme "username" pour l'apprenant
       if (name && numero) {
@@ -167,7 +168,8 @@ export default function AuthPage() {
           niveauEtude: niveauEtude || undefined,
           filiere: filiere?.trim() || undefined,
           attentes: attentes?.trim() || undefined,
-          satisfaction: satisfaction,
+          conditionsAccepted: conditionsAccepted,
+          satisfaction: conditionsAccepted, // Compatibilité avec l'ancien nom
           cohorteId: Number.parseInt(cohorteId), // Cohorte obligatoire pour étudiant des cohortes passées
           activate: true,
         }
@@ -454,13 +456,13 @@ export default function AuthPage() {
                 <div className="flex items-center space-x-2">
                   <input
                     type="checkbox"
-                    id="register-satisfaction"
-                    name="satisfaction"
+                    id="register-conditionsAccepted"
+                    name="conditionsAccepted"
                     value="true"
                     defaultChecked
                     className="rounded border-gray-300"
                   />
-                  <Label htmlFor="register-satisfaction" className="text-sm">
+                  <Label htmlFor="register-conditionsAccepted" className="text-sm">
                     J'accepte les conditions
                   </Label>
                 </div>
@@ -673,13 +675,13 @@ export default function AuthPage() {
                 <div className="flex items-center space-x-2">
                   <input
                     type="checkbox"
-                    id="existing-satisfaction"
-                    name="satisfaction"
+                    id="existing-conditionsAccepted"
+                    name="conditionsAccepted"
                     value="true"
                     defaultChecked
                     className="rounded border-gray-300"
                   />
-                  <Label htmlFor="existing-satisfaction" className="text-sm">
+                  <Label htmlFor="existing-conditionsAccepted" className="text-sm">
                     J'accepte les conditions
                   </Label>
                 </div>

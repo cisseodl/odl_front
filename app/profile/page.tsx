@@ -43,7 +43,8 @@ export default function ProfilePage() {
     niveauEtude: "",
     filiere: "",
     attentes: "",
-    satisfaction: true,
+    conditionsAccepted: true,
+    satisfaction: true, // Compatibilité avec l'ancien nom
     cohorteId: undefined,
     activate: true,
   })
@@ -105,7 +106,8 @@ export default function ProfilePage() {
         niveauEtude: apprenantForm.niveauEtude || undefined,
         filiere: apprenantForm.filiere?.trim() || undefined,
         attentes: apprenantForm.attentes?.trim() || undefined,
-        satisfaction: apprenantForm.satisfaction,
+        conditionsAccepted: apprenantForm.conditionsAccepted ?? apprenantForm.satisfaction ?? true,
+        satisfaction: apprenantForm.conditionsAccepted ?? apprenantForm.satisfaction ?? true, // Compatibilité
         cohorteId: apprenantForm.cohorteId,
         activate: apprenantForm.activate ?? true,
       }
@@ -688,11 +690,11 @@ export default function ProfilePage() {
 
                 <div className="flex items-center space-x-2">
                   <Switch
-                    id="satisfaction"
-                    checked={apprenantForm.satisfaction ?? true}
-                    onCheckedChange={(checked) => setApprenantForm({ ...apprenantForm, satisfaction: checked })}
+                    id="conditionsAccepted"
+                    checked={apprenantForm.conditionsAccepted ?? apprenantForm.satisfaction ?? true}
+                    onCheckedChange={(checked) => setApprenantForm({ ...apprenantForm, conditionsAccepted: checked, satisfaction: checked })}
                   />
-                  <Label htmlFor="satisfaction" className="text-black">
+                  <Label htmlFor="conditionsAccepted" className="text-black">
                     J'accepte les conditions
                   </Label>
                 </div>
@@ -710,7 +712,8 @@ export default function ProfilePage() {
                     niveauEtude: "",
                     filiere: "",
                     attentes: "",
-                    satisfaction: true,
+                    conditionsAccepted: true,
+    satisfaction: true, // Compatibilité avec l'ancien nom
                     cohorteId: undefined,
                     activate: true,
                   })}>
