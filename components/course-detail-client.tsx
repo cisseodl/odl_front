@@ -307,16 +307,24 @@ export function CourseDetailClient({ course }: CourseDetailClientProps) {
     }
   })
 
-  // Vérifier l'inscription au chargement initial et rediriger si inscrit
+  // IMPORTANT: Ne PAS rediriger automatiquement depuis course-detail-client
+  // La redirection ne doit se faire que:
+  // 1. Après une inscription réussie (dans enrollMutation.onSuccess)
+  // 2. Quand l'utilisateur clique sur un cours depuis la liste ET qu'il est déjà inscrit (dans CourseCard)
+  //
+  // WORKFLOW CORRECT:
+  // - Utilisateur non inscrit clique sur cours → /courses/id (reste ici pour s'inscrire)
+  // - Utilisateur inscrit clique sur cours → /learn/id (via CourseCard)
+  // - Après inscription réussie → /learn/id (via enrollMutation.onSuccess)
+  
+  // Mettre à jour isEnrolled uniquement pour l'affichage du bouton, SANS redirection
   useEffect(() => {
     if (courseIdNum && !isLoadingModules) {
-      // Si les modules sont chargés (même tableau vide), l'utilisateur est inscrit
-      if (modulesFromApi !== undefined && Array.isArray(modulesFromApi)) {
+      // Si les modules sont chargés avec succès (même tableau vide), l'utilisateur est inscrit
+      if (modulesFromApi !== undefined && Array.isArray(modulesFromApi) && !modulesError) {
         setIsEnrolled(true)
-        // Rediriger immédiatement vers la page d'apprentissage
-        console.log("✅ [ENROLLMENT] Utilisateur inscrit détecté dans course-detail-client, redirection vers /learn")
-        router.replace(`/learn/${courseIdNum}`)
-        return
+        console.log("✅ [ENROLLMENT] Utilisateur inscrit détecté (modules chargés), mais NE PAS rediriger automatiquement")
+        // NE PAS rediriger - laisser l'utilisateur voir la page d'inscription s'il le souhaite
       } else if (modulesError) {
         // Si erreur, vérifier si c'est une erreur d'inscription
         const errorMessage = String(modulesError?.message || "")
@@ -326,16 +334,18 @@ export function CourseDetailClient({ course }: CourseDetailClientProps) {
                                   errorMessage.includes("403") ||
                                   errorMessage.includes("401")
         
-        if (!isEnrollmentError) {
-          // Si ce n'est pas une erreur d'inscription, on considère que l'utilisateur est inscrit mais qu'il n'y a pas de modules
+        if (isEnrollmentError) {
+          // L'utilisateur n'est PAS inscrit
+          setIsEnrolled(false)
+          console.log("❌ [ENROLLMENT] Utilisateur non inscrit détecté, affichage de la page d'inscription")
+        } else {
+          // Erreur technique, considérer comme inscrit pour l'affichage
           setIsEnrolled(true)
-          // Rediriger vers la page d'apprentissage
-          console.log("✅ [ENROLLMENT] Erreur non liée à l'inscription, redirection vers /learn")
-          router.replace(`/learn/${courseIdNum}`)
+          console.log("⚠️ [ENROLLMENT] Erreur technique, considérer comme inscrit mais NE PAS rediriger")
         }
       }
     }
-  }, [courseIdNum, isLoadingModules, modulesFromApi, modulesError, router])
+  }, [courseIdNum, isLoadingModules, modulesFromApi, modulesError])
 
   // Adapter les modules de l'API si nécessaire
   useEffect(() => {
