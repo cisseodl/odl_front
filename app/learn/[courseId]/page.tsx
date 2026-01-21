@@ -246,6 +246,56 @@ export default function LearnPage({ params }: LearnPageProps) {
     }
   }
 
+  // Helper function to render video content
+  const renderVideoContent = () => {
+    if (!currentLessonData || currentLessonData.type !== "video") {
+      return null
+    }
+
+    if (currentLessonData.contentUrl) {
+      return (
+        <LessonContentViewer
+          contentUrl={currentLessonData.contentUrl}
+          title={currentLessonData.title || "Vidéo"}
+          type="video"
+        />
+      )
+    }
+
+    return (
+      <div className="relative">
+        <VideoPlayer 
+          title={currentLessonData.title || "Vidéo"}
+          src={undefined}
+          thumbnail={course?.imageUrl}
+          videoRef={videoRef}
+        />
+        <div className="absolute top-4 right-4 z-10">
+          <BookmarkButton
+            timestamp={0}
+            lessonId={currentLesson}
+            onBookmark={(timestamp, lessonId) => {
+              console.log("Bookmark added:", { timestamp, lessonId })
+            }}
+          />
+        </div>
+        <div className="flex items-center justify-between mt-4">
+          <h2 className="text-xl md:text-2xl font-bold">{currentLessonData.title || "Leçon"}</h2>
+          <Button onClick={handleMarkComplete} disabled={completedLessons.includes(currentLesson)}>
+            {completedLessons.includes(currentLesson) ? (
+              <>
+                <CheckCircle2 className="h-4 w-4 mr-2" />
+                Terminé
+              </>
+            ) : (
+              "Marquer comme terminé"
+            )}
+          </Button>
+        </div>
+      </div>
+    )
+  }
+
   const getLessonIcon = (type: string) => {
     switch (type) {
       case "video":
@@ -410,44 +460,7 @@ export default function LearnPage({ params }: LearnPageProps) {
             {/* Video Player */}
             {currentLessonData?.type === "video" && (
               <div className="space-y-4">
-                {currentLessonData?.contentUrl ? (
-                  <LessonContentViewer
-                    contentUrl={currentLessonData.contentUrl}
-                    title={currentLessonData.title || "Vidéo"}
-                    type="video"
-                  />
-                ) : (
-                  <div className="relative">
-                    <VideoPlayer 
-                      title={currentLessonData?.title || "Vidéo"}
-                      src={undefined}
-                      thumbnail={course?.imageUrl}
-                      videoRef={videoRef}
-                    />
-                  <div className="absolute top-4 right-4 z-10">
-                    <BookmarkButton
-                      timestamp={0}
-                      lessonId={currentLesson}
-                      onBookmark={(timestamp, lessonId) => {
-                        // Handle bookmark logic here
-                        console.log("Bookmark added:", { timestamp, lessonId })
-                      }}
-                    />
-                  </div>
-                  <div className="flex items-center justify-between mt-4">
-                    <h2 className="text-xl md:text-2xl font-bold">{currentLessonData?.title || "Leçon"}</h2>
-                    <Button onClick={handleMarkComplete} disabled={completedLessons.includes(currentLesson)}>
-                      {completedLessons.includes(currentLesson) ? (
-                        <>
-                          <CheckCircle2 className="h-4 w-4 mr-2" />
-                          Terminé
-                        </>
-                      ) : (
-                        "Marquer comme terminé"
-                      )}
-                    </Button>
-                  </div>
-                )}
+                {renderVideoContent()}
               </div>
             )}
 
