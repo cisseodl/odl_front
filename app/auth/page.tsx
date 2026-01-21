@@ -33,6 +33,11 @@ export default function AuthPage() {
   const [resultDialogTitle, setResultDialogTitle] = useState("")
   const [resultDialogDescription, setResultDialogDescription] = useState("")
 
+  // État pour le dialogue d'erreur de connexion
+  const [showLoginErrorDialog, setShowLoginErrorDialog] = useState(false)
+  const [loginErrorTitle, setLoginErrorTitle] = useState("")
+  const [loginErrorDescription, setLoginErrorDescription] = useState("")
+
   // Charger les cohortes pour le formulaire (nécessite authentification, mais on peut les charger publiquement si l'endpoint le permet)
   const { data: cohortes = [] } = useQuery({
     queryKey: ["cohortes"],
@@ -56,9 +61,40 @@ export default function AuthPage() {
       router.push("/dashboard")
       router.refresh()
     } catch (error) {
-      toast.error("Erreur de connexion", {
-        description: error instanceof Error ? error.message : "Veuillez vérifier vos identifiants",
-      })
+      // Afficher le dialog d'erreur au lieu du toast
+      const errorMessage = error instanceof Error ? error.message : "Veuillez vérifier vos identifiants"
+      
+      // Déterminer le message d'erreur spécifique
+      let errorTitle = "Erreur de connexion"
+      let errorDescription = errorMessage
+      
+      // Messages d'erreur plus spécifiques selon le type d'erreur
+      if (errorMessage.toLowerCase().includes("bad credentials") || 
+          errorMessage.toLowerCase().includes("invalid") ||
+          errorMessage.toLowerCase().includes("incorrect")) {
+        errorTitle = "Identifiants incorrects"
+        errorDescription = "L'email ou le mot de passe que vous avez saisi est incorrect. Veuillez vérifier vos identifiants et réessayer."
+      } else if (errorMessage.toLowerCase().includes("not found") ||
+                 errorMessage.toLowerCase().includes("utilisateur")) {
+        errorTitle = "Compte introuvable"
+        errorDescription = "Aucun compte n'est associé à cet email. Veuillez vérifier votre adresse email ou créer un nouveau compte."
+      } else if (errorMessage.toLowerCase().includes("disabled") ||
+                 errorMessage.toLowerCase().includes("désactivé")) {
+        errorTitle = "Compte désactivé"
+        errorDescription = "Votre compte a été désactivé. Veuillez contacter le support pour plus d'informations."
+      } else if (errorMessage.toLowerCase().includes("network") ||
+                 errorMessage.toLowerCase().includes("timeout") ||
+                 errorMessage.toLowerCase().includes("fetch")) {
+        errorTitle = "Erreur de connexion"
+        errorDescription = "Impossible de se connecter au serveur. Vérifiez votre connexion internet et réessayez."
+      } else {
+        errorTitle = "Erreur de connexion"
+        errorDescription = errorMessage || "Une erreur est survenue lors de la connexion. Veuillez réessayer."
+      }
+      
+      setLoginErrorTitle(errorTitle)
+      setLoginErrorDescription(errorDescription)
+      setShowLoginErrorDialog(true)
     } finally {
       setIsLoading(false)
     }
@@ -729,6 +765,18 @@ export default function AuthPage() {
             router.push("/dashboard")
             router.refresh()
           }
+        }}
+      />
+
+      {/* Dialogue d'erreur de connexion */}
+      <RegistrationResultDialog
+        open={showLoginErrorDialog}
+        onOpenChange={setShowLoginErrorDialog}
+        type="error"
+        title={loginErrorTitle}
+        description={loginErrorDescription}
+        onContinue={() => {
+          setShowLoginErrorDialog(false)
         }}
       />
     </div>
