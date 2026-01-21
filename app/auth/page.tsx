@@ -461,7 +461,7 @@ export default function AuthPage() {
                     className="rounded border-gray-300"
                   />
                   <Label htmlFor="register-satisfaction" className="text-sm">
-                    Je suis satisfait des conditions d'apprentissage
+                    J'accepte les conditions
                   </Label>
                 </div>
 
@@ -680,7 +680,7 @@ export default function AuthPage() {
                     className="rounded border-gray-300"
                   />
                   <Label htmlFor="existing-satisfaction" className="text-sm">
-                    Je suis satisfait des conditions d'apprentissage
+                    J'accepte les conditions
                   </Label>
                 </div>
 

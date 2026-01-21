@@ -693,7 +693,7 @@ export default function ProfilePage() {
                     onCheckedChange={(checked) => setApprenantForm({ ...apprenantForm, satisfaction: checked })}
                   />
                   <Label htmlFor="satisfaction" className="text-black">
-                    Je suis satisfait des conditions d'apprentissage
+                    J'accepte les conditions
                   </Label>
                 </div>
 
