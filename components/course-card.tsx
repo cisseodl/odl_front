@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useMemo } from "react"
+import { useState, useEffect } from "react"
 import Image from "next/image"
 import Link from "next/link"
 import { Star, Clock, Heart, Share2 } from "lucide-react"
@@ -9,9 +9,6 @@ import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { useCourseStore } from "@/lib/store/course-store"
-import { useAuthStore } from "@/lib/store/auth-store"
-import { useQuery } from "@tanstack/react-query"
-import { profileService } from "@/lib/api/services"
 import type { Course } from "@/lib/types"
 import { formatNumber } from "@/lib/utils"
 
@@ -22,31 +19,7 @@ interface CourseCardProps {
 
 export function CourseCard({ course, showPreview = true }: CourseCardProps) {
   const { toggleFavorite, isFavorite } = useCourseStore()
-  const { user, isAuthenticated } = useAuthStore()
   const [isMounted, setIsMounted] = useState(false)
-  
-  // Charger le profil pour vérifier les cours inscrits
-  const { data: profile } = useQuery({
-    queryKey: ["profile", user?.id],
-    queryFn: () => profileService.getMyProfile(),
-    enabled: isAuthenticated && !!user,
-    staleTime: 5 * 60 * 1000,
-  })
-  
-  // Vérifier si l'utilisateur est inscrit à ce cours
-  const isEnrolled = useMemo(() => {
-    if (!isAuthenticated || !profile?.enrolledCourses) {
-      return false
-    }
-    // Vérifier si le titre du cours est dans la liste des cours inscrits
-    return profile.enrolledCourses.includes(course.title)
-  }, [isAuthenticated, profile, course.title])
-  
-  // Déterminer l'URL de redirection
-  // Si inscrit → /learn/id, sinon → /courses/id
-  const courseUrl = useMemo(() => {
-    return isEnrolled ? `/learn/${course.id}` : `/courses/${course.id}`
-  }, [isEnrolled, course.id])
   
   useEffect(() => {
     setIsMounted(true)
@@ -58,8 +31,10 @@ export function CourseCard({ course, showPreview = true }: CourseCardProps) {
   const isNew = course.bestseller || (course.lastUpdated && 
     (new Date().getTime() - new Date(course.lastUpdated).getTime()) < 30 * 24 * 60 * 60 * 1000)
 
+  // Toujours rediriger vers /courses/id
+  // La page /courses/[id] vérifiera l'inscription et redirigera vers /learn/id si nécessaire
   return (
-    <Link href={courseUrl} className="block h-full group">
+    <Link href={`/courses/${course.id}`} className="block h-full group">
       <Card className="overflow-hidden transition-all duration-300 hover:shadow-2xl h-full flex flex-col border border-border hover:border-primary hover:-translate-y-1 bg-white">
         <div className="relative aspect-video overflow-hidden bg-black/5">
           <Image
