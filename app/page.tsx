@@ -451,8 +451,8 @@ function CourseSection({
             {courses.map((course) => (
               <CarouselItem key={course.id} className="pl-2 md:pl-4 basis-auto md:basis-1/4 lg:basis-1/5">
                 <Link href={`/courses/${course.id}`} className="block h-full group">
-                  <Card className="border border-border hover:shadow-xl hover:border-primary transition-all duration-300 hover:-translate-y-1 h-full bg-white">
-                    <div className="relative aspect-video overflow-hidden bg-black/5">
+                  <Card className="border border-border hover:shadow-xl hover:border-primary transition-all duration-300 hover:-translate-y-1 bg-white">
+                    <div className="relative h-32 overflow-hidden bg-black/5">
                       <Image
                         src={course.imageUrl || "/placeholder.svg"}
                         alt={course.title}
@@ -461,29 +461,8 @@ function CourseSection({
                       />
                       <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                     </div>
-                    <CardContent className="p-4 space-y-2.5">
-                      <h3 className="font-bold text-sm line-clamp-2 leading-snug group-hover:text-primary transition-colors text-black">{course.title}</h3>
-                      <p className="text-xs text-muted-foreground font-semibold">{course.instructor.name}</p>
-                      <div className="flex items-center gap-1.5">
-                        <span className="font-bold text-sm text-black">{course.rating.toFixed(1)}</span>
-                        <div className="flex items-center gap-0.5">
-                          {[...Array(5)].map((_, i) => (
-                            <Star
-                              key={i}
-                              className={`h-3.5 w-3.5 ${i < Math.floor(course.rating)
-                                ? "fill-primary text-primary"
-                                : "text-muted-foreground/30"
-                                }`}
-                            />
-                          ))}
-                        </div>
-                        <span className="text-xs text-muted-foreground">({course.reviewCount.toLocaleString()})</span>
-                      </div>
-                      {course.bestseller && (
-                        <span className="inline-block px-2 py-1 text-xs font-bold bg-primary text-white rounded border-0 shadow-sm">
-                          Nouveau
-                        </span>
-                      )}
+                    <CardContent className="p-3 pb-3">
+                      <h3 className="font-bold text-sm line-clamp-2 leading-tight group-hover:text-primary transition-colors text-black">{course.title}</h3>
                     </CardContent>
                   </Card>
                 </Link>

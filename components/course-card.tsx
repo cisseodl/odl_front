@@ -101,7 +101,7 @@ export function CourseCard({ course, showPreview = true }: CourseCardProps) {
   return (
     <Link href={courseUrl} className="block h-full group">
       <Card className="overflow-hidden transition-all duration-300 hover:shadow-2xl border border-border hover:border-primary hover:-translate-y-1 bg-white">
-        <div className="relative aspect-video overflow-hidden bg-black/5">
+        <div className="relative h-32 overflow-hidden bg-black/5">
           <Image
             src={course.imageUrl || "/placeholder.svg"}
             alt={course.title}
@@ -160,9 +160,9 @@ export function CourseCard({ course, showPreview = true }: CourseCardProps) {
           </div>
         </div>
 
-        <CardContent className="p-5 pb-4">
+        <CardContent className="p-3 pb-3">
           {/* Titre - Style Orange Mali - Hauteur réduite */}
-          <h3 className="font-bold text-base line-clamp-2 group-hover:text-primary transition-colors text-balance leading-tight text-black">
+          <h3 className="font-bold text-sm line-clamp-2 group-hover:text-primary transition-colors text-balance leading-tight text-black">
             {course.title}
           </h3>
         </CardContent>
