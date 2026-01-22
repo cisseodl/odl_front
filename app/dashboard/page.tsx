@@ -445,9 +445,14 @@ export default function DashboardPage() {
                                   <h4 className="font-bold text-base line-clamp-1 group-hover:text-primary transition-colors">
                                     {course.title}
                                   </h4>
-                                  <p className="text-sm text-muted-foreground mt-1">
-                                    {course.instructor?.name || "Formateur"}
-                                  </p>
+                                  <div className="flex items-center gap-2 mt-1">
+                                    <Badge variant="outline" className="text-xs">
+                                      {course.category || "Non catégorisé"}
+                                    </Badge>
+                                    <p className="text-sm text-muted-foreground">
+                                      {course.instructor?.name || "Formateur"}
+                                    </p>
+                                  </div>
                                 </div>
                                 {(course.progress || 0) === 100 && (
                                 <Badge className="bg-primary text-white font-semibold border-0 shadow-sm">
