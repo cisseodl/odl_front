@@ -165,9 +165,21 @@ export default function LearnPage({ params }: LearnPageProps) {
 
   // Calculer currentLessonData et progress pour déterminer si le cours est complété
   // (doit être fait avant le useQuery pour courseExam)
-  const currentLessonDataForExam = lessons.find(lesson => lesson.id === currentLesson) || lessons[0]
+  const currentLessonDataForExam = lessons.find(lesson => String(lesson.id) === String(currentLesson)) || lessons[0]
   const progressForExam = lessons.length > 0 ? (completedLessons.length / lessons.length) * 100 : 0
   const isCourseCompletedForExam = progressForExam === 100 && lessons.length > 0
+  
+  // DEBUG: Log pour comprendre quelle leçon est sélectionnée
+  if (currentLessonDataForExam && (currentLessonDataForExam.type === "document" || currentLessonDataForExam.type === "DOCUMENT")) {
+    console.log("📄 [LEARN PAGE] currentLessonDataForExam (document):", {
+      id: currentLessonDataForExam.id,
+      title: currentLessonDataForExam.title,
+      type: currentLessonDataForExam.type,
+      contentUrl: currentLessonDataForExam.contentUrl,
+      hasContentUrl: !!currentLessonDataForExam.contentUrl,
+      allKeys: Object.keys(currentLessonDataForExam)
+    })
+  }
 
   // Vérifier si un examen existe pour ce cours (seulement si le cours est complété)
   const {
