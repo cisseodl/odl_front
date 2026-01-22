@@ -1,4 +1,6 @@
 import { API_CONFIG } from "./config"
+import { logger } from "../utils/logger"
+import { createApiError, formatErrorForUser } from "../utils/error-handler"
 
 /**
  * Réponse standard de l'API backend
@@ -101,23 +103,23 @@ class ApiClient {
   ): Promise<ApiResponse<T>> {
     const url = this.buildURL(endpoint)
     
-    const headers: HeadersInit = {
+    const headers: Record<string, string> = {
       "Content-Type": "application/json",
-      ...options.headers,
+      ...(options.headers as Record<string, string> || {}),
     }
 
     // Récupérer le token actuel (depuis l'instance ou localStorage)
     const currentToken = this.getCurrentToken()
     if (currentToken) {
       headers["Authorization"] = `Bearer ${currentToken}`
-      console.log("🔑 [AUTH] Token trouvé et ajouté au header, longueur:", currentToken.length)
+      logger.api("Token trouvé et ajouté au header", { length: currentToken.length })
     } else {
-      console.warn("⚠️ [AUTH] Aucun token trouvé dans localStorage ou instance")
+      logger.warn("Aucun token trouvé dans localStorage ou instance")
       // Vérifier une dernière fois dans localStorage directement
       if (typeof window !== "undefined") {
         const directToken = localStorage.getItem("auth_token")
         if (directToken) {
-          console.log("🔑 [AUTH] Token trouvé directement dans localStorage, mise à jour")
+          logger.api("Token trouvé directement dans localStorage, mise à jour")
           this.token = directToken
           headers["Authorization"] = `Bearer ${directToken}`
         }
@@ -126,12 +128,12 @@ class ApiClient {
 
     try {
       const finalToken = headers["Authorization"] ? "présent" : "absent"
-      console.log("🌐 [HTTP] Fetch request:", { url, method: options.method, hasBody: !!options.body, token: finalToken })
+      logger.api("Fetch request", { url, method: options.method, hasBody: !!options.body, token: finalToken })
       const response = await fetch(url, {
         ...options,
         headers,
       })
-      console.log("🌐 [HTTP] Response status:", response.status, response.statusText)
+      logger.api("Response status", { status: response.status, statusText: response.statusText })
 
       // Gérer les réponses non-JSON (comme les fichiers)
       const contentType = response.headers.get("content-type")
@@ -246,9 +248,8 @@ class ApiClient {
    * POST request
    */
   async post<T>(endpoint: string, body?: any): Promise<ApiResponse<T>> {
-    console.log("🌐 [HTTP] POST request:", { endpoint, body })
+    logger.api("POST request", { endpoint })
     const bodyString = body ? JSON.stringify(body) : undefined
-    console.log("🌐 [HTTP] Body stringifié:", bodyString)
     return this.request<T>(endpoint, {
       method: "POST",
       body: bodyString,
@@ -295,8 +296,8 @@ class ApiClient {
   ): Promise<ApiResponse<T>> {
     const url = this.buildURL(endpoint)
     
-    const headers: HeadersInit = {
-      ...additionalHeaders,
+    const headers: Record<string, string> = {
+      ...(additionalHeaders as Record<string, string> || {}),
     }
 
     // Récupérer le token actuel (depuis l'instance ou localStorage)
@@ -345,12 +346,13 @@ class ApiClient {
         ko: false,
       }
     } catch (error) {
-      console.error("API request error:", error)
+      const apiError = createApiError(error)
+      logger.error("API request error", apiError)
       return {
         data: undefined,
         ok: false,
         ko: true,
-        message: error instanceof Error ? error.message : "Une erreur est survenue",
+        message: apiError.message,
       }
     }
   }

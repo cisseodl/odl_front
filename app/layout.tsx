@@ -9,6 +9,7 @@ import { ReactQueryProvider } from "@/lib/react-query-provider"
 import { ThemeProvider } from "@/components/theme-provider"
 import { StoreProvider } from "@/components/store-provider"
 import { LanguageProvider } from "@/lib/contexts/language-context"
+import { ErrorBoundary } from "@/components/error-boundary"
 // Importer globals.css (contient Tailwind, variables oklch avec fallbacks hex, et globals-tv-fallback)
 // Tous les styles sont maintenant dans un seul fichier pour éviter les chunks CSS multiples
 import "./globals.css"
@@ -121,26 +122,28 @@ export default function RootLayout({
       </head>
       <body className={`font-sans antialiased`}>
         <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false}>
-          <LanguageProvider>
-            <StoreProvider>
-              <ReactQueryProvider>
-                <SkipToContent />
-                <AriaLiveRegion />
-                <Header />
-              <main
-                id="main-content"
-                role="main"
-                aria-label="Contenu principal"
-                className="min-h-screen pt-20"
-                tabIndex={-1}
-              >
-                {children}
-              </main>
-              <Footer />
-              <Toaster />
-            </ReactQueryProvider>
-          </StoreProvider>
-          </LanguageProvider>
+          <ErrorBoundary>
+            <LanguageProvider>
+              <StoreProvider>
+                <ReactQueryProvider>
+                  <SkipToContent />
+                  <AriaLiveRegion />
+                  <Header />
+                <main
+                  id="main-content"
+                  role="main"
+                  aria-label="Contenu principal"
+                  className="min-h-screen pt-20"
+                  tabIndex={-1}
+                >
+                  {children}
+                </main>
+                <Footer />
+                <Toaster />
+              </ReactQueryProvider>
+            </StoreProvider>
+            </LanguageProvider>
+          </ErrorBoundary>
         </ThemeProvider>
         {Analytics && <Analytics />}
       </body>

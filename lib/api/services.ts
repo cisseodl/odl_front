@@ -27,6 +27,7 @@ import type {
 import { adaptCourse, adaptCourses, adaptUser, adaptQuiz, adaptLab } from "./adapters"
 import type { Course, User, Quiz, Lab } from "../types"
 import type { ApiResponse } from "./client"
+import { logger } from "../utils/logger"
 
 // ============ Authentication Services ============
 export const authService = {
@@ -121,19 +122,18 @@ export const courseService = {
    */
   async getAllCourses(): Promise<Course[]> {
     try {
-      console.log("📚 [COURSES] Début de getAllCourses, endpoint:", API_ENDPOINTS.courses.getAll)
+      logger.debug("Début de getAllCourses", { endpoint: API_ENDPOINTS.courses.getAll })
       const response = await apiClient.get<{ data: BackendCourse[] } | BackendCourse[]>(
         API_ENDPOINTS.courses.getAll
       )
       
-      console.log("📚 [COURSES] Réponse reçue:", {
+      logger.debug("Réponse reçue", {
         ok: response.ok,
         ko: response.ko,
         message: response.message,
         hasData: !!response.data,
         dataType: typeof response.data,
         isArray: Array.isArray(response.data),
-        dataKeys: response.data && typeof response.data === 'object' ? Object.keys(response.data) : null
       })
       
       if (response.ok && response.data) {
@@ -143,32 +143,14 @@ export const courseService = {
         // Cas 1: response.data est directement un array
         if (Array.isArray(response.data)) {
           courses = response.data
-          console.log("📚 [COURSES] Données trouvées directement dans response.data (array)")
-          // Log des catégories pour déboguer
-          if (courses.length > 0) {
-            console.log("📚 [COURSES] Exemple de catégorie du premier cours:", {
-              title: courses[0].title,
-              category: courses[0].category,
-              categoryType: typeof courses[0].category,
-              categoryKeys: courses[0].category && typeof courses[0].category === 'object' ? Object.keys(courses[0].category) : null
-            })
-          }
+          logger.debug("Données trouvées directement dans response.data (array)")
         } 
         // Cas 2: response.data est un objet CResponse avec une propriété data
         else if (response.data && typeof response.data === 'object') {
           // Vérifier si c'est un CResponse avec { data: [...] }
           if ('data' in response.data && Array.isArray((response.data as any).data)) {
             courses = (response.data as any).data
-            console.log("📚 [COURSES] Données trouvées dans response.data.data (CResponse)")
-            // Log des catégories pour déboguer
-            if (courses.length > 0) {
-              console.log("📚 [COURSES] Exemple de catégorie du premier cours:", {
-                title: courses[0].title,
-                category: courses[0].category,
-                categoryType: typeof courses[0].category,
-                categoryKeys: courses[0].category && typeof courses[0].category === 'object' ? Object.keys(courses[0].category) : null
-              })
-            }
+            logger.debug("Données trouvées dans response.data.data (CResponse)")
           } 
           // Vérifier si response.data est un objet avec une propriété qui est un array
           else {
@@ -176,39 +158,28 @@ export const courseService = {
             for (const key in response.data) {
               if (Array.isArray((response.data as any)[key])) {
                 courses = (response.data as any)[key]
-                console.log(`📚 [COURSES] Données trouvées dans response.data.${key}`)
+                logger.debug(`Données trouvées dans response.data.${key}`)
                 break
               }
             }
           }
         }
         
-        console.log("📚 [COURSES] Nombre de cours récupérés:", courses.length)
-        if (courses.length > 0) {
-          console.log("📚 [COURSES] Premier cours:", {
-            id: courses[0].id,
-            title: courses[0].title,
-            hasCurriculum: !!courses[0].curriculum,
-            curriculumLength: courses[0].curriculum?.length || 0
-          })
-        } else {
-          console.warn("📚 [COURSES] Aucun cours dans le tableau extrait")
-        }
+        logger.debug("Nombre de cours récupérés", { count: courses.length })
         
         const adaptedCourses = adaptCourses(courses)
-        console.log("📚 [COURSES] Cours adaptés:", adaptedCourses.length)
+        logger.debug("Cours adaptés", { count: adaptedCourses.length })
         return adaptedCourses
       }
       
-      console.warn("📚 [COURSES] Réponse invalide ou erreur:", {
+      logger.warn("Réponse invalide ou erreur", {
         ok: response.ok,
         ko: response.ko,
         message: response.message,
-        data: response.data
       })
       return []
     } catch (error) {
-      console.error("📚 [COURSES] Erreur lors de la récupération des cours:", error)
+      logger.error("Erreur lors de la récupération des cours", error)
       return []
     }
   },
@@ -247,7 +218,7 @@ export const courseService = {
         if (rawCourse && !Array.isArray(rawCourse)) {
           const adapted = adaptCourse(rawCourse as BackendCourse)
           // Log minimal pour vérifier la cohérence
-          console.log(`getCourseById(${id}): cours adapté`, {
+          logger.debug(`getCourseById(${id}): cours adapté`, {
             id: adapted.id,
             title: adapted.title,
             curriculumLength: adapted.curriculum?.length || 0,
@@ -258,7 +229,7 @@ export const courseService = {
       
       // Logger l'erreur pour le débogage
       if (!response.ok) {
-        console.error(`getCourseById(${id}) failed:`, {
+        logger.error(`getCourseById(${id}) failed:`, {
           status: response.ko ? "error" : "ok",
           message: response.message,
           data: response.data
@@ -267,7 +238,7 @@ export const courseService = {
       
       return null
     } catch (error) {
-      console.error(`Erreur lors de la récupération du cours ${id}:`, error)
+      logger.error(`Erreur lors de la récupération du cours ${id}:`, error)
       return null
     }
   },
@@ -323,13 +294,11 @@ export const courseService = {
    * S'inscrire à un cours avec attentes
    */
   async enrollInCourse(courseId: number, expectations?: string): Promise<ApiResponse<any>> {
-    console.log("📡 [API] enrollInCourse appelé:", { courseId, expectations, expectationsLength: expectations?.length })
+    logger.debug("enrollInCourse appelé", { courseId, expectationsLength: expectations?.length })
     const body = expectations ? { expectations } : {}
-    console.log("📡 [API] Body de la requête:", body)
     const endpoint = `${API_ENDPOINTS.courses.enroll}/${courseId}`
-    console.log("📡 [API] Endpoint:", endpoint)
     const response = await apiClient.post(endpoint, body)
-    console.log("📡 [API] Réponse reçue:", { ok: response.ok, message: response.message, hasData: !!response.data })
+    logger.debug("Réponse reçue", { ok: response.ok, message: response.message })
     return response
   },
 }
@@ -363,10 +332,10 @@ export const categoryService = {
         }
       }
       
-      console.warn("getAllCategories: Aucune catégorie trouvée ou format de réponse inattendu", response)
+      logger.warn("getAllCategories: Aucune catégorie trouvée ou format de réponse inattendu", response)
       return []
     } catch (error) {
-      console.error("Erreur lors de la récupération des catégories:", error)
+      logger.error("Erreur lors de la récupération des catégories:", error)
       return []
     }
   },

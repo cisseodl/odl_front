@@ -4,6 +4,7 @@ import type { User } from "../types"
 import { authService, profileService } from "../api/services"
 import { adaptUser } from "../api/adapters"
 import { apiClient } from "../api/client"
+import { logger } from "../utils/logger"
 
 interface AuthStore {
   user: User | null
@@ -72,19 +73,19 @@ export const useAuthStore = create<AuthStore>()(
           
           const response = await authService.signup(JSON.stringify(userData))
           
-          console.log("DEBUG - Signup response:", response)
+          logger.debug("Signup response", response)
           
           // Le backend retourne CResponse<JwtAuthenticationResponse>
           // Donc response.data est CResponse, et response.data.data est JwtAuthenticationResponse
           const authData = response.data as any
-          console.log("DEBUG - Auth data:", authData)
+          logger.debug("Auth data", authData)
           
           const jwtResponse = authData?.data || authData // Support des deux formats
-          console.log("DEBUG - JWT Response:", jwtResponse)
+          logger.debug("JWT Response", jwtResponse)
           
           if (response.ok && jwtResponse?.token && jwtResponse?.user) {
             const frontendUser = adaptUser(jwtResponse.user)
-            console.log("DEBUG - Frontend user:", frontendUser)
+            logger.debug("Frontend user", frontendUser)
             set({
               user: frontendUser,
               isAuthenticated: true,
@@ -93,10 +94,10 @@ export const useAuthStore = create<AuthStore>()(
             // Sauvegarder le token
             if (jwtResponse.token) {
               apiClient.setToken(jwtResponse.token)
-              console.log("DEBUG - Token saved")
+              logger.debug("Token saved")
             }
           } else {
-            console.error("DEBUG - Signup failed:", {
+            logger.error("Signup failed", {
               ok: response.ok,
               hasToken: !!jwtResponse?.token,
               hasUser: !!jwtResponse?.user,
@@ -134,11 +135,11 @@ export const useAuthStore = create<AuthStore>()(
           let token: string | null = null
           if (typeof window !== "undefined") {
             token = localStorage.getItem("auth_token")
-            console.log("🔑 [AUTH] checkAuth - Token dans localStorage:", token ? `présent (${token.length} caractères)` : "absent")
+            logger.debug("checkAuth - Token dans localStorage", token ? `présent (${token.length} caractères)` : "absent")
             // TOUJOURS synchroniser le token avec apiClient
             if (token) {
               apiClient.setToken(token)
-              console.log("🔑 [AUTH] Token synchronisé avec apiClient")
+              logger.debug("Token synchronisé avec apiClient")
             } else {
               apiClient.setToken(null)
             }
