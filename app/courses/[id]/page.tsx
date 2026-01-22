@@ -22,7 +22,9 @@ export default function CoursePage({ params }: CoursePageProps) {
   const { data: allCourses = [] } = useQuery({
     queryKey: ["courses"],
     queryFn: () => courseService.getAllCourses(),
-    staleTime: 5 * 60 * 1000,
+    staleTime: 10 * 60 * 1000, // 10 minutes - cache plus long
+    gcTime: 30 * 60 * 1000, // 30 minutes
+    refetchOnWindowFocus: false, // Ne pas refetch au focus
   })
 
   const {
