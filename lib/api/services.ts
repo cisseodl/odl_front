@@ -684,10 +684,10 @@ export const evaluationService = {
       if (response.ok && response.data) {
         const evaluations = Array.isArray(response.data) ? response.data : []
         // Filtrer les évaluations du cours
-        return evaluations.filter((eval: any) => 
-          eval.course?.id === courseId || 
-          eval.courseId === courseId ||
-          (eval.course && String(eval.course.id) === String(courseId))
+        return evaluations.filter((evaluation: any) => 
+          evaluation.course?.id === courseId || 
+          evaluation.courseId === courseId ||
+          (evaluation.course && String(evaluation.course.id) === String(courseId))
         )
       }
       
