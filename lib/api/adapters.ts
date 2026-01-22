@@ -213,14 +213,14 @@ export function adaptCourse(backendCourse: BackendCourse | any): Course {
     courseId = String(backendCourse.id || '')
   }
   
-  // Gérer la catégorie - peut être une string, un objet avec title, ou null/undefined
+  // Gérer la catégorie - le backend retourne toujours une string (ou "Non catégorisé" si null)
   let category: string = "Non catégorisé"
   
   if (backendCourse.category) {
     if (typeof backendCourse.category === 'string') {
       // Si c'est une string, vérifier qu'elle n'est pas vide
       const trimmedCategory = backendCourse.category.trim()
-      if (trimmedCategory !== "" && trimmedCategory.toLowerCase() !== "null") {
+      if (trimmedCategory !== "" && trimmedCategory.toLowerCase() !== "null" && trimmedCategory !== "Non catégorisé") {
         category = trimmedCategory
       }
     } else if (typeof backendCourse.category === 'object') {
@@ -229,14 +229,21 @@ export function adaptCourse(backendCourse: BackendCourse | any): Course {
                            (backendCourse.category as any).name || 
                            (backendCourse.category as any).label ||
                            String(backendCourse.category)
-      if (categoryTitle && typeof categoryTitle === 'string' && categoryTitle.trim() !== "" && categoryTitle.toLowerCase() !== "null") {
+      if (categoryTitle && typeof categoryTitle === 'string' && categoryTitle.trim() !== "" && categoryTitle.toLowerCase() !== "null" && categoryTitle !== "Non catégorisé") {
         category = categoryTitle.trim()
       }
     }
   }
   
-  // Catégorie gérée : le backend retourne toujours une string (ou "Non catégorisé" si null)
-  // Plus besoin de logs pour améliorer les performances
+  // Log pour déboguer les catégories manquantes
+  if (category === "Non catégorisé" && process.env.NODE_ENV === 'development') {
+    console.log("⚠️ [ADAPTER] Catégorie manquante pour le cours:", {
+      courseId: backendCourse.id,
+      courseTitle: backendCourse.title,
+      rawCategory: backendCourse.category,
+      categoryType: typeof backendCourse.category
+    })
+  }
   
   return {
     id: courseId,
