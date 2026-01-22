@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button"
 import { useCourseStore } from "@/lib/store/course-store"
 import { useAuthStore } from "@/lib/store/auth-store"
 import { useQuery } from "@tanstack/react-query"
-import { profileService } from "@/lib/api/services"
+import { profileService, moduleService } from "@/lib/api/services"
 import type { Course } from "@/lib/types"
 import { formatNumber } from "@/lib/utils"
 
@@ -31,36 +31,66 @@ export function CourseCard({ course, showPreview = true }: CourseCardProps) {
     setIsMounted(true)
   }, [])
   
-  // Charger le profil pour vérifier les cours inscrits
-  const { data: profile } = useQuery({
-    queryKey: ["profile", user?.id],
-    queryFn: () => profileService.getMyProfile(),
-    enabled: isAuthenticated && !!user && isMounted,
+  // Vérifier l'inscription DIRECTEMENT via les modules (plus fiable que profile.enrolledCourses)
+  // Cette méthode garantit que si l'utilisateur peut charger les modules, il est inscrit
+  const courseIdNum = useMemo(() => {
+    if (!course?.id) return null
+    const id = typeof course.id === 'number' ? course.id : parseInt(String(course.id), 10)
+    return Number.isNaN(id) ? null : id
+  }, [course?.id])
+
+  // Vérifier l'inscription en essayant de charger les modules
+  // Si les modules sont chargés avec succès (même vide), l'utilisateur est inscrit
+  const { data: modules, isLoading: isLoadingEnrollment } = useQuery({
+    queryKey: ["modules", courseIdNum, "enrollment-check"],
+    queryFn: async () => {
+      if (!courseIdNum) return null
+      try {
+        const modulesData = await moduleService.getModulesByCourse(courseIdNum)
+        // Si on peut charger les modules (même vide), l'utilisateur est inscrit
+        return modulesData || []
+      } catch (error: any) {
+        // Si erreur d'inscription, l'utilisateur n'est pas inscrit
+        const errorMessage = String(error?.message || "")
+        const isEnrollmentError = errorMessage.includes("inscrire") || 
+                                  errorMessage.includes("inscription") || 
+                                  errorMessage.includes("inscrit") ||
+                                  errorMessage.includes("authentifié") ||
+                                  errorMessage.includes("403") ||
+                                  errorMessage.includes("401")
+        if (isEnrollmentError) {
+          return null // Pas inscrit
+        }
+        // Autre erreur, considérer comme non inscrit par sécurité
+        return null
+      }
+    },
+    enabled: isAuthenticated && !!user && isMounted && !!courseIdNum,
     staleTime: 10 * 60 * 1000, // 10 minutes - cache plus long
     gcTime: 30 * 60 * 1000, // 30 minutes
     refetchOnWindowFocus: false, // Ne pas refetch au focus
+    retry: false, // Ne pas réessayer pour éviter les délais
   })
   
-  // Vérifier si l'utilisateur est inscrit à ce cours
+  // L'utilisateur est inscrit si les modules sont chargés avec succès (même vide)
   const isEnrolled = useMemo(() => {
-    if (!isAuthenticated || !profile?.enrolledCourses || !course?.id) {
-      return false
-    }
-    // Vérifier si le cours est dans la liste des cours inscrits
-    // enrolledCourses peut contenir des IDs (nombres) ou des titres (strings)
-    const courseIdStr = String(course.id)
-    return profile.enrolledCourses.some((enrolled: string | number) => {
-      const enrolledStr = String(enrolled)
-      // Vérifier par ID ou par titre
-      return enrolledStr === courseIdStr || enrolledStr === course.title
-    })
-  }, [isAuthenticated, profile, course.id, course.title])
+    // Si on charge encore, ne pas considérer comme inscrit (éviter redirection prématurée)
+    if (isLoadingEnrollment) return false
+    // Si modules est défini (même tableau vide), l'utilisateur est inscrit
+    return modules !== undefined && modules !== null
+  }, [modules, isLoadingEnrollment])
   
   // Déterminer l'URL de redirection
   // Si inscrit → /learn/id, sinon → /courses/id
+  // IMPORTANT: Si on charge encore, rediriger vers /courses/id par défaut (sécurité)
   const courseUrl = useMemo(() => {
+    // Si on charge encore l'inscription, rediriger vers /courses/id par sécurité
+    // Cela évite de rediriger vers /learn/id si l'utilisateur n'est pas inscrit
+    if (isLoadingEnrollment) {
+      return `/courses/${course.id}`
+    }
     return isEnrolled ? `/learn/${course.id}` : `/courses/${course.id}`
-  }, [isEnrolled, course.id])
+  }, [isEnrolled, isLoadingEnrollment, course.id])
   
   const isFav = isMounted ? isFavorite(course.id) : false
   
