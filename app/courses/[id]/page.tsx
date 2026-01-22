@@ -49,12 +49,10 @@ export default function CoursePage({ params }: CoursePageProps) {
     queryFn: async () => {
       try {
         const modules = await moduleService.getModulesByCourse(courseId)
-        console.log("📚 [ENROLLMENT] Modules chargés avec succès:", modules?.length || 0)
         // Si les modules sont chargés (même tableau vide), l'utilisateur est inscrit
         return modules || []
       } catch (error: any) {
         const errorMessage = String(error?.message || error?.response?.data?.message || "")
-        console.log("📚 [ENROLLMENT] Erreur lors du chargement des modules:", errorMessage)
         
         // Si l'erreur indique qu'il faut s'inscrire, l'utilisateur n'est pas inscrit
         const isEnrollmentError = errorMessage.includes("inscrire") || 
@@ -65,18 +63,18 @@ export default function CoursePage({ params }: CoursePageProps) {
                                   errorMessage.includes("401")
         
         if (isEnrollmentError) {
-          console.log("❌ [ENROLLMENT] Erreur d'inscription détectée, l'utilisateur n'est pas inscrit")
           throw error // Re-lancer l'erreur pour que React Query la gère
         }
         
         // Autre erreur, peut-être que l'utilisateur est inscrit mais qu'il y a un problème technique
-        console.log("⚠️ [ENROLLMENT] Erreur non liée à l'inscription, considérer comme inscrit")
         return [] // Retourner un tableau vide pour indiquer que l'utilisateur est peut-être inscrit
       }
     },
     enabled: !Number.isNaN(courseId) && !!course,
-    staleTime: 5 * 60 * 1000,
-    retry: 1,
+    staleTime: 10 * 60 * 1000, // 10 minutes - cache plus long
+    gcTime: 30 * 60 * 1000, // 30 minutes
+    refetchOnWindowFocus: false, // Ne pas refetch au focus
+    retry: false, // Ne pas réessayer pour éviter les délais inutiles
   })
 
   // Rediriger vers /learn/id UNIQUEMENT si l'utilisateur est inscrit
@@ -89,7 +87,6 @@ export default function CoursePage({ params }: CoursePageProps) {
     // Si les modules sont chargés avec succès ET qu'il y a du contenu, l'utilisateur est inscrit
     if (modulesFromApi !== undefined && Array.isArray(modulesFromApi) && !modulesError && modulesFromApi.length > 0) {
       // L'utilisateur est inscrit, rediriger vers la page d'apprentissage
-      console.log("✅ [ENROLLMENT] Utilisateur inscrit détecté (modules avec contenu), redirection vers /learn")
       router.replace(`/learn/${courseId}`)
       return
     }
@@ -108,7 +105,6 @@ export default function CoursePage({ params }: CoursePageProps) {
       
       if (isEnrollmentError) {
         // L'utilisateur n'est PAS inscrit, afficher la page d'inscription (CourseDetailClient)
-        console.log("❌ [ENROLLMENT] Utilisateur non inscrit - Affichage de la page d'inscription (/courses/id)")
         // Ne pas rediriger, laisser CourseDetailClient s'afficher avec le bouton "S'inscrire gratuitement"
         return
       }
@@ -116,7 +112,6 @@ export default function CoursePage({ params }: CoursePageProps) {
     
     // Si aucun module chargé et pas d'erreur explicite, considérer comme non inscrit
     // (laisser la page d'inscription s'afficher)
-    console.log("⚠️ [ENROLLMENT] Aucun module chargé, affichage de la page d'inscription")
   }, [modulesFromApi, modulesError, isLoadingModules, courseId, router])
 
   if (Number.isNaN(courseId)) {
