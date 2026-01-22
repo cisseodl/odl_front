@@ -541,6 +541,36 @@ export const labService = {
   },
 
   /**
+   * Obtenir les labs d'un cours (via les leçons du cours)
+   */
+  async getLabsByCourse(courseId: number, lessons: any[]): Promise<Lab[]> {
+    try {
+      const allLabs = await this.getAllLabs()
+      
+      // Extraire les IDs des leçons du cours
+      const lessonIds = lessons.map((lesson: any) => {
+        const id = typeof lesson.id === 'string' ? parseInt(lesson.id, 10) : lesson.id
+        return isNaN(id) ? null : id
+      }).filter((id: any) => id !== null)
+      
+      // Filtrer les labs dont la leçon appartient au cours
+      // Les labs bruts ont une propriété lesson avec un id
+      return allLabs.filter((lab: any) => {
+        // Chercher dans les données brutes si le lab a une leçon associée
+        const rawLab = (lab as any).rawData || lab
+        const labLessonId = rawLab.lessonId || 
+                           (rawLab.lesson && (typeof rawLab.lesson.id === 'string' ? parseInt(rawLab.lesson.id, 10) : rawLab.lesson.id)) ||
+                           (rawLab.lesson && rawLab.lesson.id)
+        
+        return labLessonId && lessonIds.includes(labLessonId)
+      })
+    } catch (error) {
+      logger.error(`Erreur lors de la récupération des labs pour le cours ${courseId}:`, error)
+      return []
+    }
+  },
+
+  /**
    * Obtenir mes sessions de lab
    * Le backend retourne CResponse<List<LabSession>>
    */
@@ -641,6 +671,49 @@ export const evaluationService = {
    */
   async getCourseExam(courseId: number): Promise<ApiResponse<any>> {
     return apiClient.get(`${API_ENDPOINTS.evaluations.getByCourse}/${courseId}`)
+  },
+
+  /**
+   * Obtenir toutes les évaluations d'un cours (y compris les TP)
+   * GET /api/evaluations/get-all puis filtrer par courseId
+   */
+  async getEvaluationsByCourse(courseId: number): Promise<any[]> {
+    try {
+      const response = await apiClient.get<any>(API_ENDPOINTS.evaluations.getAll)
+      
+      if (response.ok && response.data) {
+        const evaluations = Array.isArray(response.data) ? response.data : []
+        // Filtrer les évaluations du cours
+        return evaluations.filter((eval: any) => 
+          eval.course?.id === courseId || 
+          eval.courseId === courseId ||
+          (eval.course && String(eval.course.id) === String(courseId))
+        )
+      }
+      
+      return []
+    } catch (error) {
+      logger.error(`Erreur lors de la récupération des évaluations pour le cours ${courseId}:`, error)
+      return []
+    }
+  },
+
+  /**
+   * Obtenir les TP (Travaux Pratiques) d'un cours
+   */
+  async getTPsByCourse(courseId: number): Promise<any[]> {
+    try {
+      const evaluations = await this.getEvaluationsByCourse(courseId)
+      // Filtrer les évaluations de type TP
+      return evaluations.filter((eval: any) => 
+        eval.type === "TP" || 
+        eval.type === "tp" ||
+        (eval.evaluationType && eval.evaluationType === "TP")
+      )
+    } catch (error) {
+      logger.error(`Erreur lors de la récupération des TP pour le cours ${courseId}:`, error)
+      return []
+    }
   },
 
   /**

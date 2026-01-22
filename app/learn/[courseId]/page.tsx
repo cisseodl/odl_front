@@ -19,12 +19,13 @@ import { LessonContentViewer } from "@/components/lesson-content-viewer"
 import { cn } from "@/lib/utils"
 import { ProtectedRoute } from "@/components/protected-route"
 import { useQuery, useMutation } from "@tanstack/react-query"
-import { courseService, learnerService, moduleService, evaluationService } from "@/lib/api/services"
+import { courseService, learnerService, moduleService, evaluationService, labService } from "@/lib/api/services"
 import { adaptModule } from "@/lib/api/adapters"
 import { useRouter } from "next/navigation"
 import { FileCheck, Award, GraduationCap } from "lucide-react"
 import { toast } from "sonner"
 import type { Lesson, Module } from "@/lib/types"
+import { CourseActivitiesSection } from "@/components/course-activities-section"
 
 interface LearnPageProps {
   params: Promise<{ courseId: string }>
@@ -726,6 +727,13 @@ export default function LearnPage({ params }: LearnPageProps) {
           </div>
         </div>
       </div>
+
+      {/* Section Labs, TD et TP */}
+      <CourseActivitiesSection
+        labs={courseLabs || []}
+        tps={courseTPs || []}
+        courseId={courseIdNum}
+      />
 
       {/* Mini Player */}
       {currentLessonData?.type === "video" && showMiniPlayer && (
