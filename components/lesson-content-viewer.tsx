@@ -17,12 +17,27 @@ export function LessonContentViewer({ contentUrl, title, type, className }: Less
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
+  // DEBUG: Log pour comprendre pourquoi le document ne s'affiche pas
+  useEffect(() => {
+    console.log("📄 [LessonContentViewer] Props reçues:", {
+      contentUrl: contentUrl,
+      title: title,
+      type: type,
+      hasContentUrl: !!contentUrl,
+      contentUrlType: typeof contentUrl,
+      contentUrlLength: contentUrl ? contentUrl.length : 0
+    })
+  }, [contentUrl, title, type])
+
   useEffect(() => {
     if (!contentUrl || contentUrl.trim() === "") {
+      console.error("❌ [LessonContentViewer] Aucune URL fournie pour le contenu")
       setError("Aucune URL fournie pour le contenu")
       setIsLoading(false)
       return
     }
+    
+    console.log("✅ [LessonContentViewer] URL valide, chargement du contenu:", contentUrl)
 
     // Construire l'URL complète si nécessaire
     let fullUrl = contentUrl

@@ -540,6 +540,16 @@ export default function LearnPage({ params }: LearnPageProps) {
               // Récupérer contentUrl depuis les données brutes si nécessaire
               let finalContentUrl = currentLessonData?.contentUrl
               
+              // DEBUG: Log détaillé pour comprendre le problème
+              console.log("📄 [LEARN PAGE] Affichage document:", {
+                lessonId: currentLessonData?.id,
+                lessonTitle: currentLessonData?.title,
+                lessonType: currentLessonData?.type,
+                contentUrlFromLesson: currentLessonData?.contentUrl,
+                hasContentUrl: !!currentLessonData?.contentUrl,
+                modulesFromApiLength: modulesFromApi?.length || 0
+              })
+              
               // Si contentUrl n'est pas dans currentLessonData, chercher dans les données brutes
               if (!finalContentUrl && modulesFromApi && modulesFromApi.length > 0) {
                 const allLessonsRaw: any[] = []
@@ -548,15 +558,55 @@ export default function LearnPage({ params }: LearnPageProps) {
                     allLessonsRaw.push(...module.lessons)
                   }
                 })
+                
+                console.log("📄 [LEARN PAGE] Recherche dans données brutes:", {
+                  totalLessonsRaw: allLessonsRaw.length,
+                  currentLessonId: currentLessonData?.id,
+                  rawLessons: allLessonsRaw.map((l: any) => ({
+                    id: l.id,
+                    title: l.title,
+                    type: l.type,
+                    contentUrl: l.contentUrl,
+                    content_url: l.content_url,
+                    allKeys: Object.keys(l)
+                  }))
+                })
+                
                 const rawLesson = allLessonsRaw.find((l: any) => 
                   String(l.id) === String(currentLessonData?.id) || 
                   l.title === currentLessonData?.title
                 )
-                if (rawLesson && rawLesson.contentUrl) {
-                  finalContentUrl = rawLesson.contentUrl
-                  console.log("📄 [FIX] contentUrl récupéré depuis données brutes:", finalContentUrl)
+                
+                if (rawLesson) {
+                  console.log("📄 [LEARN PAGE] Leçon brute trouvée:", {
+                    id: rawLesson.id,
+                    title: rawLesson.title,
+                    contentUrl: rawLesson.contentUrl,
+                    content_url: rawLesson.content_url,
+                    allKeys: Object.keys(rawLesson),
+                    rawData: JSON.stringify(rawLesson).substring(0, 500)
+                  })
+                  
+                  // Essayer toutes les variantes
+                  finalContentUrl = rawLesson.contentUrl || 
+                                   rawLesson.content_url || 
+                                   rawLesson['content-url'] ||
+                                   (rawLesson as any).contentUrl
+                  
+                  if (finalContentUrl) {
+                    console.log("✅ [LEARN PAGE] contentUrl récupéré depuis données brutes:", finalContentUrl)
+                  } else {
+                    console.error("❌ [LEARN PAGE] contentUrl introuvable dans les données brutes")
+                  }
+                } else {
+                  console.error("❌ [LEARN PAGE] Leçon brute non trouvée pour:", {
+                    id: currentLessonData?.id,
+                    title: currentLessonData?.title
+                  })
                 }
               }
+              
+              console.log("📄 [LEARN PAGE] finalContentUrl avant rendu:", finalContentUrl)
               
               return (
                 <div className="space-y-4">
