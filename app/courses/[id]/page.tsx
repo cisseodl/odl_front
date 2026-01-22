@@ -80,34 +80,21 @@ export default function CoursePage({ params }: CoursePageProps) {
     retry: false, // Ne pas réessayer pour éviter les délais inutiles
   })
 
-  // Rediriger IMMÉDIATEMENT vers /learn/id si l'utilisateur est inscrit
-  // Si l'utilisateur n'est pas inscrit, afficher la page d'inscription (CourseDetailClient)
+  // IMPORTANT: NE JAMAIS rediriger automatiquement depuis /courses/id vers /learn/id
+  // La redirection ne doit se faire QUE:
+  // 1. Quand l'utilisateur clique sur un cours depuis la liste ET qu'il est déjà inscrit (dans CourseCard)
+  // 2. Après une inscription réussie (dans CourseDetailClient.enrollMutation.onSuccess)
+  //
   // WORKFLOW STRICT: 
-  // - /courses/id → Si inscrit (modules chargés avec succès) → rediriger vers /learn/id
-  // - /courses/id → Si NON inscrit (erreur ou pas de modules) → afficher page d'inscription
-  useEffect(() => {
-    // Attendre que le chargement soit terminé
-    if (isLoadingModules) return
-    
-    // IMPORTANT: L'utilisateur est inscrit UNIQUEMENT si:
-    // 1. Les modules sont chargés avec succès (même tableau vide)
-    // 2. ET il n'y a PAS d'erreur
-    const isEnrolled = modulesFromApi !== undefined && 
-                       modulesFromApi !== null && 
-                       Array.isArray(modulesFromApi) && 
-                       !modulesError
-    
-    if (isEnrolled) {
-      // L'utilisateur est inscrit, rediriger IMMÉDIATEMENT vers la page d'apprentissage
-      // Même si modulesFromApi.length === 0, l'utilisateur est inscrit (il peut juste n'avoir pas de modules encore)
-      router.replace(`/learn/${courseId}`)
-      return
-    }
-    
-    // Si erreur OU pas de modules chargés, l'utilisateur n'est PAS inscrit
-    // Afficher la page d'inscription (CourseDetailClient) avec le bouton "S'inscrire gratuitement"
-    // Ne pas rediriger, laisser CourseDetailClient s'afficher
-  }, [modulesFromApi, modulesError, isLoadingModules, courseId, router])
+  // - /courses/id → TOUJOURS afficher la page d'inscription (CourseDetailClient)
+  // - CourseCard → Si inscrit → rediriger vers /learn/id, sinon → /courses/id
+  // - Après inscription réussie → rediriger vers /learn/id
+  //
+  // SUPPRESSION de la redirection automatique pour éviter les redirections prématurées
+  // useEffect(() => {
+  //   // Cette redirection automatique est DÉSACTIVÉE pour éviter les problèmes
+  //   // L'utilisateur doit rester sur /courses/id tant qu'il n'est pas inscrit
+  // }, [modulesFromApi, modulesError, isLoadingModules, courseId, router])
 
   if (Number.isNaN(courseId)) {
     notFound()
