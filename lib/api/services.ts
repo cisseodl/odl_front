@@ -376,6 +376,28 @@ export const moduleService = {
           modules = []
         }
         
+        // DEBUG: Log pour vérifier si contentUrl est présent dans les leçons
+        if (modules.length > 0 && modules[0]?.lessons?.length > 0) {
+          const documentLessons = modules.flatMap((m: any) => 
+            (m.lessons || []).filter((l: any) => 
+              l.type === "DOCUMENT" || l.type === "document" || 
+              (l.type && l.type.toLowerCase() === "document")
+            )
+          )
+          if (documentLessons.length > 0) {
+            console.log(`📚 [SERVICE] getModulesByCourse(${courseId}): Leçons document trouvées:`, 
+              documentLessons.map((l: any) => ({
+                id: l.id,
+                title: l.title,
+                type: l.type,
+                contentUrl: l.contentUrl,
+                hasContentUrl: !!l.contentUrl,
+                allKeys: Object.keys(l)
+              }))
+            )
+          }
+        }
+        
         return modules
       }
       

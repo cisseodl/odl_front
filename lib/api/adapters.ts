@@ -92,6 +92,20 @@ export function adaptLesson(lessonDto: LessonDto | any): Lesson {
   // Vérifier plusieurs propriétés possibles pour être sûr de récupérer contentUrl
   let contentUrl: string | undefined = undefined
   
+  // DEBUG: Log pour les documents
+  const isDocument = lessonDto?.type === "DOCUMENT" || lessonDto?.type === "document" || 
+                     (lessonDto?.type && lessonDto.type.toLowerCase() === "document")
+  
+  if (isDocument) {
+    console.log("📄 [ADAPTER] adaptLesson pour document:", {
+      id: lessonDto?.id,
+      title: lessonDto?.title,
+      type: lessonDto?.type,
+      allKeys: lessonDto ? Object.keys(lessonDto) : [],
+      rawData: lessonDto
+    })
+  }
+  
   // Essayer différentes façons de récupérer contentUrl
   if (lessonDto) {
     // Méthode 1: Propriété directe
@@ -119,6 +133,14 @@ export function adaptLesson(lessonDto: LessonDto | any): Lesson {
       if (contentUrl === '' || contentUrl === 'null' || contentUrl === 'undefined') {
         contentUrl = undefined
       }
+    }
+    
+    // DEBUG: Log le résultat pour les documents
+    if (isDocument) {
+      console.log("📄 [ADAPTER] contentUrl extrait:", {
+        contentUrl: contentUrl,
+        hasContentUrl: !!contentUrl
+      })
     }
   }
   
