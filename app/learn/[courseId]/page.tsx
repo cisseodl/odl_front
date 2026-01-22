@@ -537,19 +537,11 @@ export default function LearnPage({ params }: LearnPageProps) {
 
             {/* Document */}
             {currentLessonData?.type === "document" && (() => {
-              // DEBUG: Log pour voir ce qui se passe
-              console.log("📄 [DEBUG DOCUMENT] currentLessonData:", {
-                id: currentLessonData?.id,
-                title: currentLessonData?.title,
-                type: currentLessonData?.type,
-                contentUrl: currentLessonData?.contentUrl,
-                hasContentUrl: !!currentLessonData?.contentUrl,
-                allKeys: currentLessonData ? Object.keys(currentLessonData) : [],
-                fullData: currentLessonData
-              })
+              // Récupérer contentUrl depuis les données brutes si nécessaire
+              let finalContentUrl = currentLessonData?.contentUrl
               
-              // Vérifier aussi dans les leçons brutes
-              if (modulesFromApi && modulesFromApi.length > 0) {
+              // Si contentUrl n'est pas dans currentLessonData, chercher dans les données brutes
+              if (!finalContentUrl && modulesFromApi && modulesFromApi.length > 0) {
                 const allLessonsRaw: any[] = []
                 modulesFromApi.forEach((module: any) => {
                   if (module.lessons && Array.isArray(module.lessons)) {
@@ -560,23 +552,17 @@ export default function LearnPage({ params }: LearnPageProps) {
                   String(l.id) === String(currentLessonData?.id) || 
                   l.title === currentLessonData?.title
                 )
-                if (rawLesson) {
-                  console.log("📄 [DEBUG DOCUMENT] Raw lesson from API:", {
-                    id: rawLesson.id,
-                    title: rawLesson.title,
-                    type: rawLesson.type,
-                    contentUrl: rawLesson.contentUrl,
-                    hasContentUrl: !!rawLesson.contentUrl,
-                    allKeys: Object.keys(rawLesson)
-                  })
+                if (rawLesson && rawLesson.contentUrl) {
+                  finalContentUrl = rawLesson.contentUrl
+                  console.log("📄 [FIX] contentUrl récupéré depuis données brutes:", finalContentUrl)
                 }
               }
               
               return (
                 <div className="space-y-4">
-                  {currentLessonData?.contentUrl ? (
+                  {finalContentUrl ? (
                     <LessonContentViewer
-                      contentUrl={currentLessonData.contentUrl}
+                      contentUrl={finalContentUrl}
                       title={currentLessonData.title || "Document"}
                       type="document"
                     />
