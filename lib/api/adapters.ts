@@ -213,24 +213,62 @@ export function adaptLesson(lessonDto: LessonDto | any): Lesson {
 export function adaptModule(moduleDto: ModuleDto | any): Module {
   // Le backend peut retourner les entités Module directement avec les leçons
   // Vérifier si lessons est présent et adapter chaque leçon
-  const lessons = moduleDto.lessons || (moduleDto as any).lessons || []
+  const rawLessons = moduleDto.lessons || (moduleDto as any).lessons || []
   
-  // Log pour déboguer les modules avec documents
-  if (lessons.length > 0) {
-    const documentLessons = lessons.filter((l: any) => 
-      l.type === "DOCUMENT" || l.type === "document" || 
-      (l.type && l.type.toLowerCase() === "document")
+  // IMPORTANT: Préserver contentUrl depuis les données brutes AVANT l'adaptation
+  // Créer un map des leçons brutes pour récupérer contentUrl si l'adapter le perd
+  const rawLessonsMap = new Map<number | string, any>()
+  rawLessons.forEach((rawLesson: any) => {
+    if (rawLesson && rawLesson.id) {
+      rawLessonsMap.set(rawLesson.id, rawLesson)
+    }
+  })
+  
+  // Adapter les leçons
+  const adaptedLessons = rawLessons.map((rawLesson: any) => {
+    const adapted = adaptLesson(rawLesson)
+    
+    // Si l'adapter n'a pas trouvé contentUrl, le récupérer directement depuis les données brutes
+    if (!adapted.contentUrl && rawLesson) {
+      // Essayer toutes les variantes possibles
+      const contentUrl = rawLesson.contentUrl || 
+                        (rawLesson as any).content_url || 
+                        (rawLesson as any)['content-url'] ||
+                        rawLesson.contentUrl
+      
+      if (contentUrl && typeof contentUrl === 'string' && contentUrl.trim()) {
+        adapted.contentUrl = contentUrl.trim()
+        
+        // Log uniquement en développement
+        if (process.env.NODE_ENV === 'development' && 
+            (rawLesson.type === "DOCUMENT" || rawLesson.type === "document")) {
+          console.log("📄 [ADAPTER] adaptModule - contentUrl récupéré depuis données brutes:", {
+            lessonId: rawLesson.id,
+            lessonTitle: rawLesson.title,
+            contentUrl: adapted.contentUrl
+          })
+        }
+      }
+    }
+    
+    return adapted
+  })
+  
+  // Log pour déboguer les modules avec documents (uniquement en développement)
+  if (process.env.NODE_ENV === 'development' && adaptedLessons.length > 0) {
+    const documentLessons = adaptedLessons.filter((l: any) => 
+      l.type === "document" || l.type === "DOCUMENT"
     )
     if (documentLessons.length > 0) {
-      console.log("📚 [ADAPTER] adaptModule - Leçons document trouvées:", {
+      console.log("📚 [ADAPTER] adaptModule - Leçons document adaptées:", {
         moduleId: moduleDto.id,
         moduleTitle: moduleDto.title,
         documentLessons: documentLessons.map((l: any) => ({
           id: l.id,
           title: l.title,
           type: l.type,
-          contentUrl: l.contentUrl || (l as any).contentUrl,
-          allKeys: Object.keys(l)
+          contentUrl: l.contentUrl,
+          hasContentUrl: !!l.contentUrl
         }))
       })
     }
@@ -240,7 +278,7 @@ export function adaptModule(moduleDto: ModuleDto | any): Module {
     id: String(moduleDto.id),
     title: moduleDto.title,
     duration: moduleDto.duration || "0h 0m",
-    lessons: lessons.map(adaptLesson),
+    lessons: adaptedLessons,
   }
 }
 
