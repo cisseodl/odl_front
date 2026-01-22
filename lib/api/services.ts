@@ -351,20 +351,40 @@ export const moduleService = {
    */
   async getModulesByCourse(courseId: number): Promise<ModuleDto[]> {
     try {
+      console.log(`🔵 [SERVICE] ===== DÉBUT getModulesByCourse pour courseId: ${courseId} =====`)
+      
       const response = await apiClient.get<any>(
         `${API_ENDPOINTS.modules.getByCourse}/${courseId}`
       )
+      
+      console.log(`🔵 [SERVICE] Réponse brute du backend:`, {
+        ok: response.ok,
+        ko: response.ko,
+        message: response.message,
+        dataType: typeof response.data,
+        isArray: Array.isArray(response.data),
+        dataKeys: response.data && typeof response.data === 'object' ? Object.keys(response.data) : [],
+        fullResponse: response
+      })
       
       if (response.ok && response.data) {
         // Le backend retourne CResponse<List<Module>> avec data contenant la liste
         // Les entités Module sont sérialisées directement, donc contentUrl est présent dans les leçons
         let modules = Array.isArray(response.data) ? response.data : []
         
+        console.log(`🔵 [SERVICE] Modules initiaux (après première extraction):`, {
+          isArray: Array.isArray(modules),
+          length: modules.length,
+          modules: modules
+        })
+        
         // Si response.data n'est pas directement un array, chercher dans la structure
         if (!Array.isArray(modules) && response.data && typeof response.data === 'object') {
+          console.log(`🔵 [SERVICE] Recherche d'un array dans response.data...`)
           // Chercher un array dans response.data
           for (const key in response.data) {
             if (Array.isArray((response.data as any)[key])) {
+              console.log(`🔵 [SERVICE] Array trouvé dans response.data.${key}`)
               modules = (response.data as any)[key]
               break
             }
@@ -373,18 +393,37 @@ export const moduleService = {
         
         // S'assurer que modules est un array
         if (!Array.isArray(modules)) {
+          console.warn(`⚠️ [SERVICE] modules n'est pas un array, conversion en array vide`)
           modules = []
         }
-        
+
+        console.log(`🔵 [SERVICE] Modules finaux:`, {
+          length: modules.length,
+          modules: modules
+        })
+
         // DEBUG: Log détaillé pour vérifier si contentUrl est présent dans les leçons
         if (modules.length > 0) {
-          console.log(`📚 [SERVICE] getModulesByCourse(${courseId}): Modules récupérés:`, modules.length)
+          console.log(`📚 [SERVICE] ===== ANALYSE DES MODULES =====`)
+          console.log(`📚 [SERVICE] Nombre de modules récupérés:`, modules.length)
           
           // Vérifier toutes les leçons, pas seulement les documents
           const allLessons = modules.flatMap((m: any) => m.lessons || [])
-          console.log(`📚 [SERVICE] Total leçons trouvées:`, allLessons.length)
+          console.log(`📚 [SERVICE] Total leçons trouvées dans tous les modules:`, allLessons.length)
+          
+          // Log détaillé pour chaque module
+          modules.forEach((m: any, moduleIndex: number) => {
+            console.log(`📦 [SERVICE] Module ${moduleIndex + 1}:`, {
+              id: m.id,
+              title: m.title,
+              description: m.description,
+              lessonsCount: m.lessons ? m.lessons.length : 0,
+              lessons: m.lessons
+            })
+          })
           
           // Log détaillé pour chaque leçon
+          console.log(`📚 [SERVICE] ===== ANALYSE DES LEÇONS =====`)
           allLessons.forEach((l: any, index: number) => {
             console.log(`📚 [SERVICE] Leçon ${index + 1}:`, {
               id: l.id,
@@ -397,7 +436,8 @@ export const moduleService = {
               hasContent_url: !!l.content_url,
               hasContentDashUrl: !!l['content-url'],
               allKeys: Object.keys(l),
-              rawLesson: JSON.stringify(l).substring(0, 200) // Premiers 200 caractères
+              rawLesson: l,
+              rawLessonJSON: JSON.stringify(l)
             })
           })
           
@@ -407,7 +447,7 @@ export const moduleService = {
             (l.type && l.type.toLowerCase() === "document")
           )
           if (documentLessons.length > 0) {
-            console.log(`📚 [SERVICE] Leçons document trouvées:`, documentLessons.length)
+            console.log(`📄 [SERVICE] ===== LEÇONS DOCUMENT TROUVÉES: ${documentLessons.length} =====`)
             documentLessons.forEach((l: any) => {
               console.log(`📄 [SERVICE] Document leçon ID ${l.id}:`, {
                 id: l.id,
@@ -417,13 +457,23 @@ export const moduleService = {
                 content_url: l.content_url,
                 'content-url': l['content-url'],
                 hasContentUrl: !!l.contentUrl,
+                hasContent_url: !!l.content_url,
+                hasContentDashUrl: !!l['content-url'],
                 allKeys: Object.keys(l),
-                rawData: l
+                rawData: l,
+                rawDataJSON: JSON.stringify(l, null, 2)
               })
             })
+          } else {
+            console.warn(`⚠️ [SERVICE] Aucune leçon document trouvée dans les modules`)
           }
+          
+          console.log(`📚 [SERVICE] ===== FIN ANALYSE =====`)
+        } else {
+          console.warn(`⚠️ [SERVICE] Aucun module trouvé pour le cours ${courseId}`)
         }
         
+        console.log(`🔵 [SERVICE] ===== FIN getModulesByCourse =====`)
         return modules
       }
       

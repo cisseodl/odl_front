@@ -87,6 +87,9 @@ export function adaptInstructor(instructorDto?: InstructorDto): Instructor {
  * donc contentUrl peut être présent même s'il n'est pas dans le type LessonDto
  */
 export function adaptLesson(lessonDto: LessonDto | any): Lesson {
+  console.log(`🟢 [ADAPTER] ===== DÉBUT adaptLesson =====`)
+  console.log(`🟢 [ADAPTER] lessonDto reçu:`, lessonDto)
+  
   // Le backend retourne les entités Lesson directement (pas des DTOs)
   // contentUrl est présent dans l'entité Lesson
   // Vérifier plusieurs propriétés possibles pour être sûr de récupérer contentUrl
@@ -97,12 +100,14 @@ export function adaptLesson(lessonDto: LessonDto | any): Lesson {
                      (lessonDto?.type && lessonDto.type.toLowerCase() === "document")
   
   if (isDocument) {
+    console.log("📄 [ADAPTER] ===== LEÇON DOCUMENT DÉTECTÉE =====")
     console.log("📄 [ADAPTER] adaptLesson pour document:", {
       id: lessonDto?.id,
       title: lessonDto?.title,
       type: lessonDto?.type,
       allKeys: lessonDto ? Object.keys(lessonDto) : [],
-      rawData: lessonDto
+      rawData: lessonDto,
+      rawDataJSON: JSON.stringify(lessonDto, null, 2)
     })
   }
   
@@ -115,21 +120,25 @@ export function adaptLesson(lessonDto: LessonDto | any): Lesson {
         lessonTitle: lessonDto.title,
         lessonType: lessonDto.type,
         allKeys: Object.keys(lessonDto),
-        rawLessonDto: JSON.stringify(lessonDto).substring(0, 300)
+        rawLessonDto: lessonDto,
+        rawLessonDtoJSON: JSON.stringify(lessonDto, null, 2)
       })
     }
     
     // Méthode 1: Propriété directe (camelCase)
     contentUrl = (lessonDto as any).contentUrl || lessonDto.contentUrl
+    console.log(`🟢 [ADAPTER] Méthode 1 (camelCase): contentUrl =`, contentUrl)
     
     // Méthode 2: Propriété snake_case
     if (!contentUrl) {
       contentUrl = (lessonDto as any).content_url
+      console.log(`🟢 [ADAPTER] Méthode 2 (snake_case): contentUrl =`, contentUrl)
     }
     
     // Méthode 3: Propriété kebab-case
     if (!contentUrl) {
       contentUrl = (lessonDto as any)['content-url']
+      console.log(`🟢 [ADAPTER] Méthode 3 (kebab-case): contentUrl =`, contentUrl)
     }
     
     // Méthode 4: Vérifier si c'est dans un objet imbriqué
@@ -211,9 +220,17 @@ export function adaptLesson(lessonDto: LessonDto | any): Lesson {
  * Convertir un ModuleDto backend en Module frontend
  */
 export function adaptModule(moduleDto: ModuleDto | any): Module {
+  console.log(`🟡 [ADAPTER] ===== DÉBUT adaptModule =====`)
+  console.log(`🟡 [ADAPTER] moduleDto reçu:`, moduleDto)
+  
   // Le backend peut retourner les entités Module directement avec les leçons
   // Vérifier si lessons est présent et adapter chaque leçon
   const rawLessons = moduleDto.lessons || (moduleDto as any).lessons || []
+  
+  console.log(`🟡 [ADAPTER] Leçons brutes trouvées:`, {
+    count: rawLessons.length,
+    rawLessons: rawLessons
+  })
   
   // IMPORTANT: Préserver contentUrl depuis les données brutes AVANT l'adaptation
   // Créer un map des leçons brutes pour récupérer contentUrl si l'adapter le perd
@@ -221,45 +238,74 @@ export function adaptModule(moduleDto: ModuleDto | any): Module {
   rawLessons.forEach((rawLesson: any) => {
     if (rawLesson && rawLesson.id) {
       rawLessonsMap.set(rawLesson.id, rawLesson)
+      // Log pour chaque leçon brute
+      if (rawLesson.type === "DOCUMENT" || rawLesson.type === "document") {
+        console.log(`🟡 [ADAPTER] Leçon brute (document) ajoutée au map:`, {
+          id: rawLesson.id,
+          title: rawLesson.title,
+          type: rawLesson.type,
+          contentUrl: rawLesson.contentUrl,
+          allKeys: Object.keys(rawLesson),
+          rawLesson: rawLesson
+        })
+      }
     }
   })
   
   // Adapter les leçons
   const adaptedLessons = rawLessons.map((rawLesson: any) => {
+    console.log(`🟡 [ADAPTER] Adaptation de la leçon:`, {
+      id: rawLesson?.id,
+      title: rawLesson?.title,
+      type: rawLesson?.type,
+      contentUrlBefore: rawLesson?.contentUrl
+    })
+    
     const adapted = adaptLesson(rawLesson)
     
     // Si l'adapter n'a pas trouvé contentUrl, le récupérer directement depuis les données brutes
     if (!adapted.contentUrl && rawLesson) {
+      console.log(`🟡 [ADAPTER] contentUrl manquant après adaptation, recherche dans données brutes...`)
       // Essayer toutes les variantes possibles
       const contentUrl = rawLesson.contentUrl || 
                         (rawLesson as any).content_url || 
                         (rawLesson as any)['content-url'] ||
                         rawLesson.contentUrl
       
+      console.log(`🟡 [ADAPTER] Tentative de récupération contentUrl:`, {
+        contentUrl: contentUrl,
+        rawLessonContentUrl: rawLesson.contentUrl,
+        rawLessonContent_url: (rawLesson as any).content_url,
+        rawLessonContentDashUrl: (rawLesson as any)['content-url']
+      })
+      
       if (contentUrl && typeof contentUrl === 'string' && contentUrl.trim()) {
         adapted.contentUrl = contentUrl.trim()
-        
-        // Log uniquement en développement
-        if (process.env.NODE_ENV === 'development' && 
-            (rawLesson.type === "DOCUMENT" || rawLesson.type === "document")) {
-          console.log("📄 [ADAPTER] adaptModule - contentUrl récupéré depuis données brutes:", {
-            lessonId: rawLesson.id,
-            lessonTitle: rawLesson.title,
-            contentUrl: adapted.contentUrl
-          })
-        }
+        console.log(`✅ [ADAPTER] adaptModule - contentUrl récupéré depuis données brutes:`, {
+          lessonId: rawLesson.id,
+          lessonTitle: rawLesson.title,
+          contentUrl: adapted.contentUrl
+        })
+      } else {
+        console.warn(`⚠️ [ADAPTER] adaptModule - contentUrl introuvable dans données brutes pour leçon ${rawLesson.id}`)
       }
+    } else if (adapted.contentUrl) {
+      console.log(`✅ [ADAPTER] adaptModule - contentUrl déjà présent après adaptation:`, {
+        lessonId: rawLesson.id,
+        contentUrl: adapted.contentUrl
+      })
     }
     
     return adapted
   })
   
-  // Log pour déboguer les modules avec documents (uniquement en développement)
-  if (process.env.NODE_ENV === 'development' && adaptedLessons.length > 0) {
+  // Log pour déboguer les modules avec documents
+  if (adaptedLessons.length > 0) {
     const documentLessons = adaptedLessons.filter((l: any) => 
       l.type === "document" || l.type === "DOCUMENT"
     )
     if (documentLessons.length > 0) {
+      console.log("📚 [ADAPTER] ===== LEÇONS DOCUMENT ADAPTÉES =====")
       console.log("📚 [ADAPTER] adaptModule - Leçons document adaptées:", {
         moduleId: moduleDto.id,
         moduleTitle: moduleDto.title,
@@ -274,12 +320,17 @@ export function adaptModule(moduleDto: ModuleDto | any): Module {
     }
   }
   
-  return {
+  const adaptedModule = {
     id: String(moduleDto.id),
     title: moduleDto.title,
     duration: moduleDto.duration || "0h 0m",
     lessons: adaptedLessons,
   }
+  
+  console.log(`🟡 [ADAPTER] ===== FIN adaptModule =====`)
+  console.log(`🟡 [ADAPTER] Module adapté:`, adaptedModule)
+  
+  return adaptedModule
 }
 
 /**
