@@ -705,10 +705,10 @@ export const evaluationService = {
     try {
       const evaluations = await this.getEvaluationsByCourse(courseId)
       // Filtrer les évaluations de type TP
-      return evaluations.filter((eval: any) => 
-        eval.type === "TP" || 
-        eval.type === "tp" ||
-        (eval.evaluationType && eval.evaluationType === "TP")
+      return evaluations.filter((evaluation: any) => 
+        evaluation.type === "TP" || 
+        evaluation.type === "tp" ||
+        (evaluation.evaluationType && evaluation.evaluationType === "TP")
       )
     } catch (error) {
       logger.error(`Erreur lors de la récupération des TP pour le cours ${courseId}:`, error)

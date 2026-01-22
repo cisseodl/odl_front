@@ -193,6 +193,30 @@ export default function LearnPage({ params }: LearnPageProps) {
     retry: false,
   })
 
+  // Récupérer les labs du cours
+  const {
+    data: courseLabs,
+    isLoading: isLoadingLabs,
+  } = useQuery({
+    queryKey: ["courseLabs", courseIdNum, lessons.length],
+    queryFn: () => labService.getLabsByCourse(courseIdNum, lessons),
+    enabled: !Number.isNaN(courseIdNum) && lessons.length > 0,
+    staleTime: 10 * 60 * 1000, // 10 minutes
+    refetchOnWindowFocus: false,
+  })
+
+  // Récupérer les TP (Travaux Pratiques) du cours
+  const {
+    data: courseTPs,
+    isLoading: isLoadingTPs,
+  } = useQuery({
+    queryKey: ["courseTPs", courseIdNum],
+    queryFn: () => evaluationService.getTPsByCourse(courseIdNum),
+    enabled: !Number.isNaN(courseIdNum),
+    staleTime: 10 * 60 * 1000, // 10 minutes
+    refetchOnWindowFocus: false,
+  })
+
   // Filter lessons based on search query
   const filteredLessons = useMemo(() => {
     if (!searchQuery.trim()) return lessons
