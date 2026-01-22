@@ -68,8 +68,9 @@ export default function CoursePage({ params }: CoursePageProps) {
           throw error // Re-lancer l'erreur pour que React Query la gère
         }
         
-        // Autre erreur, peut-être que l'utilisateur est inscrit mais qu'il y a un problème technique
-        return [] // Retourner un tableau vide pour indiquer que l'utilisateur est peut-être inscrit
+        // Autre erreur technique, considérer comme non inscrit par sécurité
+        // Ne pas retourner [] car cela ferait croire que l'utilisateur est inscrit
+        throw error // Re-lancer pour être sûr que l'utilisateur n'est pas considéré comme inscrit
       }
     },
     enabled: !Number.isNaN(courseId) && !!course,
