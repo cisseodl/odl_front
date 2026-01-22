@@ -5,7 +5,8 @@ import { Card } from "@/components/ui/card"
 import { BookOpen, Users, Award, Globe, Target, Heart, Lightbulb, TrendingUp, GraduationCap, Rocket, Wrench, Video, Facebook, Twitter, Linkedin, Instagram, Loader2, ExternalLink } from "lucide-react"
 import Link from "next/link"
 import { useQuery } from "@tanstack/react-query"
-import { rubriqueService, odcFormationService } from "@/lib/api/services"
+import { rubriqueService, odcFormationService, dashboardService } from "@/lib/api/services"
+import { AnimatedStats } from "@/components/animated-stats"
 import Image from "next/image"
 
 export default function AboutPage() {
@@ -48,6 +49,19 @@ export default function AboutPage() {
     : Array.isArray(odcFormationsResponse) 
     ? odcFormationsResponse 
     : []
+
+  // Charger les statistiques publiques
+  const {
+    data: publicStats,
+    isLoading: isLoadingStats,
+  } = useQuery({
+    queryKey: ["publicStats"],
+    queryFn: async () => {
+      const stats = await dashboardService.getPublicStats()
+      return stats
+    },
+    staleTime: 10 * 60 * 1000, // 10 minutes - les stats changent moins souvent
+  })
 
   // Fonction pour obtenir l'icône selon le titre de la formation
   const getIconForFormation = (titre: string) => {
@@ -97,24 +111,31 @@ export default function AboutPage() {
       {/* Stats Section */}
       <section className="py-16 bg-card">
         <div className="container mx-auto px-4">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
-            <div className="text-center">
-              <div className="text-4xl md:text-5xl font-bold text-primary mb-2">250K+</div>
-              <div className="text-muted-foreground">Étudiants actifs</div>
+          {isLoadingStats ? (
+            <div className="flex justify-center items-center py-12">
+              <Loader2 className="h-6 w-6 animate-spin text-primary" />
             </div>
-            <div className="text-center">
-              <div className="text-4xl md:text-5xl font-bold text-primary mb-2">5,000+</div>
-              <div className="text-muted-foreground">Cours disponibles</div>
-            </div>
-            <div className="text-center">
-              <div className="text-4xl md:text-5xl font-bold text-primary mb-2">12,000+</div>
-              <div className="text-muted-foreground">Formateurs experts</div>
-            </div>
-            <div className="text-center">
-              <div className="text-4xl md:text-5xl font-bold text-primary mb-2">150+</div>
-              <div className="text-muted-foreground">Pays représentés</div>
-            </div>
-          </div>
+          ) : (
+            <AnimatedStats
+              stats={[
+                { 
+                  value: publicStats?.totalStudents ?? 0, 
+                  label: "Étudiants actifs", 
+                  useFormat: true 
+                },
+                { 
+                  value: publicStats?.totalCourses ?? 0, 
+                  label: "Cours disponibles", 
+                  useFormat: true 
+                },
+                { 
+                  value: publicStats?.totalInstructors ?? 0, 
+                  label: "Formateurs experts", 
+                  useFormat: true 
+                },
+              ]}
+            />
+          )}
         </div>
       </section>
 

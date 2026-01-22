@@ -949,6 +949,7 @@ export const dashboardService = {
         const result = {
           totalStudents: stats.totalStudents || 0,
           totalCourses: stats.totalCourses || 0,
+          totalInstructors: stats.totalInstructors || 0,
           mostViewedCourses: stats.mostViewedCourses || 0,
           satisfactionRate: stats.satisfactionRate || 98,
         }
@@ -961,6 +962,7 @@ export const dashboardService = {
       return {
         totalStudents: 0,
         totalCourses: 0,
+        totalInstructors: 0,
         mostViewedCourses: 0,
         satisfactionRate: 98,
       }
@@ -970,6 +972,7 @@ export const dashboardService = {
       return {
         totalStudents: 0,
         totalCourses: 0,
+        totalInstructors: 0,
         mostViewedCourses: 0,
         satisfactionRate: 98,
       }

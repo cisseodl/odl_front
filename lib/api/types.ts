@@ -329,6 +329,7 @@ export interface StudentStats {
 export interface PublicStats {
   totalStudents: number
   totalCourses: number
+  totalInstructors: number
   mostViewedCourses: number
   satisfactionRate: number
 }
