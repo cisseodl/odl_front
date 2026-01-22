@@ -358,12 +358,19 @@ export default function LearnPage({ params }: LearnPageProps) {
   }
 
   // MAINTENANT on peut faire les retours conditionnels
-  // Si pas de leçons, afficher un message
+  // Si pas de leçons, afficher un message informatif
   if (lessons.length === 0) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="text-center">
-          <p className="text-muted-foreground">Aucune leçon disponible pour ce cours.</p>
+      <div className="flex items-center justify-center min-h-[400px] px-4">
+        <div className="text-center max-w-md">
+          <FileText className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+          <h3 className="text-lg font-semibold mb-2">Aucune leçon disponible</h3>
+          <p className="text-muted-foreground mb-4">
+            Ce cours n'a pas encore de contenu disponible. Les modules et leçons seront ajoutés prochainement.
+          </p>
+          <Link href={`/courses/${courseIdNum}`}>
+            <Button variant="outline">Retour au cours</Button>
+          </Link>
         </div>
       </div>
     )

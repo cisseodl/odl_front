@@ -470,7 +470,10 @@ export const moduleService = {
           
           console.log(`📚 [SERVICE] ===== FIN ANALYSE =====`)
         } else {
-          console.warn(`⚠️ [SERVICE] Aucun module trouvé pour le cours ${courseId}`)
+          // Un tableau vide peut être un cas légitime (cours sans modules, utilisateur non inscrit, etc.)
+          // On log uniquement en debug pour éviter les warnings inutiles en production
+          // Le warning n'est généré que si la réponse est OK mais vide, ce qui peut indiquer un problème de données
+          logger.debug(`[SERVICE] Aucun module trouvé pour le cours ${courseId}. Cela peut être normal si le cours n'a pas encore de contenu.`)
         }
         
         console.log(`🔵 [SERVICE] ===== FIN getModulesByCourse =====`)
