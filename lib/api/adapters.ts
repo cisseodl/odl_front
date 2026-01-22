@@ -356,12 +356,30 @@ export function adaptCourse(backendCourse: BackendCourse | any): Course {
   // Gérer la catégorie - le backend retourne toujours une string (ou "Non catégorisé" si null)
   let category: string = "Non catégorisé"
   
+  // Log détaillé pour déboguer
+  if (process.env.NODE_ENV === 'development') {
+    console.log("🔍 [ADAPTER] adaptCourse - Catégorie brute:", {
+      courseId: backendCourse.id,
+      courseTitle: backendCourse.title,
+      rawCategory: backendCourse.category,
+      categoryType: typeof backendCourse.category,
+      categoryValue: backendCourse.category
+    })
+  }
+  
   if (backendCourse.category) {
     if (typeof backendCourse.category === 'string') {
       // Si c'est une string, vérifier qu'elle n'est pas vide
       const trimmedCategory = backendCourse.category.trim()
       if (trimmedCategory !== "" && trimmedCategory.toLowerCase() !== "null" && trimmedCategory !== "Non catégorisé") {
         category = trimmedCategory
+        if (process.env.NODE_ENV === 'development') {
+          console.log("✅ [ADAPTER] Catégorie extraite (string):", category)
+        }
+      } else {
+        if (process.env.NODE_ENV === 'development') {
+          console.log("⚠️ [ADAPTER] Catégorie string invalide:", trimmedCategory)
+        }
       }
     } else if (typeof backendCourse.category === 'object') {
       // Si c'est un objet, essayer d'extraire le titre
@@ -371,18 +389,28 @@ export function adaptCourse(backendCourse: BackendCourse | any): Course {
                            String(backendCourse.category)
       if (categoryTitle && typeof categoryTitle === 'string' && categoryTitle.trim() !== "" && categoryTitle.toLowerCase() !== "null" && categoryTitle !== "Non catégorisé") {
         category = categoryTitle.trim()
+        if (process.env.NODE_ENV === 'development') {
+          console.log("✅ [ADAPTER] Catégorie extraite (objet):", category)
+        }
+      } else {
+        if (process.env.NODE_ENV === 'development') {
+          console.log("⚠️ [ADAPTER] Catégorie objet invalide:", categoryTitle)
+        }
       }
+    } else {
+      if (process.env.NODE_ENV === 'development') {
+        console.log("⚠️ [ADAPTER] Type de catégorie inattendu:", typeof backendCourse.category)
+      }
+    }
+  } else {
+    if (process.env.NODE_ENV === 'development') {
+      console.log("⚠️ [ADAPTER] backendCourse.category est null/undefined")
     }
   }
   
-  // Log pour déboguer les catégories manquantes
-  if (category === "Non catégorisé" && process.env.NODE_ENV === 'development') {
-    console.log("⚠️ [ADAPTER] Catégorie manquante pour le cours:", {
-      courseId: backendCourse.id,
-      courseTitle: backendCourse.title,
-      rawCategory: backendCourse.category,
-      categoryType: typeof backendCourse.category
-    })
+  // Log final
+  if (process.env.NODE_ENV === 'development') {
+    console.log("📊 [ADAPTER] Catégorie finale pour cours", backendCourse.id, ":", category)
   }
   
   return {
