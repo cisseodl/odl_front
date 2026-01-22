@@ -40,8 +40,9 @@ export function CourseCard({ course, showPreview = true }: CourseCardProps) {
   }, [course?.id])
 
   // Vérifier l'inscription en essayant de charger les modules
-  // Si les modules sont chargés avec succès (même vide), l'utilisateur est inscrit
-  const { data: modules, isLoading: isLoadingEnrollment } = useQuery({
+  // IMPORTANT: Par défaut, considérer que l'utilisateur n'est PAS inscrit
+  // Seulement si on peut charger les modules avec succès, l'utilisateur est inscrit
+  const { data: modules, isLoading: isLoadingEnrollment, error: enrollmentError } = useQuery({
     queryKey: ["modules", courseIdNum, "enrollment-check"],
     queryFn: async () => {
       if (!courseIdNum) return null
@@ -57,12 +58,15 @@ export function CourseCard({ course, showPreview = true }: CourseCardProps) {
                                   errorMessage.includes("inscrit") ||
                                   errorMessage.includes("authentifié") ||
                                   errorMessage.includes("403") ||
-                                  errorMessage.includes("401")
+                                  errorMessage.includes("401") ||
+                                  errorMessage.includes("Forbidden") ||
+                                  errorMessage.includes("Unauthorized")
         if (isEnrollmentError) {
-          return null // Pas inscrit
+          // Re-lancer l'erreur pour que React Query la gère correctement
+          throw error
         }
         // Autre erreur, considérer comme non inscrit par sécurité
-        return null
+        throw error
       }
     },
     enabled: isAuthenticated && !!user && isMounted && !!courseIdNum,
@@ -72,25 +76,32 @@ export function CourseCard({ course, showPreview = true }: CourseCardProps) {
     retry: false, // Ne pas réessayer pour éviter les délais
   })
   
-  // L'utilisateur est inscrit si les modules sont chargés avec succès (même vide)
+  // L'utilisateur est inscrit UNIQUEMENT si les modules sont chargés avec succès (même vide)
+  // IMPORTANT: Par défaut, considérer comme NON inscrit
   const isEnrolled = useMemo(() => {
     // Si on charge encore, ne pas considérer comme inscrit (éviter redirection prématurée)
     if (isLoadingEnrollment) return false
-    // Si modules est défini (même tableau vide), l'utilisateur est inscrit
-    return modules !== undefined && modules !== null
-  }, [modules, isLoadingEnrollment])
+    
+    // Si erreur, l'utilisateur n'est PAS inscrit
+    if (enrollmentError) return false
+    
+    // Si modules est défini (même tableau vide) ET qu'il n'y a pas d'erreur, l'utilisateur est inscrit
+    return modules !== undefined && modules !== null && !enrollmentError
+  }, [modules, isLoadingEnrollment, enrollmentError])
   
   // Déterminer l'URL de redirection
-  // Si inscrit → /learn/id, sinon → /courses/id
-  // IMPORTANT: Si on charge encore, rediriger vers /courses/id par défaut (sécurité)
+  // RÈGLE STRICTE: 
+  // - Si inscrit → /learn/id
+  // - Si NON inscrit OU en chargement → /courses/id (par sécurité)
   const courseUrl = useMemo(() => {
-    // Si on charge encore l'inscription, rediriger vers /courses/id par sécurité
-    // Cela évite de rediriger vers /learn/id si l'utilisateur n'est pas inscrit
-    if (isLoadingEnrollment) {
+    // Par défaut, toujours rediriger vers /courses/id (page d'inscription)
+    // Seulement si on est CERTAIN que l'utilisateur est inscrit, rediriger vers /learn/id
+    if (isLoadingEnrollment || enrollmentError || !isEnrolled) {
       return `/courses/${course.id}`
     }
-    return isEnrolled ? `/learn/${course.id}` : `/courses/${course.id}`
-  }, [isEnrolled, isLoadingEnrollment, course.id])
+    // Seulement ici, on est sûr que l'utilisateur est inscrit
+    return `/learn/${course.id}`
+  }, [isEnrolled, isLoadingEnrollment, enrollmentError, course.id])
   
   const isFav = isMounted ? isFavorite(course.id) : false
   

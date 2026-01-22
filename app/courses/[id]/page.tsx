@@ -82,41 +82,31 @@ export default function CoursePage({ params }: CoursePageProps) {
 
   // Rediriger IMMÉDIATEMENT vers /learn/id si l'utilisateur est inscrit
   // Si l'utilisateur n'est pas inscrit, afficher la page d'inscription (CourseDetailClient)
-  // WORKFLOW: /courses/id → Si inscrit → rediriger IMMÉDIATEMENT vers /learn/id, sinon afficher page d'inscription
+  // WORKFLOW STRICT: 
+  // - /courses/id → Si inscrit (modules chargés avec succès) → rediriger vers /learn/id
+  // - /courses/id → Si NON inscrit (erreur ou pas de modules) → afficher page d'inscription
   useEffect(() => {
     // Attendre que le chargement soit terminé
     if (isLoadingModules) return
     
-    // IMPORTANT: Si les modules sont chargés avec succès (même tableau vide), l'utilisateur est inscrit
-    // On vérifie modulesFromApi !== undefined ET !== null pour être sûr
-    if (modulesFromApi !== undefined && modulesFromApi !== null && Array.isArray(modulesFromApi) && !modulesError) {
+    // IMPORTANT: L'utilisateur est inscrit UNIQUEMENT si:
+    // 1. Les modules sont chargés avec succès (même tableau vide)
+    // 2. ET il n'y a PAS d'erreur
+    const isEnrolled = modulesFromApi !== undefined && 
+                       modulesFromApi !== null && 
+                       Array.isArray(modulesFromApi) && 
+                       !modulesError
+    
+    if (isEnrolled) {
       // L'utilisateur est inscrit, rediriger IMMÉDIATEMENT vers la page d'apprentissage
       // Même si modulesFromApi.length === 0, l'utilisateur est inscrit (il peut juste n'avoir pas de modules encore)
       router.replace(`/learn/${courseId}`)
       return
     }
     
-    // Si erreur, vérifier si c'est une erreur d'inscription
-    if (modulesError) {
-      const errorMessage = String(modulesError?.message || "")
-      const isEnrollmentError = errorMessage.includes("inscrire") || 
-                                errorMessage.includes("inscription") || 
-                                errorMessage.includes("inscrit") ||
-                                errorMessage.includes("non inscrit") ||
-                                errorMessage.includes("403") ||
-                                errorMessage.includes("401") ||
-                                errorMessage.includes("Forbidden") ||
-                                errorMessage.includes("Unauthorized")
-      
-      if (isEnrollmentError) {
-        // L'utilisateur n'est PAS inscrit, afficher la page d'inscription (CourseDetailClient)
-        // Ne pas rediriger, laisser CourseDetailClient s'afficher avec le bouton "S'inscrire gratuitement"
-        return
-      }
-    }
-    
-    // Si aucun module chargé et pas d'erreur explicite, considérer comme non inscrit
-    // (laisser la page d'inscription s'afficher)
+    // Si erreur OU pas de modules chargés, l'utilisateur n'est PAS inscrit
+    // Afficher la page d'inscription (CourseDetailClient) avec le bouton "S'inscrire gratuitement"
+    // Ne pas rediriger, laisser CourseDetailClient s'afficher
   }, [modulesFromApi, modulesError, isLoadingModules, courseId, router])
 
   if (Number.isNaN(courseId)) {
