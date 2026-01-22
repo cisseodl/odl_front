@@ -376,25 +376,51 @@ export const moduleService = {
           modules = []
         }
         
-        // DEBUG: Log pour vérifier si contentUrl est présent dans les leçons
-        if (modules.length > 0 && modules[0]?.lessons?.length > 0) {
-          const documentLessons = modules.flatMap((m: any) => 
-            (m.lessons || []).filter((l: any) => 
-              l.type === "DOCUMENT" || l.type === "document" || 
-              (l.type && l.type.toLowerCase() === "document")
-            )
+        // DEBUG: Log détaillé pour vérifier si contentUrl est présent dans les leçons
+        if (modules.length > 0) {
+          console.log(`📚 [SERVICE] getModulesByCourse(${courseId}): Modules récupérés:`, modules.length)
+          
+          // Vérifier toutes les leçons, pas seulement les documents
+          const allLessons = modules.flatMap((m: any) => m.lessons || [])
+          console.log(`📚 [SERVICE] Total leçons trouvées:`, allLessons.length)
+          
+          // Log détaillé pour chaque leçon
+          allLessons.forEach((l: any, index: number) => {
+            console.log(`📚 [SERVICE] Leçon ${index + 1}:`, {
+              id: l.id,
+              title: l.title,
+              type: l.type,
+              contentUrl: l.contentUrl,
+              content_url: l.content_url,
+              'content-url': l['content-url'],
+              hasContentUrl: !!l.contentUrl,
+              hasContent_url: !!l.content_url,
+              hasContentDashUrl: !!l['content-url'],
+              allKeys: Object.keys(l),
+              rawLesson: JSON.stringify(l).substring(0, 200) // Premiers 200 caractères
+            })
+          })
+          
+          // Log spécifique pour les leçons document
+          const documentLessons = allLessons.filter((l: any) => 
+            l.type === "DOCUMENT" || l.type === "document" || 
+            (l.type && l.type.toLowerCase() === "document")
           )
           if (documentLessons.length > 0) {
-            console.log(`📚 [SERVICE] getModulesByCourse(${courseId}): Leçons document trouvées:`, 
-              documentLessons.map((l: any) => ({
+            console.log(`📚 [SERVICE] Leçons document trouvées:`, documentLessons.length)
+            documentLessons.forEach((l: any) => {
+              console.log(`📄 [SERVICE] Document leçon ID ${l.id}:`, {
                 id: l.id,
                 title: l.title,
                 type: l.type,
                 contentUrl: l.contentUrl,
+                content_url: l.content_url,
+                'content-url': l['content-url'],
                 hasContentUrl: !!l.contentUrl,
-                allKeys: Object.keys(l)
-              }))
-            )
+                allKeys: Object.keys(l),
+                rawData: l
+              })
+            })
           }
         }
         

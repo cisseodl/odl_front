@@ -108,23 +108,71 @@ export function adaptLesson(lessonDto: LessonDto | any): Lesson {
   
   // Essayer différentes façons de récupérer contentUrl
   if (lessonDto) {
-    // Méthode 1: Propriété directe
-    contentUrl = (lessonDto as any).contentUrl || lessonDto.contentUrl
-    
-    // Méthode 2: Vérifier si c'est dans un objet imbriqué
-    if (!contentUrl && (lessonDto as any).lesson) {
-      contentUrl = (lessonDto as any).lesson.contentUrl
+    // Log détaillé pour le débogage
+    if (isDocument) {
+      console.log("📄 [ADAPTER] adaptLesson - Début extraction contentUrl:", {
+        lessonId: lessonDto.id,
+        lessonTitle: lessonDto.title,
+        lessonType: lessonDto.type,
+        allKeys: Object.keys(lessonDto),
+        rawLessonDto: JSON.stringify(lessonDto).substring(0, 300)
+      })
     }
     
-    // Méthode 3: Vérifier toutes les clés pour trouver contentUrl
+    // Méthode 1: Propriété directe (camelCase)
+    contentUrl = (lessonDto as any).contentUrl || lessonDto.contentUrl
+    
+    // Méthode 2: Propriété snake_case
+    if (!contentUrl) {
+      contentUrl = (lessonDto as any).content_url
+    }
+    
+    // Méthode 3: Propriété kebab-case
+    if (!contentUrl) {
+      contentUrl = (lessonDto as any)['content-url']
+    }
+    
+    // Méthode 4: Vérifier si c'est dans un objet imbriqué
+    if (!contentUrl && (lessonDto as any).lesson) {
+      contentUrl = (lessonDto as any).lesson.contentUrl || 
+                   (lessonDto as any).lesson.content_url ||
+                   (lessonDto as any).lesson['content-url']
+    }
+    
+    // Méthode 5: Vérifier toutes les clés pour trouver contentUrl (recherche flexible)
     if (!contentUrl) {
       const allKeys = Object.keys(lessonDto)
       for (const key of allKeys) {
-        if (key.toLowerCase().includes('content') && key.toLowerCase().includes('url')) {
+        const lowerKey = key.toLowerCase()
+        if ((lowerKey.includes('content') && lowerKey.includes('url')) ||
+            lowerKey === 'contenturl' ||
+            lowerKey === 'content_url' ||
+            lowerKey === 'content-url') {
           contentUrl = (lessonDto as any)[key]
-          break
+          if (contentUrl) break
         }
       }
+    }
+    
+    // Méthode 6: Recherche récursive dans les objets imbriqués
+    if (!contentUrl) {
+      const searchInObject = (obj: any, depth = 0): string | undefined => {
+        if (depth > 3 || !obj || typeof obj !== 'object') return undefined
+        for (const key in obj) {
+          if (key.toLowerCase().includes('content') && key.toLowerCase().includes('url')) {
+            const value = obj[key]
+            if (typeof value === 'string' && value.trim()) {
+              return value.trim()
+            }
+          }
+          if (typeof obj[key] === 'object' && obj[key] !== null) {
+            const found = searchInObject(obj[key], depth + 1)
+            if (found) return found
+          }
+        }
+        return undefined
+      }
+      contentUrl = searchInObject(lessonDto)
     }
     
     // Nettoyer l'URL si elle existe (enlever les espaces, etc.)
@@ -137,9 +185,12 @@ export function adaptLesson(lessonDto: LessonDto | any): Lesson {
     
     // DEBUG: Log le résultat pour les documents
     if (isDocument) {
-      console.log("📄 [ADAPTER] contentUrl extrait:", {
+      console.log("📄 [ADAPTER] adaptLesson - Résultat extraction contentUrl:", {
+        lessonId: lessonDto.id,
         contentUrl: contentUrl,
-        hasContentUrl: !!contentUrl
+        hasContentUrl: !!contentUrl,
+        contentUrlType: typeof contentUrl,
+        contentUrlLength: contentUrl ? contentUrl.length : 0
       })
     }
   }
