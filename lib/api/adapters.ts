@@ -194,20 +194,8 @@ export function adaptCourse(backendCourse: BackendCourse | any): Course {
     }
   }
   
-  // Log pour déboguer les catégories (uniquement en développement)
-  if (category === "Non catégorisé" && process.env.NODE_ENV === 'development') {
-    // Utiliser un logger si disponible, sinon console.log uniquement en dev
-    if (typeof window !== 'undefined') {
-      // eslint-disable-next-line no-console
-      console.warn("⚠️ [ADAPTER] Catégorie par défaut utilisée pour le cours:", {
-        courseId,
-        title: backendCourse.title,
-        rawCategory: backendCourse.category,
-        categoryType: typeof backendCourse.category,
-        categoryKeys: backendCourse.category && typeof backendCourse.category === 'object' ? Object.keys(backendCourse.category) : null
-      })
-    }
-  }
+  // Catégorie gérée : le backend retourne toujours une string (ou "Non catégorisé" si null)
+  // Plus besoin de logs pour améliorer les performances
   
   return {
     id: courseId,

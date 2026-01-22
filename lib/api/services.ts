@@ -122,19 +122,9 @@ export const courseService = {
    */
   async getAllCourses(): Promise<Course[]> {
     try {
-      logger.debug("Début de getAllCourses", { endpoint: API_ENDPOINTS.courses.getAll })
       const response = await apiClient.get<{ data: BackendCourse[] } | BackendCourse[]>(
         API_ENDPOINTS.courses.getAll
       )
-      
-      logger.debug("Réponse reçue", {
-        ok: response.ok,
-        ko: response.ko,
-        message: response.message,
-        hasData: !!response.data,
-        dataType: typeof response.data,
-        isArray: Array.isArray(response.data),
-      })
       
       if (response.ok && response.data) {
         // Le backend retourne CResponse<List<CourseDto>> avec la structure { ok: true, data: [...], message: "..." }
@@ -143,14 +133,12 @@ export const courseService = {
         // Cas 1: response.data est directement un array
         if (Array.isArray(response.data)) {
           courses = response.data
-          logger.debug("Données trouvées directement dans response.data (array)")
         } 
         // Cas 2: response.data est un objet CResponse avec une propriété data
         else if (response.data && typeof response.data === 'object') {
           // Vérifier si c'est un CResponse avec { data: [...] }
           if ('data' in response.data && Array.isArray((response.data as any).data)) {
             courses = (response.data as any).data
-            logger.debug("Données trouvées dans response.data.data (CResponse)")
           } 
           // Vérifier si response.data est un objet avec une propriété qui est un array
           else {
@@ -158,17 +146,14 @@ export const courseService = {
             for (const key in response.data) {
               if (Array.isArray((response.data as any)[key])) {
                 courses = (response.data as any)[key]
-                logger.debug(`Données trouvées dans response.data.${key}`)
                 break
               }
             }
           }
         }
         
-        logger.debug("Nombre de cours récupérés", { count: courses.length })
-        
+        // Adapter les cours avec gestion optimisée des catégories
         const adaptedCourses = adaptCourses(courses)
-        logger.debug("Cours adaptés", { count: adaptedCourses.length })
         return adaptedCourses
       }
       

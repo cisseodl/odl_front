@@ -36,20 +36,12 @@ export default function CoursesPage() {
     refetch,
   } = useQuery({
     queryKey: ["courses"],
-    queryFn: async () => {
-      console.log("📚 [PAGE] Chargement des cours...")
-      const result = await courseService.getAllCourses()
-      console.log("📚 [PAGE] Cours chargés:", result.length)
-      return result
-    },
-    staleTime: 5 * 60 * 1000, // 5 minutes
-    retry: 2, // Réessayer 2 fois en cas d'erreur
-    onError: (error) => {
-      console.error("📚 [PAGE] Erreur lors du chargement des cours:", error)
-    },
-    onSuccess: (data) => {
-      console.log("📚 [PAGE] Cours chargés avec succès:", data.length)
-    }
+    queryFn: () => courseService.getAllCourses(),
+    staleTime: 10 * 60 * 1000, // 10 minutes - cache plus long pour performance
+    gcTime: 30 * 60 * 1000, // 30 minutes - garder en cache plus longtemps
+    refetchOnWindowFocus: false, // Ne pas refetch au focus pour performance
+    refetchOnMount: false, // Utiliser le cache si disponible
+    retry: 1, // Réessayer 1 fois seulement pour rapidité
   })
   
   // Load view preference from localStorage

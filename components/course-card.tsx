@@ -36,7 +36,9 @@ export function CourseCard({ course, showPreview = true }: CourseCardProps) {
     queryKey: ["profile", user?.id],
     queryFn: () => profileService.getMyProfile(),
     enabled: isAuthenticated && !!user && isMounted,
-    staleTime: 5 * 60 * 1000,
+    staleTime: 10 * 60 * 1000, // 10 minutes - cache plus long
+    gcTime: 30 * 60 * 1000, // 30 minutes
+    refetchOnWindowFocus: false, // Ne pas refetch au focus
   })
   
   // Vérifier si l'utilisateur est inscrit à ce cours

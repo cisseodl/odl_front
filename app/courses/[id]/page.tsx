@@ -37,10 +37,10 @@ export default function CoursePage({ params }: CoursePageProps) {
       return courseData ? serializeData(courseData) : null
     },
     enabled: !Number.isNaN(courseId),
+    staleTime: 10 * 60 * 1000, // 10 minutes - cache plus long
+    gcTime: 30 * 60 * 1000, // 30 minutes
+    refetchOnWindowFocus: false, // Ne pas refetch au focus
     retry: 1, // Réessayer une fois en cas d'erreur
-    onError: (error) => {
-      console.error("Erreur lors du chargement du cours:", error)
-    }
   })
 
   // Vérifier si l'utilisateur est inscrit au cours en essayant de charger les modules
@@ -134,7 +134,6 @@ export default function CoursePage({ params }: CoursePageProps) {
 
   // Si le cours ne charge pas mais qu'on a un ID valide, créer un cours minimal pour permettre l'affichage des modules
   if (error || !course) {
-    console.warn(`Impossible de charger le cours ${courseId}, utilisation d'un cours minimal`)
     
     // Essayer de récupérer le titre depuis la liste des cours
     const courseFromList = allCourses.find(c => {
