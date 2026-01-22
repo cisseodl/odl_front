@@ -79,16 +79,18 @@ export default function CoursePage({ params }: CoursePageProps) {
     retry: false, // Ne pas réessayer pour éviter les délais inutiles
   })
 
-  // Rediriger vers /learn/id UNIQUEMENT si l'utilisateur est inscrit
+  // Rediriger IMMÉDIATEMENT vers /learn/id si l'utilisateur est inscrit
   // Si l'utilisateur n'est pas inscrit, afficher la page d'inscription (CourseDetailClient)
-  // WORKFLOW: /courses/id → Si inscrit → rediriger vers /learn/id, sinon afficher page d'inscription
+  // WORKFLOW: /courses/id → Si inscrit → rediriger IMMÉDIATEMENT vers /learn/id, sinon afficher page d'inscription
   useEffect(() => {
     // Attendre que le chargement soit terminé
     if (isLoadingModules) return
     
-    // Si les modules sont chargés avec succès ET qu'il y a du contenu, l'utilisateur est inscrit
-    if (modulesFromApi !== undefined && Array.isArray(modulesFromApi) && !modulesError && modulesFromApi.length > 0) {
-      // L'utilisateur est inscrit, rediriger vers la page d'apprentissage
+    // IMPORTANT: Si les modules sont chargés avec succès (même tableau vide), l'utilisateur est inscrit
+    // On vérifie modulesFromApi !== undefined ET !== null pour être sûr
+    if (modulesFromApi !== undefined && modulesFromApi !== null && Array.isArray(modulesFromApi) && !modulesError) {
+      // L'utilisateur est inscrit, rediriger IMMÉDIATEMENT vers la page d'apprentissage
+      // Même si modulesFromApi.length === 0, l'utilisateur est inscrit (il peut juste n'avoir pas de modules encore)
       router.replace(`/learn/${courseId}`)
       return
     }
