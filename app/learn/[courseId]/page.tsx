@@ -8,8 +8,9 @@ import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Card } from "@/components/ui/card"
+import { Card, CardContent } from "@/components/ui/card"
 import { Textarea } from "@/components/ui/textarea"
+import { Separator } from "@/components/ui/separator"
 import { VideoPlayer } from "@/components/video-player"
 import { MiniPlayer } from "@/components/mini-player"
 import { ContentSearch } from "@/components/content-search"
@@ -688,83 +689,102 @@ export default function LearnPage({ params }: LearnPageProps) {
               )
             })()}
 
-            {/* Tabs: Transcription, Resources, Notes */}
-            <Tabs defaultValue="transcript" className="w-full">
-              <TabsList>
-                <TabsTrigger value="transcript">Transcription</TabsTrigger>
-                <TabsTrigger value="resources">Ressources</TabsTrigger>
-                <TabsTrigger value="notes">Mes Notes</TabsTrigger>
-              </TabsList>
+            {/* Tabs: Transcription (uniquement pour les vidéos) */}
+            {currentLessonData?.type === "video" && (
+              <Tabs defaultValue="transcript" className="w-full">
+                <TabsList>
+                  <TabsTrigger value="transcript">Transcription</TabsTrigger>
+                </TabsList>
 
-              <TabsContent value="transcript" className="mt-4">
-                <TranscriptWithTimestamps
-                  segments={[]}
-                  videoRef={videoRef}
-                  onTimestampClick={(timestamp) => {
-                    if (videoRef.current) {
-                      videoRef.current.currentTime = timestamp
-                      videoRef.current.play()
-                    }
-                  }}
-                />
-              </TabsContent>
+                <TabsContent value="transcript" className="mt-4">
+                  <TranscriptWithTimestamps
+                    segments={[]}
+                    videoRef={videoRef}
+                    onTimestampClick={(timestamp) => {
+                      if (videoRef.current) {
+                        videoRef.current.currentTime = timestamp
+                        videoRef.current.play()
+                      }
+                    }}
+                  />
+                </TabsContent>
+              </Tabs>
+            )}
 
-              <TabsContent value="resources" className="mt-4">
-                <Card className="p-6">
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between p-3 border rounded-lg hover:bg-muted/50 transition-colors">
-                      <div className="flex items-center gap-3">
-                        <FileText className="h-5 w-5 text-muted-foreground" />
-                        <div>
-                          <p className="font-medium text-sm">Slides de présentation</p>
-                          <p className="text-xs text-muted-foreground">PDF • 2.4 MB</p>
+            {/* Labs associés à la leçon actuelle */}
+            {(() => {
+              // Filtrer les labs pour n'afficher que ceux associés à la leçon actuelle
+              const currentLessonId = currentLessonData?.id
+              const currentLessonLabs = courseLabs?.filter((lab: any) => {
+                const rawLab = (lab as any).rawData || lab
+                const labLessonId = rawLab.lessonId || 
+                                 (rawLab.lesson && (typeof rawLab.lesson.id === 'string' ? parseInt(rawLab.lesson.id, 10) : rawLab.lesson.id)) ||
+                                 (rawLab.lesson && rawLab.lesson.id)
+                
+                // Comparer les IDs (gérer les cas où ils sont des strings ou des numbers)
+                const currentId = typeof currentLessonId === 'string' ? parseInt(currentLessonId, 10) : currentLessonId
+                const labId = typeof labLessonId === 'string' ? parseInt(labLessonId, 10) : labLessonId
+                
+                return currentId && labId && currentId === labId
+              }) || []
+
+              if (currentLessonLabs.length === 0) {
+                return null
+              }
+
+              return (
+                <div className="mt-8 space-y-4">
+                  <Separator />
+                  <div>
+                    <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
+                      <FlaskConical className="h-5 w-5 text-orange-500" />
+                      Labs associés à cette leçon
+                    </h3>
+                    <Card>
+                      <CardContent className="pt-6">
+                        <div className="space-y-3">
+                          {currentLessonLabs.map((lab: any) => (
+                            <div
+                              key={lab.id}
+                              className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition-colors"
+                            >
+                              <div className="flex items-center gap-4 flex-1">
+                                <div className="rounded-full bg-orange-100 p-2">
+                                  <FlaskConical className="h-5 w-5 text-orange-600" />
+                                </div>
+                                <div className="flex-1">
+                                  <h4 className="font-semibold">{lab.title}</h4>
+                                  {lab.description && (
+                                    <p className="text-sm text-muted-foreground line-clamp-1 mt-1">
+                                      {lab.description}
+                                    </p>
+                                  )}
+                                </div>
+                              </div>
+                              <Button
+                                size="sm"
+                                onClick={() => {
+                                  // TODO: Implémenter la navigation vers le lab
+                                  console.log("Démarrer lab:", lab.id)
+                                }}
+                              >
+                                <Play className="h-4 w-4 mr-2" />
+                                Démarrer
+                              </Button>
+                            </div>
+                          ))}
                         </div>
-                      </div>
-                      <Button size="sm" variant="outline">
-                        Télécharger
-                      </Button>
-                    </div>
-                    <div className="flex items-center justify-between p-3 border rounded-lg hover:bg-muted/50 transition-colors">
-                      <div className="flex items-center gap-3">
-                        <Code className="h-5 w-5 text-muted-foreground" />
-                        <div>
-                          <p className="font-medium text-sm">Code source</p>
-                          <p className="text-xs text-muted-foreground">ZIP • 156 KB</p>
-                        </div>
-                      </div>
-                      <Button size="sm" variant="outline">
-                        Télécharger
-                      </Button>
-                    </div>
+                      </CardContent>
+                    </Card>
                   </div>
-                </Card>
-              </TabsContent>
-
-              <TabsContent value="notes" className="mt-4">
-                <Card className="p-6">
-                  <div className="space-y-3">
-                    <label className="text-sm font-medium">Vos notes personnelles</label>
-                    <Textarea
-                      placeholder="Écrivez vos notes ici..."
-                      value={notes}
-                      onChange={(e) => setNotes(e.target.value)}
-                      className="min-h-[200px]"
-                    />
-                    <Button size="sm">Enregistrer</Button>
-                  </div>
-                </Card>
-              </TabsContent>
-            </Tabs>
+                </div>
+              )
+            })()}
           </div>
         </div>
       </div>
 
-      {/* Section Labs, TD et TP */}
-      <CourseActivitiesSection
-        labs={courseLabs || []}
-        tps={courseTPs || []}
-        courseId={courseIdNum}
-      />
+      {/* Note: Les labs associés à la leçon actuelle sont affichés juste après le contenu de la leçon */}
 
       {/* Mini Player */}
       {currentLessonData?.type === "video" && showMiniPlayer && (
