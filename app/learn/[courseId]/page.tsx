@@ -124,15 +124,36 @@ export default function LearnPage({ params }: LearnPageProps) {
   }, [course?.curriculum, modulesFromApi])
 
   // Convertir les modules du cours en leçons pour l'affichage
+  // IMPORTANT: Préserver contentUrl depuis les données brutes si l'adapter l'a perdu
   const lessons = useMemo(() => {
     if (!curriculum || curriculum.length === 0) return []
     
     const allLessons: Array<Lesson & { moduleTitle: string; moduleId: string }> = []
     
+    // Créer un map des leçons brutes depuis modulesFromApi pour récupérer contentUrl
+    const rawLessonsMap = new Map<string | number, any>()
+    if (modulesFromApi && Array.isArray(modulesFromApi)) {
+      modulesFromApi.forEach((module: any) => {
+        if (module.lessons && Array.isArray(module.lessons)) {
+          module.lessons.forEach((rawLesson: any) => {
+            if (rawLesson.id) {
+              rawLessonsMap.set(rawLesson.id, rawLesson)
+            }
+          })
+        }
+      })
+    }
+    
     curriculum.forEach((module) => {
       module.lessons.forEach((lesson) => {
+        // Récupérer la leçon brute pour préserver contentUrl
+        const rawLesson = rawLessonsMap.get(Number(lesson.id))
+        const contentUrl = rawLesson?.contentUrl || lesson.contentUrl
+        
         allLessons.push({
           ...lesson,
+          // Forcer contentUrl depuis les données brutes si disponible
+          contentUrl: contentUrl,
           moduleTitle: module.title,
           moduleId: module.id,
         })
@@ -140,7 +161,7 @@ export default function LearnPage({ params }: LearnPageProps) {
     })
     
     return allLessons
-  }, [curriculum])
+  }, [curriculum, modulesFromApi])
 
   // Calculer currentLessonData et progress pour déterminer si le cours est complété
   // (doit être fait avant le useQuery pour courseExam)
