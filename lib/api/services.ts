@@ -358,20 +358,24 @@ export const moduleService = {
       if (response.ok && response.data) {
         // Le backend retourne CResponse<List<Module>> avec data contenant la liste
         // Les entités Module sont sérialisées directement, donc contentUrl est présent dans les leçons
-        const modules = Array.isArray(response.data) ? response.data : []
+        let modules = Array.isArray(response.data) ? response.data : []
         
-        // Log pour vérifier si contentUrl est présent dans les leçons
-        if (modules.length > 0 && modules[0]?.lessons?.length > 0) {
-          const firstLesson = modules[0].lessons[0]
-          console.log(`getModulesByCourse(${courseId}): Exemple de leçon brute:`, {
-            title: firstLesson.title,
-            type: firstLesson.type,
-            contentUrl: firstLesson.contentUrl,
-            allKeys: Object.keys(firstLesson)
-          })
+        // Si response.data n'est pas directement un array, chercher dans la structure
+        if (!Array.isArray(modules) && response.data && typeof response.data === 'object') {
+          // Chercher un array dans response.data
+          for (const key in response.data) {
+            if (Array.isArray((response.data as any)[key])) {
+              modules = (response.data as any)[key]
+              break
+            }
+          }
         }
         
-        console.log(`getModulesByCourse(${courseId}): ${modules.length} modules récupérés`)
+        // S'assurer que modules est un array
+        if (!Array.isArray(modules)) {
+          modules = []
+        }
+        
         return modules
       }
       

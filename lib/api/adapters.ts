@@ -87,27 +87,46 @@ export function adaptInstructor(instructorDto?: InstructorDto): Instructor {
  * donc contentUrl peut être présent même s'il n'est pas dans le type LessonDto
  */
 export function adaptLesson(lessonDto: LessonDto | any): Lesson {
-  // Le backend peut retourner les entités directement avec contentUrl
-  // même si ce n'est pas dans le type LessonDto
-  const contentUrl = (lessonDto as any).contentUrl || lessonDto.contentUrl || undefined
+  // Le backend retourne les entités Lesson directement (pas des DTOs)
+  // contentUrl est présent dans l'entité Lesson
+  // Vérifier plusieurs propriétés possibles pour être sûr de récupérer contentUrl
+  let contentUrl: string | undefined = undefined
   
-  // Log pour déboguer les documents
-  if (lessonDto.type === "DOCUMENT" || lessonDto.type === "document") {
-    console.log("📄 [ADAPTER] adaptLesson pour document:", {
-      id: lessonDto.id,
-      title: lessonDto.title,
-      type: lessonDto.type,
-      contentUrl: contentUrl,
-      hasContentUrl: !!contentUrl,
-      allKeys: Object.keys(lessonDto)
-    })
+  // Essayer différentes façons de récupérer contentUrl
+  if (lessonDto) {
+    // Méthode 1: Propriété directe
+    contentUrl = (lessonDto as any).contentUrl || lessonDto.contentUrl
+    
+    // Méthode 2: Vérifier si c'est dans un objet imbriqué
+    if (!contentUrl && (lessonDto as any).lesson) {
+      contentUrl = (lessonDto as any).lesson.contentUrl
+    }
+    
+    // Méthode 3: Vérifier toutes les clés pour trouver contentUrl
+    if (!contentUrl) {
+      const allKeys = Object.keys(lessonDto)
+      for (const key of allKeys) {
+        if (key.toLowerCase().includes('content') && key.toLowerCase().includes('url')) {
+          contentUrl = (lessonDto as any)[key]
+          break
+        }
+      }
+    }
+    
+    // Nettoyer l'URL si elle existe (enlever les espaces, etc.)
+    if (contentUrl && typeof contentUrl === 'string') {
+      contentUrl = contentUrl.trim()
+      if (contentUrl === '' || contentUrl === 'null' || contentUrl === 'undefined') {
+        contentUrl = undefined
+      }
+    }
   }
   
   return {
     id: String(lessonDto.id),
     title: lessonDto.title,
     type: lessonTypeMapping[lessonDto.type] || "video",
-    // Récupérer contentUrl depuis la réponse brute (peut être présent même si pas dans le type)
+    // Récupérer contentUrl depuis la réponse brute
     contentUrl: contentUrl,
     duration: lessonDto.duration || "0 min",
     completed: lessonDto.completed || false,

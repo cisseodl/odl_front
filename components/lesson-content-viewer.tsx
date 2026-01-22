@@ -54,11 +54,22 @@ export function LessonContentViewer({ contentUrl, title, type, className }: Less
   }
 
   // Construire l'URL complète pour l'affichage
+  // IMPORTANT: Le contentUrl du backend est déjà une URL complète (S3), pas besoin d'ajouter le préfixe API
   const getFullUrl = () => {
     if (!contentUrl) return ""
+    
+    // Si c'est déjà une URL complète (http/https), l'utiliser directement
     if (contentUrl.startsWith("http://") || contentUrl.startsWith("https://")) {
       return contentUrl
     }
+    
+    // Si c'est une URL S3 (commence par s3:// ou contient amazonaws.com), la convertir
+    if (contentUrl.includes("amazonaws.com") || contentUrl.startsWith("s3://")) {
+      // Les URLs S3 sont déjà complètes, les utiliser telles quelles
+      return contentUrl
+    }
+    
+    // Sinon, construire l'URL complète avec le préfixe API (pour les fichiers locaux)
     const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || "https://api.smart-odc.com"
     return `${apiBaseUrl}/awsodclearning${contentUrl.startsWith("/") ? contentUrl : `/${contentUrl}`}`
   }

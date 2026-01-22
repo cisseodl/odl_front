@@ -515,48 +515,37 @@ export default function LearnPage({ params }: LearnPageProps) {
             )}
 
             {/* Document */}
-            {currentLessonData?.type === "document" && (() => {
-              // Log pour déboguer
-              console.log("📄 [DOCUMENT] currentLessonData:", {
-                id: currentLessonData?.id,
-                title: currentLessonData?.title,
-                type: currentLessonData?.type,
-                contentUrl: currentLessonData?.contentUrl,
-                fullData: currentLessonData
-              })
-              
-              return (
-                <div className="space-y-4">
-                  {currentLessonData?.contentUrl ? (
-                    <LessonContentViewer
-                      contentUrl={currentLessonData.contentUrl}
-                      title={currentLessonData.title || "Document"}
-                      type="document"
-                    />
-                  ) : (
-                    <Card className="p-6">
-                      <div className="flex items-center gap-3 mb-6">
-                        <div className="rounded-full bg-muted p-3">
-                          <FileText className="h-6 w-6" />
-                        </div>
-                        <div>
-                          <h2 className="text-xl font-bold">{currentLessonData?.title || "Document"}</h2>
-                          <p className="text-sm text-muted-foreground">Ressource consultable</p>
-                        </div>
+            {currentLessonData?.type === "document" && (
+              <div className="space-y-4">
+                {currentLessonData?.contentUrl ? (
+                  <LessonContentViewer
+                    contentUrl={currentLessonData.contentUrl}
+                    title={currentLessonData.title || "Document"}
+                    type="document"
+                  />
+                ) : (
+                  <Card className="p-6">
+                    <div className="flex items-center gap-3 mb-6">
+                      <div className="rounded-full bg-muted p-3">
+                        <FileText className="h-6 w-6" />
                       </div>
-                      <div className="bg-muted/50 rounded-lg p-6 border border-border">
-                        <p className="text-muted-foreground text-center">
-                          Ce document est disponible uniquement en lecture. Vous pouvez le consulter directement dans cette section.
-                        </p>
-                        <p className="text-xs text-muted-foreground text-center mt-2">
-                          ⚠️ Aucune URL de contenu trouvée pour ce document.
-                        </p>
+                      <div>
+                        <h2 className="text-xl font-bold">{currentLessonData?.title || "Document"}</h2>
+                        <p className="text-sm text-muted-foreground">Ressource consultable</p>
                       </div>
-                    </Card>
-                  )}
-                </div>
-              )
-            })()}
+                    </div>
+                    <div className="bg-muted/50 rounded-lg p-6 border border-border">
+                      <p className="text-muted-foreground text-center">
+                        Ce document est disponible uniquement en lecture. Vous pouvez le consulter directement dans cette section.
+                      </p>
+                      <p className="text-xs text-muted-foreground text-center mt-2">
+                        ⚠️ Aucune URL de contenu trouvée pour ce document.
+                      </p>
+                    </div>
+                  </Card>
+                )}
+              </div>
+            )}
 
             {/* Tabs: Transcription, Resources, Notes */}
             <Tabs defaultValue="transcript" className="w-full">
