@@ -100,7 +100,7 @@ export function CourseCard({ course, showPreview = true }: CourseCardProps) {
 
   return (
     <Link href={courseUrl} className="block h-full group">
-      <Card className="overflow-hidden transition-all duration-300 hover:shadow-2xl h-full flex flex-col border border-border hover:border-primary hover:-translate-y-1 bg-white">
+      <Card className="overflow-hidden transition-all duration-300 hover:shadow-2xl border border-border hover:border-primary hover:-translate-y-1 bg-white">
         <div className="relative aspect-video overflow-hidden bg-black/5">
           <Image
             src={course.imageUrl || "/placeholder.svg"}
@@ -160,52 +160,12 @@ export function CourseCard({ course, showPreview = true }: CourseCardProps) {
           </div>
         </div>
 
-        <CardContent className="flex-1 p-5 space-y-3">
-          {/* Titre - Style Orange Mali */}
-          <h3 className="font-bold text-base line-clamp-2 group-hover:text-primary transition-colors text-balance leading-tight min-h-[3rem] text-black">
+        <CardContent className="p-5 pb-4">
+          {/* Titre - Style Orange Mali - Hauteur réduite */}
+          <h3 className="font-bold text-base line-clamp-2 group-hover:text-primary transition-colors text-balance leading-tight text-black">
             {course.title}
           </h3>
-
-          {/* Nom formateur avec avatar */}
-          {course.instructor && (
-            <div className="flex items-center gap-2">
-              <Avatar className="h-7 w-7 border-2 border-white shadow-sm">
-                <AvatarImage src={course.instructor?.avatar || "/placeholder.svg"} alt={course.instructor?.name || "Formateur"} />
-                <AvatarFallback className="text-xs bg-primary text-white">{(course.instructor?.name || "F")[0]}</AvatarFallback>
-              </Avatar>
-              <span className="text-sm text-muted-foreground font-medium">{course.instructor?.name || "Formateur"}</span>
-            </div>
-          )}
-
-          {/* Rating étoiles + nombre d'avis - Orange pour maximiser l'impact */}
-          <div className="flex items-center gap-2">
-            <div className="flex items-center gap-1">
-              <Star className="h-4 w-4 fill-primary text-primary" />
-              <span className="font-bold text-sm text-black">{course.rating.toFixed(1)}</span>
-            </div>
-            <span className="text-xs text-muted-foreground">({formatNumber(course.reviewCount)} avis)</span>
-          </div>
-
-          {/* Preview Description on Hover */}
-          {showPreview && (
-            <div className="absolute bottom-full left-0 right-0 p-4 bg-white border border-border shadow-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none z-30">
-              <p className="text-sm text-muted-foreground line-clamp-2">{course.subtitle}</p>
-            </div>
-          )}
         </CardContent>
-
-        {/* Footer : Durée + Niveau - Style Orange Mali */}
-        <CardFooter className="p-5 pt-0 flex items-center justify-between border-t border-border">
-          <div className="flex items-center gap-3 text-xs text-muted-foreground">
-            <div className="flex items-center gap-1.5">
-              <Clock className="h-4 w-4 text-muted-foreground/70" />
-              <span className="font-semibold">{course.duration}h</span>
-            </div>
-            <Badge variant="outline" className="text-xs font-semibold border-border text-black">
-              {course.level}
-            </Badge>
-          </div>
-        </CardFooter>
       </Card>
     </Link>
   )
