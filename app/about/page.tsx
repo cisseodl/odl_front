@@ -32,6 +32,9 @@ import {
 import { AnimatedStats } from "@/components/animated-stats";
 import Image from "next/image";
 
+// AJOUTER: Import manquant de FadeInView
+import { FadeInView } from "@/components/fade-in-view";
+
 export default function HomePage() {
   // Charger les rubriques depuis l'API
   const { data: rubriques = [], isLoading: isLoadingRubriques } = useQuery({
