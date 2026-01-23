@@ -1,0 +1,41 @@
+[33m8259ea6[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m Correction Annonce version 5
+[33ma000df2[m Correction Annonce version 4
+[33m4a13dc6[m Correction Annonce version 3
+[33m08e2c0f[m Correction Annonce version 2
+[33m5318fff[m Correction Annonce version 1
+[33m9f3c556[m Correction Annonce
+[33m3a1f32c[m Ajout Annonce a la page d accueil
+[33m2b98641[m Ajout Annonce
+[33m6b5644a[m feat: Rendre mÃ©triques page About dynamiques - Suppression mÃ©trique 'Pays reprÃ©sentÃ©s' - Utilisation statistiques publiques pour Ã‰tudiants actifs, Cours disponibles, Formateurs experts - Ajout animation avec AnimatedStats
+[33mbb319b5[m debug: Ajout logs dÃ©taillÃ©s dans adaptCourse() pour dÃ©boguer problÃ¨me catÃ©gories
+[33m05d4aee[m feat: Refactorisation onglets et labs dans page learn - Suppression onglets 'Ressources' et 'Mes Notes' - Affichage 'Transcription' uniquement pour les vidÃ©os - Affichage labs associÃ©s Ã  la leÃ§on actuelle en bas de la leÃ§on
+[33m2fc25fd[m refactor: AmÃ©lioration gestion cas 'aucun module trouvÃ©' - Remplacement console.warn par logger.debug pour Ã©viter warnings inutiles - AmÃ©lioration UI pour afficher message informatif quand aucun module disponible
+[33mdbcc8c3[m debug: Ajout logs complets dans console navigateur - Logs dÃ©taillÃ©s dans getModulesByCourse (rÃ©ponse brute backend) - Logs complets dans adaptLesson et adaptModule - Affichage de toutes les donnÃ©es dans console navigateur - JSON complet pour chaque leÃ§on document
+[33m93664cb[m fix: Suppression redirection automatique /courses/id vers /learn/id - Les utilisateurs non inscrits restent sur /courses/id - Redirection uniquement via CourseCard (si inscrit) ou aprÃ¨s inscription - Ã‰vite les redirections prÃ©maturÃ©es
+[33m76e5891[m fix: Correction logique redirection cours - Non inscrit â†’ toujours /courses/id - Inscrit â†’ /learn/id - VÃ©rification stricte avec gestion erreurs - Par dÃ©faut considÃ©rer comme non inscrit
+[33m24a3738[m fix: Correction derniÃ¨re erreur eval en evaluation
+[33m3e2222c[m fix: Correction erreurs linter - Ajout useQuery pour courseLabs et courseTPs - Correction nom variable eval en evaluation
+[33mcce4280[m feat: Ajout section labs, TD et TP en bas de la leÃ§on - Service getLabsByCourse pour filtrer labs par cours - Service getTPsByCourse pour rÃ©cupÃ©rer TP - Composant CourseActivitiesSection pour affichage - IntÃ©gration dans page learn/[courseId]
+[33mbd70584[m debug: Ajout logs pour currentLessonDataForExam et correction comparaison ID
+[33m1f6096e[m debug: Ajout logs dÃ©taillÃ©s pour diagnostiquer problÃ¨me affichage document - Logs complets dans page.tsx pour tracer contentUrl - Logs dans LessonContentViewer pour vÃ©rifier props - Recherche exhaustive dans donnÃ©es brutes avec toutes variantes
+[33m108ac32[m fix: PrÃ©servation contentUrl dans adaptModule depuis donnÃ©es brutes - RÃ©cupÃ©ration contentUrl directement depuis rawLesson si adapter le perd - Support de toutes les variantes (contentUrl, content_url, content-url) - Logs uniquement en dÃ©veloppement pour Ã©viter le bruit
+[33m417cb4b[m debug: Ajout logs dÃ©taillÃ©s pour diagnostiquer problÃ¨me contentUrl - Logs complets dans getModulesByCourse pour toutes les leÃ§ons - Logs dÃ©taillÃ©s dans adaptLesson avec recherche rÃ©cursive - Support de content_url, content-url, et contentUrl - Recherche dans objets imbriquÃ©s
+[33m6983f1f[m chore: Suppression imports inutilisÃ©s (Star, Clock)
+[33m2b0eec9[m fix: RÃ©duction hauteur cartes et suppression rating - Hauteur image rÃ©duite de aspect-video Ã  h-32 - Padding rÃ©duit dans CardContent - Suppression affichage rating (Ã©toiles et note) dans page.tsx
+[33m33ba80b[m fix: RÃ©duction hauteur cartes cours et correction erreurs dashboard - Cartes cours: suppression footer et contenu, hauteur rÃ©duite au titre - Dashboard: ajout DialogDescription pour corriger warning - DataTable: protection supplÃ©mentaire contre undefined.filter
+[33ma59f181[m debug: Ajout logs pour catÃ©gories manquantes - Logs en dÃ©veloppement pour identifier pourquoi catÃ©gories = 'Non catÃ©gorisÃ©' - VÃ©rification que catÃ©gorie n'est pas 'Non catÃ©gorisÃ©' avant assignation
+[33me587a85[m fix: Ajout affichage catÃ©gorie dans dashboard - Badge catÃ©gorie affichÃ© pour chaque cours inscrit - Utilise course.category avec fallback 'Non catÃ©gorisÃ©'
+[33m3e35841[m fix: Utilisation directe contentUrl depuis donnÃ©es brutes dans rendu - RÃ©cupÃ©ration contentUrl depuis modulesFromApi si absent dans currentLessonData - Garantit affichage PDF mÃªme si adapter perd contentUrl
+[33m285d9f7[m fix: RÃ©cupÃ©ration contentUrl directement depuis donnÃ©es brutes - CrÃ©ation map des leÃ§ons brutes pour prÃ©server contentUrl - Contournement adapter si contentUrl est perdu - Garantit affichage PDF mÃªme si adapter Ã©choue
+[33m81eff6b[m debug: Ajout logs dÃ©taillÃ©s dans adaptLesson et services - Logs pour voir structure exacte des donnÃ©es brutes - Logs pour vÃ©rifier extraction contentUrl
+[33m9229ac7[m debug: Ajout logs pour diagnostiquer problÃ¨me contentUrl - Logs dÃ©taillÃ©s dans adaptLesson pour documents - Logs dans getModulesByCourse pour vÃ©rifier structure - Logs dans page d'apprentissage pour voir donnÃ©es brutes
+[33m851abcf[m fix: Correction affichage PDF dans page d'apprentissage - AmÃ©lioration extraction contentUrl dans adaptLesson (vÃ©rification multiple) - Correction construction URL dans LessonContentViewer (support S3) - Suppression logs console.log inutiles - Garantit affichage PDF comme dans dashboard instructeur
+[33mfef684d[m fix: Correction sÃ©curitÃ© vÃ©rification inscription - Ne pas retourner [] en cas d'erreur technique - Garantit que seuls utilisateurs vraiment inscrits sont redirigÃ©s
+[33ma5ed1f9[m fix: AmÃ©lioration redirection immÃ©diate pour utilisateurs inscrits - Redirection immÃ©diate dans /courses/[id] si modules chargÃ©s (mÃªme vide) - VÃ©rification plus stricte de l'inscription - Garantit redirection vers /learn/id sans dÃ©lai
+[33m334680b[m fix: Correction bug redirection pour utilisateurs inscrits - VÃ©rification inscription directe via modules au lieu de profile.enrolledCourses - Garantit que utilisateurs inscrits vont toujours vers /learn/id - Ã‰vite redirection vers /courses/id pour utilisateurs dÃ©jÃ  inscrits
+[33md788c61[m fix: Optimisation cache allCourses dans courses/[id]/page.tsx - Cache augmentÃ© Ã  10 min staleTime et 30 min gcTime - DÃ©sactivation refetchOnWindowFocus
+[33m29d7ded[m fix: Suppression console.log restants et optimisation cache - Suppression tous console.log dans courses/[id]/page.tsx - Cache augmentÃ© pour allCourses (10 min staleTime) - Optimisation adaptCourse pour catÃ©gories
+[33mb287dbe[m perf: Optimisation des performances et correction catÃ©gories - Cache React Query augmentÃ© (10 min staleTime, 30 min gcTime) - Suppression console.log pour amÃ©liorer les performances - DÃ©sactivation refetchOnWindowFocus pour rapiditÃ© - Optimisation gestion des catÃ©gories (backend garantit toujours string) - AmÃ©lioration rafraÃ®chissement avec cache plus long
+[33mb60961e[m feat: ImplÃ©mentation des recommandations prioritaires - Ajout ErrorBoundary global et gestion centralisÃ©e des erreurs - Remplacement console.log par logger centralisÃ© - AmÃ©lioration gestion des catÃ©gories
+[33mc20ee9e[m fix: AmÃ©lioration de la gestion des catÃ©gories de cours - Gestion des catÃ©gories comme string, objet avec title/name, ou null - Ajout de logs pour dÃ©boguer les catÃ©gories manquantes - VÃ©rification plus robuste pour Ã©viter 'Non catÃ©gorisÃ©' quand une catÃ©gorie existe
+[33ma909abf[m feat: Ajout d'un dialog d'erreur moderne pour les erreurs de connexion - Remplacement du toast par un dialog d'erreur pour les Ã©checs de login - Messages d'erreur spÃ©cifiques selon le type d'erreur (identif

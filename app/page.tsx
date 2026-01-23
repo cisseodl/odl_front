@@ -3,7 +3,7 @@
 import Link from "next/link"
 import Image from "next/image"
 import { useState, useEffect, useMemo } from "react"
-import { Play, CheckCircle2, ChevronRight, Loader2 } from "lucide-react"
+import { Play, CheckCircle2, ChevronRight, Loader2, Award, Target, Lightbulb, ExternalLink, GraduationCap } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Carousel, CarouselContent, CarouselItem, CarouselPrevious, CarouselNext } from "@/components/ui/carousel"
@@ -14,7 +14,7 @@ import { FadeInView } from "@/components/fade-in-view"
 import { useLanguage } from "@/lib/contexts/language-context"
 import type { UseEmblaCarouselType } from "embla-carousel-react"
 import { useQuery } from "@tanstack/react-query"
-import { courseService, dashboardService } from "@/lib/api/services"
+import { courseService, dashboardService, odcFormationService } from "@/lib/api/services";
 import type { Course } from "@/lib/types"
 
 type CarouselApi = UseEmblaCarouselType[1]
@@ -34,20 +34,38 @@ export default function HomePage() {
     staleTime: 5 * 60 * 1000, // 5 minutes
   })
 
-  // Charger les statistiques publiques
-  const {
-    data: publicStats,
-    isLoading: isLoadingStats,
-  } = useQuery({
-    queryKey: ["publicStats"],
-    queryFn: async () => {
-      const stats = await dashboardService.getPublicStats()
-      console.log("Page d'accueil - Statistiques publiques reçues:", stats)
-      return stats
-    },
-    staleTime: 10 * 60 * 1000, // 10 minutes - les stats changent moins souvent
-  })
-
+        // Charger les statistiques publiques
+        const {
+          data: publicStats,
+          isLoading: isLoadingStats,
+        } = useQuery({
+          queryKey: ["publicStats"],
+          queryFn: async () => {
+            const stats = await dashboardService.getPublicStats()
+            console.log("Page d'accueil - Statistiques publiques reçues:", stats)
+            return stats
+          },
+          staleTime: 10 * 60 * 1000, // 10 minutes - les stats changent moins souvent
+        })
+  
+        // Charger les formations ODC depuis l'API (pour la section Annonce)
+        const { data: odcFormationsResponse, isLoading: isLoadingOdcFormations } =
+          useQuery({
+            queryKey: ["odcFormations"],
+            queryFn: async () => {
+              const data = await odcFormationService.getAllFormations();
+              console.log("Formations ODC chargées:", data);
+              return data;
+            },
+            staleTime: 10 * 60 * 1000, // Cache pendant 10 minutes
+          });
+  
+        // Extraire les formations du tableau, en s'assurant que c'est toujours un tableau
+        const odcFormations = Array.isArray(odcFormationsResponse?.data)
+          ? odcFormationsResponse.data
+          : Array.isArray(odcFormationsResponse)
+            ? odcFormationsResponse
+            : [];
   // Organize courses by category
   const cloudDataCourses = useMemo(() => {
     return courses.filter((c) => 
@@ -77,18 +95,47 @@ export default function HomePage() {
     return [...courses].slice(0, 6)
   }, [courses])
 
-  useEffect(() => {
-    if (!api) return
-
-    setCurrent(api.selectedScrollSnap())
-
-    api.on("select", () => {
-      setCurrent(api.selectedScrollSnap())
-    })
-  }, [api])
-
-  const testimonials = [
-    {
+        // Fonction pour obtenir l'icône selon le titre de la formation (pour la section Annonce)
+        const getIconForFormation = (titre: string) => {
+          const title = titre?.toLowerCase() || "";
+          if (
+            title.includes("formation") ||
+            title.includes("gratuit") ||
+            title.includes("gratuite")
+          ) {
+            return {
+              icon: Target,
+              color: "bg-primary/10",
+              iconColor: "text-primary",
+            };
+          }
+          if (
+            title.includes("accompagnement") ||
+            title.includes("support") ||
+            title.includes("complet")
+          ) {
+            return { icon: Award, color: "bg-accent/10", iconColor: "text-accent" };
+          }
+          if (
+            title.includes("innovation") ||
+            title.includes("numérique") ||
+            title.includes("digital")
+          ) {
+            return {
+              icon: Lightbulb,
+              color: "bg-primary/10",
+              iconColor: "text-primary",
+            };
+          }
+          // Icône par défaut
+          return {
+            icon: GraduationCap,
+            color: "bg-primary/10",
+            iconColor: "text-primary",
+          };
+        };
+  
+        const testimonials = [    {
       name: "Kadiatou Traoré",
       role: "Développeuse Front-End",
       content: "J'ai transformé ma carrière grâce aux cours d'Orange Digital Learning. Les formateurs sont exceptionnels !",
@@ -269,6 +316,120 @@ export default function HomePage() {
                 ]}
               />
             )}
+          </FadeInView>
+        </div>
+      </section>
+
+      {/* AJOUTER: Section Annonce déplacée depuis la page about */}
+      <section className="py-12 lg:py-16 bg-gradient-to-r from-primary/5 to-primary/10">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+          <FadeInView delay={0.1}>
+            <div className="text-center mb-8 lg:mb-12">
+              <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-black mb-4 tracking-tight">
+                Annonce
+              </h2>
+              <p className="text-sm text-muted-foreground max-w-2xl mx-auto">
+                Découvrez nos programmes de formation et accompagnement
+              </p>
+            </div>
+
+            <div className="grid md:grid-cols-3 gap-8">
+              {isLoadingOdcFormations ? (
+                <div className="col-span-3 flex items-center justify-center py-12">
+                  <Loader2 className="w-8 h-8 animate-spin text-primary" />
+                </div>
+              ) : odcFormations.length === 0 ? (
+                // Fallback vers les cartes statiques si aucune formation ODC n'est disponible
+                <>
+                  <Card className="p-6 text-center hover:shadow-lg transition-shadow">
+                    <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                      <Target className="w-6 h-6 text-primary" />
+                    </div>
+                    <h3 className="text-xl font-semibold mb-3">
+                      Formation Gratuite
+                    </h3>
+                    <p className="text-muted-foreground">
+                      Tous nos programmes sont 100% gratuits et ouverts à tous,
+                      sans condition de ressources financières.
+                    </p>
+                  </Card>
+
+                  <Card className="p-6 text-center hover:shadow-lg transition-shadow">
+                    <div className="w-12 h-12 bg-accent/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                      <Award className="w-6 h-6 text-accent" />
+                    </div>
+                    <h3 className="text-xl font-semibold mb-3">
+                      Accompagnement Complet
+                    </h3>
+                    <p className="text-muted-foreground">
+                      De la formation initiale à l'accélération de start-up,
+                      nous accompagnons les jeunes tout au long de leur parcours
+                      entrepreneurial.
+                    </p>
+                  </Card>
+
+                  <Card className="p-6 text-center hover:shadow-lg transition-shadow">
+                    <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                      <Lightbulb className="w-6 h-6 text-primary" />
+                    </div>
+                    <h3 className="text-xl font-semibold mb-3">
+                      Innovation & Numérique
+                    </h3>
+                    <p className="text-muted-foreground">
+                      Formation aux dernières technologies : développement
+                      web/mobile, IA, IoT, design graphique et fabrication
+                      numérique.
+                    </p>
+                  </Card>
+                </>
+              ) : (
+                // Afficher les formations ODC dynamiques (maximum 3)
+                odcFormations.slice(0, 3).map((formation: any) => {
+                  const {
+                    icon: IconComponent,
+                    color,
+                    iconColor,
+                  } = getIconForFormation(formation.titre);
+                  return (
+                    <Card
+                      key={formation.id}
+                      className="p-6 text-center hover:shadow-lg transition-shadow"
+                    >
+                      <div
+                        className={`w-12 h-12 ${color} rounded-full flex items-center justify-center mx-auto mb-4`}
+                      >
+                        <IconComponent className={`w-6 h-6 ${iconColor}`} />
+                      </div>
+                      <h3 className="text-xl font-semibold mb-3">
+                        {formation.titre}
+                      </h3>
+                      <p className="text-muted-foreground mb-4">
+                        {formation.description ||
+                          "Découvrez nos programmes de formation."}
+                      </p>
+                      {formation.lien && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          asChild
+                          className="mt-2"
+                        >
+                          <a
+                            href={formation.lien}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center gap-2"
+                          >
+                            En savoir plus
+                            <ExternalLink className="h-4 w-4" />
+                          </a>
+                        </Button>
+                      )}
+                    </Card>
+                  );
+                })
+              )}
+            </div>
           </FadeInView>
         </div>
       </section>
