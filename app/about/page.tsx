@@ -116,25 +116,27 @@ export default function AboutPage() {
               <Loader2 className="h-6 w-6 animate-spin text-primary" />
             </div>
           ) : (
-            <AnimatedStats
-              stats={[
-                { 
-                  value: publicStats?.totalStudents ?? 0, 
-                  label: "Étudiants actifs", 
-                  useFormat: true 
-                },
-                { 
-                  value: publicStats?.totalCourses ?? 0, 
-                  label: "Cours disponibles", 
-                  useFormat: true 
-                },
-                { 
-                  value: publicStats?.totalInstructors ?? 0, 
-                  label: "Formateurs experts", 
-                  useFormat: true 
-                },
-              ]}
-            />
+            <div className="flex justify-center">
+              <AnimatedStats
+                stats={[
+                  { 
+                    value: publicStats?.totalStudents ?? 0, 
+                    label: "Étudiants actifs", 
+                    useFormat: true 
+                  },
+                  { 
+                    value: publicStats?.totalCourses ?? 0, 
+                    label: "Cours disponibles", 
+                    useFormat: true 
+                  },
+                  { 
+                    value: publicStats?.totalInstructors ?? 0, 
+                    label: "Formateurs experts", 
+                    useFormat: true 
+                  },
+                ]}
+              />
+            </div>
           )}
         </div>
       </section>

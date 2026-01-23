@@ -47,7 +47,7 @@ export function AnimatedStats({ stats, className }: AnimatedStatsProps) {
 
   return (
     <div ref={sectionRef} className={className}>
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-6 lg:gap-8">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8 justify-items-center max-w-4xl mx-auto">
         {stats.map((stat, index) => (
           <div
             key={index}

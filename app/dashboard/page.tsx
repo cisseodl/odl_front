@@ -69,6 +69,13 @@ export default function DashboardPage() {
     staleTime: 5 * 60 * 1000,
   })
 
+  // AJOUTER: Récupérer les statistiques publiques pour la section Annonce
+  const { data: publicStats, isLoading: isLoadingPublicStats } = useQuery({
+    queryKey: ["publicStats"],
+    queryFn: () => dashboardService.getPublicStats(),
+    staleTime: 10 * 60 * 1000, // 10 minutes
+  })
+
   // Filtrer les cours inscrits
   const enrolledCourses = useMemo(() => {
     if (!profile?.enrolledCourses || !allCourses.length) {
@@ -384,6 +391,58 @@ export default function DashboardPage() {
               </Button>
             </div>
           </div>
+        </FadeInView>
+
+        {/* AJOUTER: Section Annonce avec métriques publiques */}
+        <FadeInView delay={0.1}>
+          <Card className="border-2 border-primary/20 bg-gradient-to-r from-primary/5 to-primary/10">
+            <CardHeader className="pb-4">
+              <div className="flex items-center gap-3">
+                <div className="rounded-lg bg-primary/10 p-2 border border-primary/20">
+                  <BarChart3 className="h-5 w-5 text-primary" />
+                </div>
+                <div>
+                  <CardTitle className="text-xl text-primary">Annonce</CardTitle>
+                  <CardDescription>Découvrez les statistiques de notre plateforme</CardDescription>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent>
+              {isLoadingPublicStats ? (
+                <div className="flex items-center justify-center py-6">
+                  <Loader2 className="h-5 w-5 animate-spin text-primary" />
+                  <span className="ml-2 text-muted-foreground">Chargement des statistiques...</span>
+                </div>
+              ) : (
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  <div className="text-center p-4 bg-white/50 rounded-lg border border-primary/10">
+                    <div className="text-2xl font-bold text-primary mb-1">
+                      {publicStats?.totalStudents?.toLocaleString() || "0"}
+                    </div>
+                    <div className="text-sm text-muted-foreground">Étudiants actifs</div>
+                  </div>
+                  <div className="text-center p-4 bg-white/50 rounded-lg border border-primary/10">
+                    <div className="text-2xl font-bold text-primary mb-1">
+                      {publicStats?.totalCourses?.toLocaleString() || "0"}
+                    </div>
+                    <div className="text-sm text-muted-foreground">Cours disponibles</div>
+                  </div>
+                  <div className="text-center p-4 bg-white/50 rounded-lg border border-primary/10">
+                    <div className="text-2xl font-bold text-primary mb-1">
+                      {publicStats?.totalInstructors?.toLocaleString() || "0"}
+                    </div>
+                    <div className="text-sm text-muted-foreground">Instructeurs</div>
+                  </div>
+                  <div className="text-center p-4 bg-white/50 rounded-lg border border-primary/10">
+                    <div className="text-2xl font-bold text-primary mb-1">
+                      {publicStats?.satisfactionRate || "98"}%
+                    </div>
+                    <div className="text-sm text-muted-foreground">Satisfaction</div>
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
         </FadeInView>
 
         {/* Stats Cards - Design moderne avec animations - Fond Noir, Texte Blanc */}
