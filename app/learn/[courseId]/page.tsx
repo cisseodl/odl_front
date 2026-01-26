@@ -112,7 +112,42 @@ export default function LearnPage({ params }: LearnPageProps) {
   const [completedLessons, setCompletedLessons] = useState<number[]>([])
   const [searchQuery, setSearchQuery] = useState("")
   const [showMiniPlayer, setShowMiniPlayer] = useState(true)
+  const [newReview, setNewReview] = useState({ rating: 0, comment: "" }) // Ajout de l'état pour l'avis
   const videoRef = useRef<HTMLVideoElement>(null)
+
+  const addReviewMutation = useMutation({
+    mutationFn: ({ rating, comment }: { rating: number; comment: string }) => {
+      if (!courseIdNum) {
+        throw new Error("ID du cours invalide");
+      }
+      // Assuming courseService has an addReview method
+      return courseService.addReview(courseIdNum, { rating, comment });
+    },
+    onSuccess: () => {
+      toast.success("Avis ajouté avec succès !");
+      // Invalidate queries to refetch reviews for this course, if any are displayed
+      // We don't have review display here so no invalidation needed.
+      setNewReview({ rating: 0, comment: "" });
+    },
+    onError: (error: any) => {
+      toast.error("Erreur lors de l'ajout de l'avis", {
+        description: error.message || "Veuillez réessayer.",
+      });
+    },
+  });
+
+  const handleReviewSubmit = () => {
+    if (newReview.rating === 0) {
+      toast.error("Veuillez donner une note.");
+      return;
+    }
+    if (newReview.comment.trim() === "") {
+      toast.error("Veuillez laisser un commentaire.");
+      return;
+    }
+    addReviewMutation.mutate(newReview);
+  };
+
 
   // Utiliser le curriculum du cours s'il existe, sinon utiliser les modules chargés dynamiquement
   const curriculum = useMemo(() => {
@@ -782,6 +817,51 @@ export default function LearnPage({ params }: LearnPageProps) {
             })()}
           </div>
         </div>
+      </div>
+
+      {/* Add Review Form */}
+      <div className="container max-w-6xl mx-auto p-4 md:p-6 space-y-6">
+        <Card className="border-2">
+          <CardContent className="p-6 space-y-4">
+            <h3 className="text-xl font-bold">Laissez votre avis sur ce cours</h3>
+            <div>
+              <p className="font-medium mb-2">Votre note</p>
+              <div className="flex items-center gap-1">
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <Star
+                    key={star}
+                    className={cn(
+                      "h-6 w-6 cursor-pointer transition-colors",
+                      star <= newReview.rating
+                        ? "fill-primary text-primary"
+                        : "text-gray-300 hover:text-gray-400"
+                    )}
+                    onClick={() => setNewReview({ ...newReview, rating: star })}
+                  />
+                ))}
+              </div>
+            </div>
+            <div>
+              <p className="font-medium mb-2">Votre commentaire</p>
+              <Textarea
+                placeholder="Partagez votre expérience avec ce cours..."
+                value={newReview.comment}
+                onChange={(e) => setNewReview({ ...newReview, comment: e.target.value })}
+                rows={4}
+              />
+            </div>
+            <Button onClick={handleReviewSubmit} disabled={addReviewMutation.isPending}>
+              {addReviewMutation.isPending ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Envoi en cours...
+                </>
+              ) : (
+                "Envoyer mon avis"
+              )}
+            </Button>
+          </CardContent>
+        </Card>
       </div>
 
       {/* Note: Les labs associés à la leçon actuelle sont affichés juste après le contenu de la leçon */}

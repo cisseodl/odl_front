@@ -16,13 +16,18 @@ import type { UseEmblaCarouselType } from "embla-carousel-react"
 import { useQuery } from "@tanstack/react-query"
 import { courseService, dashboardService, odcFormationService } from "@/lib/api/services";
 import type { Course } from "@/lib/types"
+import { useAuthStore } from "@/lib/store/auth-store";
+import { TestimonialModal } from "@/components/testimonial-modal";
+import { toast } from "sonner";
 
 type CarouselApi = UseEmblaCarouselType[1]
 
 export default function HomePage() {
   const [api, setApi] = useState<CarouselApi | null>(null)
   const [current, setCurrent] = useState(0)
+  const [isTestimonialModalOpen, setIsTestimonialModalOpen] = useState(false); // New state for modal
   const { t } = useLanguage()
+  const { isAuthenticated } = useAuthStore();
 
   // Charger les cours depuis l'API
   const {
@@ -494,9 +499,25 @@ export default function HomePage() {
       {/* How Learners Achieve Goals - Style Orange Mali */}
       <section className="py-16 lg:py-20 bg-white">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-          <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-black mb-12 text-center tracking-tight">
-            {t("home.testimonials")}
-          </h2>
+          <div className="flex items-center justify-center mb-12">
+            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-black tracking-tight mr-4">
+              {t("home.testimonials")}
+            </h2>
+            <Button
+              variant="outline"
+              onClick={() => {
+                if (isAuthenticated) {
+                  setIsTestimonialModalOpen(true);
+                } else {
+                  toast.error("Authentification requise", {
+                    description: "Vous devez être connecté pour laisser un témoignage.",
+                  });
+                }
+              }}
+            >
+              Laisser un témoignage
+            </Button>
+          </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8 max-w-5xl mx-auto">
             {testimonials.map((testimonial, index) => (
               <Card key={index} className="border border-border hover:shadow-xl hover:border-primary transition-all duration-300 bg-white">
@@ -573,6 +594,10 @@ export default function HomePage() {
       <CourseSection
         title={t("home.creativeDesign")}
         courses={designCourses}
+      />
+      <TestimonialModal
+        isOpen={isTestimonialModalOpen}
+        onOpenChange={setIsTestimonialModalOpen}
       />
     </div>
   )
