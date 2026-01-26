@@ -1,19 +1,27 @@
-Le problème persiste avec des erreurs `404 Not Found` pour `GET https://api.smart-odc.com/awsodclearning/api/testimonials`.
+Le problème persiste avec des erreurs `404 Not Found` pour `GET https://api.smart-odc.com/awsodclearning/api/testimonials` et `POST https://api.smart-odc.com/awsodclearning/api/testimonials`.
 
-Cela confirme que le backend n'expose pas cet endpoint à l'URL attendue, même après avoir aligné la configuration du frontend avec ce que nous pensions être correct.
+Cependant, les logs montrent un point très important :
+*   **`GET /awsodclearning/api/reviews/all HTTP/1.1" 200 OK`**. Ceci confirme que la partie `/awsodclearning/api/` est correcte et que l'endpoint `getAllReviews` fonctionne !
 
-Il y a deux possibilités principales pour ces erreurs 404 persistantes :
+Les problèmes sont donc :
 
-1.  **Le fichier `PRIORITIES.md` est obsolète ou incorrect** : Les informations sur les endpoints backend que j'utilise comme référence ne correspondent pas aux chemins réels sur le serveur backend en cours d'exécution.
-2.  **Configuration/Déploiement du Backend** : Le backend n'est pas déployé correctement, n'est pas en cours d'exécution, ou ses contrôleurs (`TestimonialController`, `ReviewController`) ne sont pas configurés pour exposer ces chemins spécifiques (`/api/testimonials`, `/api/reviews/all`) sous le context-path `/awsodclearning`.
+1.  **Erreurs `404 Not Found` pour les témoignages (GET et POST) :**
+    *   Malgré que la `baseURL` soit correcte (`https://api.smart-odc.com/awsodclearning`), le backend ne trouve toujours pas les endpoints `/api/testimonials`.
+    *   **Action requise de votre part :** **Vérifiez TRÈS attentivement le code de votre `TestimonialController.java` dans le backend.**
+        *   Assurez-vous que le contrôleur est bien annoté avec `@RestController`.
+        *   Vérifiez l'annotation `@RequestMapping` au niveau de la classe (par exemple, `@RequestMapping("/api/testimonials")`).
+        *   Vérifiez les annotations `@GetMapping` et `@PostMapping` sur les méthodes respectives. Par exemple, si `@RequestMapping("/api/testimonials")` est au niveau de la classe, le `@GetMapping` et `@PostMapping` devraient être juste sur `/`.
+        *   **Il est possible que le `TestimonialController` ne soit pas correctement chargé par Spring Boot ou que ses mappings soient différents de ce que vous pensez.**
 
-**Pour diagnostiquer et corriger cela, j'ai ABSOLUMENT besoin des logs réels du serveur backend.**
+2.  **Erreurs `connect() failed (111: Connection refused)` dans `nginx/error.log` :**
+    *   C'est le problème le plus grave. Nginx n'arrive pas à se connecter à votre application Spring Boot sur le port `5000`. Cela indique que votre application backend n'est pas stable, qu'elle crash au démarrage ou qu'elle ne s'initialise pas correctement.
+    *   **Action requise de votre part :** **Consultez les logs détaillés de votre application Spring Boot (généralement `web.stdout.log` complet ou `catalina.out` si vous utilisez Tomcat sur votre environnement Elastic Beanstalk).**
+        *   Recherchez les messages d'erreur au démarrage (`ERROR` ou `FAIL`).
+        *   Vérifiez que l'application démarre et écoute bien sur le port `5000` (`server.port=5000` est défini dans `application.properties`).
+        *   **Tant que votre application Spring Boot ne démarre pas de manière stable et ne répond pas sur le port 5000, aucun endpoint ne fonctionnera.**
 
-Veuillez me fournir :
+**En résumé :**
+*   **Corrigez la stabilité de votre application Spring Boot (la `Connection refused`) en priorité.**
+*   **Vérifiez ensuite les mappings de votre `TestimonialController` côté backend pour les requêtes `GET` et `POST` `/api/testimonials`.**
 
-*   **Les logs de démarrage complets de votre application Spring Boot.** Cela me permettra de voir précisément quels endpoints Spring a mappés et à quelles URL.
-*   **Les logs du serveur backend lorsqu'une requête `GET` est envoyée** (par exemple, en essayant d'accéder à `smart-odc.com` pour les témoignages, ou à la page admin des avis pour les avis). Ces logs devraient montrer si la requête atteint le serveur et, si oui, pourquoi elle n'est pas traitée (par exemple, "No mapping for GET /awsodclearning/api/testimonials").
-
-**Veuillez ne PAS mettre ces logs dans `PRIORITIES.md`. Copiez-les directement dans la conversation ou mettez-les dans un fichier temporaire (ex: `backend_logs.txt`) et lisez le fichier pour moi.**
-
-Sans ces logs serveur précis, je ne peux que faire des suppositions sur les URLs du backend, ce qui ne résout pas le problème.
+Je ne peux pas avancer sans que ces problèmes côté backend soient résolus. Une fois que votre application backend fonctionnera de manière stable et exposera les endpoints corrects, le frontend devrait fonctionner.

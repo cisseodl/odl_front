@@ -921,37 +921,36 @@ export function CourseDetailClient({ course }: CourseDetailClientProps) {
 
                     {/* Reviews List */}
                     <div className="space-y-4">
-                      {reviews && Array.isArray(reviews) ? reviews.filter(review => review && review.id).map((review) => (
+                      {reviews && Array.isArray(reviews) && reviews.length > 0 ? reviews.map((review) => (
                         <Card key={String(review.id)} className="border-2 hover:border-primary/20 transition-all">
                           <CardContent className="p-6">
                             <div className="flex items-start gap-4">
                               <Avatar className="h-12 w-12 border-2 border-primary/30">
-                                <AvatarImage src={review.avatar} alt={review.user} />
+                                <AvatarImage src={review.user?.avatar || "/placeholder-user.jpg"} alt={review.user?.fullName || review.user?.email || "Utilisateur inconnu"} />
                                 <AvatarFallback className="bg-primary text-white font-bold">
-                                  {review.user[0]}
+                                  {(review.user?.fullName || review.user?.email || "U")[0]}
                                 </AvatarFallback>
                               </Avatar>
                               <div className="flex-1 space-y-2">
                                 <div className="flex items-start justify-between gap-4">
                                   <div>
-                                    <p className="font-bold text-sm text-foreground">{review.user}</p>
+                                    <p className="font-bold text-sm text-foreground">{review.user?.fullName || review.user?.email || "Utilisateur inconnu"}</p>
                                     <div className="flex items-center gap-2 mt-1">
                                       <RatingStars rating={review.rating} size="sm" />
-                                      <span className="text-xs text-muted-foreground">{review.date}</span>
+                                      <span className="text-xs text-muted-foreground">{new Date(review.createdAt).toLocaleDateString("fr-FR", { day: "numeric", month: "short", year: "numeric" })}</span>
                                     </div>
                                   </div>
                                 </div>
                                 <p className="text-sm text-muted-foreground leading-relaxed">{review.comment}</p>
-                                <div className="flex items-center gap-4 pt-2">
-                                  <Button variant="ghost" size="sm" className="text-xs h-7">
-                                    Utile ({review.helpful})
-                                  </Button>
-                                </div>
                               </div>
                             </div>
                           </CardContent>
                         </Card>
-                      )) : null}
+                      )) : (
+                        <div className="p-8 text-center text-muted-foreground border-2 border-dashed border-border rounded-xl">
+                          <p>Aucun avis pour le moment. Soyez le premier à en laisser un !</p>
+                        </div>
+                      )}
                     </div>
                     </div>
                   </div>
