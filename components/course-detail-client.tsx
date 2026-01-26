@@ -1093,24 +1093,15 @@ export function CourseDetailClient({ course }: CourseDetailClientProps) {
                           <p className="text-xs text-green-700">Accès complet sans frais</p>
                         </div>
                       </div>
-                      <div className="flex items-center gap-3 p-3 bg-primary/5 border border-primary/20 rounded-lg">
-                        <div className="rounded-full bg-primary p-1.5">
-                          <Infinity className="h-4 w-4 text-white" />
-                        </div>
-                        <div className="flex-1">
-                          <p className="text-sm font-semibold text-foreground">Accès à vie</p>
-                          <p className="text-xs text-muted-foreground">Mises à jour incluses</p>
-                        </div>
-                      </div>
                       <div className="flex items-center gap-3 p-3 bg-orange-50 border border-orange-200 rounded-lg">
                         <div className="rounded-full bg-orange-500 p-1.5">
                           <Award className="h-4 w-4 text-white" />
                         </div>
                         <div className="flex-1">
                           <p className="text-sm font-semibold text-orange-900">Certificat inclus</p>
-                          <p className="text-xs text-orange-700">Reconnu professionnellement</p>
                         </div>
                       </div>
+
                     </div>
                   </div>
 

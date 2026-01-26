@@ -509,9 +509,9 @@ export default function DashboardPage() {
                                       {course.category || "Non catégorisé"}
                                     </Badge>
                                     <p className="text-sm text-muted-foreground">
-                                      {course.instructor?.name || "Formateur"}
-                                    </p>
-                                  </div>
+                                    {course.instructor?.name || "Formateur"}
+                                  </p>
+                                </div>
                                 </div>
                                 {(course.progress || 0) === 100 && (
                                 <Badge className="bg-primary text-white font-semibold border-0 shadow-sm">
