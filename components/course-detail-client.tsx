@@ -26,6 +26,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { moduleService, courseService } from "@/lib/api/services"
 import { adaptModule } from "@/lib/api/adapters"
 import { CourseSidebar } from "@/components/course-sidebar"
+import { Textarea } from "@/components/ui/textarea"
 import { useAuthStore } from "@/lib/store/auth-store"
 import { EnrollmentExpectationsModal } from "@/components/enrollment-expectations-modal"
 import type { Course, Module } from "@/lib/types"
@@ -61,6 +62,7 @@ export function CourseDetailClient({ course }: CourseDetailClientProps) {
   const [dynamicCurriculum, setDynamicCurriculum] = useState<Module[] | null>(null)
   const [isEnrolled, setIsEnrolled] = useState(false)
   const [showExpectationsModal, setShowExpectationsModal] = useState(false)
+  const [newReview, setNewReview] = useState({ rating: 0, comment: "" })
   const queryClient = useQueryClient()
 
   // Convertir course.id en nombre de manière sécurisée
@@ -100,6 +102,38 @@ export function CourseDetailClient({ course }: CourseDetailClientProps) {
     return numId
   }, [course?.id]) // Ne dépendre que de course.id, pas de tout l'objet course
 
+  const addReviewMutation = useMutation({
+    mutationFn: ({ rating, comment }: { rating: number; comment: string }) => {
+      if (!courseIdNum) {
+        throw new Error("ID du cours invalide");
+      }
+      // Simuler l'appel API - en réalité, ce serait courseService.addReview(...)
+      return new Promise(resolve => setTimeout(() => resolve({ success: true }), 1000));
+    },
+    onSuccess: () => {
+      toast.success("Avis ajouté avec succès !");
+      queryClient.invalidateQueries({ queryKey: ["reviews", courseIdNum] });
+      setNewReview({ rating: 0, comment: "" });
+    },
+    onError: (error: any) => {
+      toast.error("Erreur lors de l'ajout de l'avis", {
+        description: error.message || "Veuillez réessayer.",
+      });
+    },
+  });
+
+  const handleReviewSubmit = () => {
+    if (newReview.rating === 0) {
+      toast.error("Veuillez donner une note.");
+      return;
+    }
+    if (newReview.comment.trim() === "") {
+      toast.error("Veuillez laisser un commentaire.");
+      return;
+    }
+    addReviewMutation.mutate(newReview);
+  };
+  
   // Vérifier si l'utilisateur a un profil apprenant
   const hasLearnerProfile = useMemo(() => {
     if (!user) return false
@@ -486,25 +520,7 @@ export function CourseDetailClient({ course }: CourseDetailClientProps) {
     },
   ]
 
-  // Mock FAQ data
-  const faqs = [
-    {
-      question: "Quels sont les prérequis pour ce cours ?",
-      answer: "Ce cours est conçu pour les développeurs ayant une connaissance de base en JavaScript. Aucune expérience préalable avec React n'est nécessaire.",
-    },
-    {
-      question: "Puis-je accéder au cours à vie ?",
-      answer: "Oui, une fois inscrit, vous avez un accès à vie au contenu du cours, y compris toutes les mises à jour futures.",
-    },
-    {
-      question: "Y a-t-il un certificat à la fin du cours ?",
-      answer: "Oui, vous recevrez un certificat de complétion une fois que vous aurez terminé tous les modules et les projets pratiques.",
-    },
-    {
-      question: "Puis-je poser des questions au formateur ?",
-      answer: "Oui, vous pouvez poser des questions dans la section Q&A du cours et le formateur répondra dans les 24-48 heures.",
-    },
-  ]
+
 
   return (
     <div className="min-h-screen bg-background">
@@ -661,12 +677,7 @@ export function CourseDetailClient({ course }: CourseDetailClientProps) {
                         </span>
                       </span>
                   </TabsTrigger>
-                    <TabsTrigger 
-                      value="faq" 
-                      className="px-6 py-4 text-sm font-medium text-gray-600 hover:text-black transition-all duration-200 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:text-primary data-[state=active]:font-semibold data-[state=active]:bg-transparent min-w-fit whitespace-nowrap"
-                    >
-                    FAQ
-                  </TabsTrigger>
+
                 </TabsList>
                 </div>
 
@@ -966,6 +977,53 @@ export function CourseDetailClient({ course }: CourseDetailClientProps) {
                       </CardContent>
                     </Card>
 
+                    {/* Add Review Form */}
+                    {isEnrolled && (
+                      <Card className="border-2">
+                        <CardHeader>
+                          <CardTitle>Laissez votre avis</CardTitle>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                          <div>
+                            <p className="font-medium mb-2">Votre note</p>
+                            <div className="flex items-center gap-1">
+                              {[1, 2, 3, 4, 5].map((star) => (
+                                <Star
+                                  key={star}
+                                  className={cn(
+                                    "h-6 w-6 cursor-pointer transition-colors",
+                                    star <= newReview.rating
+                                      ? "fill-primary text-primary"
+                                      : "text-gray-300 hover:text-gray-400"
+                                  )}
+                                  onClick={() => setNewReview({ ...newReview, rating: star })}
+                                />
+                              ))}
+                            </div>
+                          </div>
+                          <div>
+                            <p className="font-medium mb-2">Votre commentaire</p>
+                            <Textarea
+                              placeholder="Partagez votre expérience avec ce cours..."
+                              value={newReview.comment}
+                              onChange={(e) => setNewReview({ ...newReview, comment: e.target.value })}
+                              rows={4}
+                            />
+                          </div>
+                          <Button onClick={handleReviewSubmit} disabled={addReviewMutation.isPending}>
+                            {addReviewMutation.isPending ? (
+                              <>
+                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                Envoi en cours...
+                              </>
+                            ) : (
+                              "Envoyer mon avis"
+                            )}
+                          </Button>
+                        </CardContent>
+                      </Card>
+                    )}
+
                     {/* Reviews List */}
                     <div className="space-y-4">
                       {reviews && Array.isArray(reviews) ? reviews.filter(review => review && review.id).map((review) => (
@@ -1004,29 +1062,7 @@ export function CourseDetailClient({ course }: CourseDetailClientProps) {
                   </div>
                 </TabsContent>
 
-                {/* FAQ Tab */}
-                <TabsContent value="faq" className="mt-6">
-                  <div id="faq" className="scroll-mt-24">
-                  <div className="space-y-4">
-                    <h3 className="text-xl font-bold mb-4 text-foreground">Questions fréquemment posées</h3>
-                    <Accordion type="single" collapsible className="w-full">
-                      {faqs && Array.isArray(faqs) ? faqs.map((faq, index) => (
-                        <AccordionItem key={index} value={`faq-${index}`} className="border-2 rounded-lg mb-3 px-4 hover:border-primary/40 transition-all">
-                          <AccordionTrigger className="hover:no-underline py-4">
-                            <div className="flex items-center gap-3 text-left">
-                              <HelpCircle className="h-5 w-5 text-primary flex-shrink-0" />
-                              <span className="font-semibold text-foreground">{faq.question}</span>
-                            </div>
-                          </AccordionTrigger>
-                          <AccordionContent className="pb-4 pl-8">
-                            <p className="text-muted-foreground leading-relaxed">{faq.answer}</p>
-                          </AccordionContent>
-                        </AccordionItem>
-                      )) : null}
-                    </Accordion>
-                  </div>
-                  </div>
-                </TabsContent>
+
               </Tabs>
             </FadeInView>
           </div>
