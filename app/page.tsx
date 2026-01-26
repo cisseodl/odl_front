@@ -500,11 +500,10 @@ export default function HomePage() {
       <section className="py-16 lg:py-20 bg-white">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-center mb-12">
-            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-black tracking-tight mr-4">
-              {t("home.testimonials")}
-            </h2>
+
             <Button
               variant="outline"
+              size="lg"
               onClick={() => {
                 if (isAuthenticated) {
                   setIsTestimonialModalOpen(true);
