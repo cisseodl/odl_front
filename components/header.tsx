@@ -160,7 +160,7 @@ export function Header() {
 
         {/* MOBILE MENU */}
         {mobileMenuOpen && (
-          <nav className="lg:hidden py-4 bg-white border-t">
+          <nav className="lg:hidden py-4 bg-card border-t border-border">
             <div className="flex flex-col gap-1">
               {[
                 { href: "/courses", icon: BookOpen, label: t("common.courses") },
@@ -172,7 +172,7 @@ export function Header() {
                   key={href}
                   href={href}
                   onClick={() => setMobileMenuOpen(false)}
-                  className="flex items-center gap-3 px-4 py-2 text-sm hover:bg-gray-100"
+                  className="flex items-center gap-3 px-4 py-2 text-sm text-foreground hover:bg-muted"
                 >
                   <Icon className="h-4 w-4" />
                   {label}
