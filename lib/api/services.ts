@@ -307,6 +307,28 @@ export const courseService = {
   },
 }
 
+// ============ Review Services ============
+export const reviewService = {
+  async getReviewsByCourse(courseId: number): Promise<any[]> { // Return type should be more specific, e.g., Review[]
+    try {
+      const response = await apiClient.get<any>(`${API_ENDPOINTS.courses.getReviewsByCourse}/${courseId}/reviews`);
+
+      if (response.ok && response.data) {
+        // Assume backend returns a list of reviews or a CResponse containing a list
+        const reviews = Array.isArray(response.data)
+          ? response.data
+          : (response.data.data && Array.isArray(response.data.data) ? response.data.data : []);
+        return reviews;
+      }
+      return [];
+    } catch (error) {
+      console.error("Error fetching reviews by course:", error);
+      return [];
+    }
+  },
+}
+
+
 // ============ Category Services ============
 export const categoryService = {
   /**

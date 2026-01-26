@@ -14,7 +14,7 @@ import { FadeInView } from "@/components/fade-in-view"
 import { useLanguage } from "@/lib/contexts/language-context"
 import type { UseEmblaCarouselType } from "embla-carousel-react"
 import { useQuery } from "@tanstack/react-query"
-import { courseService, dashboardService, odcFormationService } from "@/lib/api/services";
+import { courseService, dashboardService, odcFormationService, testimonialService } from "@/lib/api/services"; // Added testimonialService
 import type { Course } from "@/lib/types"
 import { useAuthStore } from "@/lib/store/auth-store";
 import { TestimonialModal } from "@/components/testimonial-modal";
@@ -140,25 +140,11 @@ export default function HomePage() {
           };
         };
   
-        const testimonials = [    {
-      name: "Kadiatou Traoré",
-      role: "Développeuse Front-End",
-      content: "J'ai transformé ma carrière grâce aux cours d'Orange Digital Learning. Les formateurs sont exceptionnels !",
-      avatar: "/woman-developer-smiling.jpg",
-    },
-    {
-      name: "Ousmane Keita",
-      role: "Data Scientist",
-      content: "La qualité des cours et l'accompagnement font vraiment la différence. Je recommande à 100%.",
-      avatar: "/man-data-scientist-portrait.jpg",
-    },
-    {
-      name: "Mariam Sangaré",
-      role: "UX Designer",
-      content: "J'ai pu monter en compétences et décrocher mon emploi de rêve. Merci Orange Digital Learning !",
-      avatar: "/woman-designer-happy.jpg",
-    },
-  ]
+  const { data: testimonials = [] } = useQuery({
+    queryKey: ["testimonials"],
+    queryFn: () => testimonialService.getAllTestimonials(),
+    staleTime: 5 * 60 * 1000, // 5 minutes
+  });
 
   // Hero slides data
   const heroSlides = [

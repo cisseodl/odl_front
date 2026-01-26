@@ -23,7 +23,7 @@ import { RatingStars } from "@/components/rating-stars"
 import { FadeInView } from "@/components/fade-in-view"
 import { useScrollSpy } from "@/hooks/use-scroll-spy"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
-import { moduleService, courseService } from "@/lib/api/services"
+import { moduleService, courseService, reviewService } from "@/lib/api/services" // Added reviewService
 import { adaptModule } from "@/lib/api/adapters"
 import { CourseSidebar } from "@/components/course-sidebar"
 import { useAuthStore } from "@/lib/store/auth-store"
@@ -455,36 +455,12 @@ export function CourseDetailClient({ course }: CourseDetailClientProps) {
   // Extended description
   const fullDescription = `${course.description}\n\nCe cours vous guidera à travers tous les concepts essentiels et avancés. Vous travaillerez sur des projets réels et obtiendrez les compétences nécessaires pour exceller dans votre domaine. Notre approche pratique vous permettra de mettre immédiatement en application ce que vous apprenez.`
 
-  // Mock reviews data
-  const reviews = [
-    {
-      id: "1",
-      user: "Kadiatou Traoré",
-      avatar: "/woman-developer-smiling.jpg",
-      rating: 5,
-      date: "Il y a 2 jours",
-      comment: "Excellent cours ! Les explications sont très claires et les projets pratiques sont vraiment utiles. Je recommande vivement.",
-      helpful: 12,
-    },
-    {
-      id: "2",
-      user: "Amadou Keita",
-      avatar: "/man-data-scientist-portrait.jpg",
-      rating: 5,
-      date: "Il y a 5 jours",
-      comment: "Le meilleur cours que j'ai suivi sur ce sujet. Le formateur est très pédagogue et le contenu est à jour.",
-      helpful: 8,
-    },
-    {
-      id: "3",
-      user: "Mariam Sangaré",
-      avatar: "/woman-designer-happy.jpg",
-      rating: 4,
-      date: "Il y a 1 semaine",
-      comment: "Très bon cours dans l'ensemble. Quelques sections pourraient être plus détaillées, mais globalement c'est excellent.",
-      helpful: 5,
-    },
-  ]
+  const { data: reviews = [] } = useQuery({
+    queryKey: ["reviews", courseIdNum],
+    queryFn: () => reviewService.getReviewsByCourse(courseIdNum!),
+    enabled: !!courseIdNum && !Number.isNaN(courseIdNum!),
+    staleTime: 5 * 60 * 1000, // 5 minutes
+  });
 
 
 

@@ -45,6 +45,7 @@ export const API_ENDPOINTS = {
     getByPage: "/courses/page",
     enroll: "/courses/enroll",
     addReview: "/api/courses", // Endpoint pour ajouter un avis
+    getReviewsByCourse: "/api/courses", // Endpoint pour récupérer les avis d'un cours
     save: "/courses/save",
     update: "/courses/update",
     delete: "/courses/delete",

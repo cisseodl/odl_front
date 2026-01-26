@@ -1,22 +1,43 @@
-0caae56376e993bd.js:1 
- DELETE https://api.smart-odc.com/awsodclearning/api/reviews/1 404 (Not Found)
-ba3ba857cf32069f.js:1 Error deleting review: Error: API Error 404: Something went wrong
-    at n (0caae56376e993bd.js:1:1828)
-    at async Object.deleteReview (e17fd2279b6e5570.js:3:17247)
-    at async G (ba3ba857cf32069f.js:1:13313)
-G	@	ba3ba857cf32069f.js:1
-await in G		
-sX	@	e1e73461228f2d3c.js:1
-(anonymous)	@	e1e73461228f2d3c.js:1
-tI	@	e1e73461228f2d3c.js:1
-s3	@	e1e73461228f2d3c.js:1
-fC	@	e1e73461228f2d3c.js:1
-fN	@	e1e73461228f2d3c.js:1
+## Endpoint pour la soumission de Témoignages
 
-﻿
+### POST /api/testimonials
 
-Press ctrl i to turn on code suggestions. Press ctrl x to disable code suggestions.
-ctrl
-i
- to turn on code suggestions. Don't show again NEW
+*   **Description :** Permet à un utilisateur authentifié de soumettre un témoignage pour la plateforme.
+*   **Méthode HTTP :** `POST`
+*   **URL de l'endpoint :** `/api/testimonials`
+*   **Corps de la requête (Request Body - JSON) :**
+    ```json
+    {
+      "content": "Votre témoignage ici..."
+    }
+    ```
+    *   `content` (Type: `String`) : Le texte du témoignage.
+*   **Réponse en cas de succès (200 OK) :** `CResponse<TestimonialResponse>`
+    *   Retourne les détails du témoignage soumis.
+*   **Codes d'erreur possibles :**
+    *   `400 Bad Request` : Si le `content` est vide ou ne respecte pas les règles de validation.
+    *   `401 Unauthorized` : Si l'utilisateur n'est pas authentifié.
+*   **Authentification :** Requiert un utilisateur authentifié (`@PreAuthorize("isAuthenticated()")`).
 
+### GET /api/testimonials
+
+*   **Description :** Permet de récupérer tous les témoignages soumis.
+*   **Méthode HTTP :** `GET`
+*   **URL de l'endpoint :** `/api/testimonials`
+*   **Authentification :** Non spécifié, mais souvent pour les utilisateurs authentifiés, ou peut être public. (Dans l'implémentation, il n'y a pas de `@PreAuthorize` donc il est public si la configuration globale l'autorise ou authentifié par `anyRequest().authenticated()` s'il n'est pas dans `permitAll`).
+*   **Réponse (200 OK) :** `CResponse<List<TestimonialResponse>>`
+    *   Retourne une liste d'objets `TestimonialResponse`.
+
+### GET /api/testimonials/user/{userId}
+
+*   **Description :** Permet de récupérer tous les témoignages soumis par un utilisateur spécifique.
+*   **Méthode HTTP :** `GET`
+*   **URL des exemples :**
+    *   `GET /api/testimonials/user/123`
+*   **Path Variable :**
+    *   `userId` (Type: `Long`) : L'identifiant unique de l'utilisateur dont on veut récupérer les témoignages.
+*   **Authentification :** Non spécifié. (Dans l'implémentation, il n'y a pas de `@PreAuthorize` donc il est public si la configuration globale l'autorise ou authentifié par `anyRequest().authenticated()` s'il n'est pas dans `permitAll`).
+*   **Réponse (200 OK) :** `CResponse<List<TestimonialResponse>>`
+    *   Retourne une liste d'objets `TestimonialResponse`.
+
+---
