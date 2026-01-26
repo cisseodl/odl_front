@@ -3,7 +3,7 @@
 import { use, useState, useRef, useMemo, useEffect, Fragment } from "react"
 import { notFound } from "next/navigation"
 import Link from "next/link"
-import { ChevronLeft, ChevronRight, CheckCircle2, Circle, Play, FileText, Code, FlaskConical, Menu, Loader2 } from "lucide-react"
+import { ChevronLeft, ChevronRight, CheckCircle2, Circle, Play, FileText, Code, FlaskConical, Menu, Loader2, Star } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
