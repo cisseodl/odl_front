@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/dialog"
 import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
+import { StatusDialog } from "./status-dialog" // New import
 
 // Simuler un service API pour les témoignages
 const testimonialService = {
@@ -38,20 +39,33 @@ interface TestimonialModalProps {
 
 export function TestimonialModal({ isOpen, onOpenChange }: TestimonialModalProps) {
   const [content, setContent] = useState("")
+  const [showStatusDialog, setShowStatusDialog] = useState(false)
+  const [statusDialogProps, setStatusDialogProps] = useState({
+    title: "",
+    description: "",
+    status: "success" as "success" | "error",
+  })
   const queryClient = useQueryClient()
 
   const addTestimonialMutation = useMutation({
     mutationFn: testimonialService.addTestimonial,
     onSuccess: (data) => {
-      toast.success(data.message)
-      // Invalider les requêtes pour rafraîchir les données si nécessaire
-      queryClient.invalidateQueries({ queryKey: ["testimonials"] })
-      onOpenChange(false) // Fermer le modal
+      onOpenChange(false) // Close the testimonial input modal
+      setShowStatusDialog(true)
+      setStatusDialogProps({
+        title: "Témoignage Soumis avec Succès !",
+        description: data.message,
+        status: "success",
+      })
       setContent("") // Réinitialiser le champ
     },
     onError: (error: any) => {
-      toast.error("Erreur lors de la soumission", {
-        description: error.message || "Une erreur est survenue.",
+      onOpenChange(false) // Close the testimonial input modal
+      setShowStatusDialog(true)
+      setStatusDialogProps({
+        title: "Erreur lors de la Soumission",
+        description: error.message || "Une erreur est survenue lors de l'envoi de votre témoignage.",
+        status: "error",
       })
     },
   })
@@ -101,6 +115,13 @@ export function TestimonialModal({ isOpen, onOpenChange }: TestimonialModalProps
           </Button>
         </DialogFooter>
       </DialogContent>
+      <StatusDialog
+        isOpen={showStatusDialog}
+        onOpenChange={setShowStatusDialog}
+        title={statusDialogProps.title}
+        description={statusDialogProps.description}
+        status={statusDialogProps.status}
+      />
     </Dialog>
   )
 }

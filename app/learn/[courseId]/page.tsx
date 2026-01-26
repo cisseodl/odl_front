@@ -27,6 +27,7 @@ import { FileCheck, Award, GraduationCap } from "lucide-react"
 import { toast } from "sonner"
 import type { Lesson, Module } from "@/lib/types"
 import { CourseActivitiesSection } from "@/components/course-activities-section"
+import { ReviewSuccessDialog } from "@/components/review-success-dialog" // New import
 
 interface LearnPageProps {
   params: Promise<{ courseId: string }>
@@ -113,6 +114,7 @@ export default function LearnPage({ params }: LearnPageProps) {
   const [searchQuery, setSearchQuery] = useState("")
   const [showMiniPlayer, setShowMiniPlayer] = useState(true)
   const [newReview, setNewReview] = useState({ rating: 0, comment: "" }) // Ajout de l'état pour l'avis
+  const [showSuccessDialog, setShowSuccessDialog] = useState(false) // New state for success dialog
   const videoRef = useRef<HTMLVideoElement>(null)
 
   const addReviewMutation = useMutation({
@@ -125,6 +127,8 @@ export default function LearnPage({ params }: LearnPageProps) {
     },
     onSuccess: () => {
       toast.success("Avis ajouté avec succès !");
+      // Open the success dialog
+      setShowSuccessDialog(true);
       // Invalidate queries to refetch reviews for this course, if any are displayed
       // We don't have review display here so no invalidation needed.
       setNewReview({ rating: 0, comment: "" });
@@ -883,6 +887,10 @@ export default function LearnPage({ params }: LearnPageProps) {
         </Card>
       </div>
       </div>
+      <ReviewSuccessDialog
+        isOpen={showSuccessDialog}
+        onOpenChange={setShowSuccessDialog}
+      />
     </ProtectedRoute>
   )
 }

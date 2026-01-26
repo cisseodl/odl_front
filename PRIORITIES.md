@@ -1,28 +1,22 @@
-661aa9d51efce74b.js:1
-POST https://api.smart-odc.com/awsodclearning/courses/2/reviews?rating=4&comment=Un+cour+complet 404 (Not Found)
-request @ 661aa9d51efce74b.js:1
-post @ 661aa9d51efce74b.js:1
-addReview @ 661aa9d51efce74b.js:1
-mutationFn @ 8125c49d40c5bf1c.js:10
-fn @ 250e1c751a012ca9.js:3
-m @ aed27c3fd59ab5f5.js:1
-start @ aed27c3fd59ab5f5.js:1
-execute @ 250e1c751a012ca9.js:3
-await in execute
-mutate @ 8125c49d40c5bf1c.js:10
-(anonymous) @ 8125c49d40c5bf1c.js:10
-onClick @ 8125c49d40c5bf1c.js:10
-sX @ 50cc9bab3846708c.js:1
-(anonymous) @ 50cc9bab3846708c.js:1
-tI @ 50cc9bab3846708c.js:1
-s3 @ 50cc9bab3846708c.js:1
-fC @ 50cc9bab3846708c.js:1
-fN @ 50cc9bab3846708c.js:1
-Turn on Console insights in Settings to receive AI assistance for understanding and addressing console warnings and errors. Learn more
+0caae56376e993bd.js:1 
+ DELETE https://api.smart-odc.com/awsodclearning/api/reviews/1 404 (Not Found)
+ba3ba857cf32069f.js:1 Error deleting review: Error: API Error 404: Something went wrong
+    at n (0caae56376e993bd.js:1:1828)
+    at async Object.deleteReview (e17fd2279b6e5570.js:3:17247)
+    at async G (ba3ba857cf32069f.js:1:13313)
+G	@	ba3ba857cf32069f.js:1
+await in G		
+sX	@	e1e73461228f2d3c.js:1
+(anonymous)	@	e1e73461228f2d3c.js:1
+tI	@	e1e73461228f2d3c.js:1
+s3	@	e1e73461228f2d3c.js:1
+fC	@	e1e73461228f2d3c.js:1
+fN	@	e1e73461228f2d3c.js:1
 
 ﻿
 
 Press ctrl i to turn on code suggestions. Press ctrl x to disable code suggestions.
 ctrl
 i
-to turn on code suggestions. Don't show again NEW
+ to turn on code suggestions. Don't show again NEW
+
