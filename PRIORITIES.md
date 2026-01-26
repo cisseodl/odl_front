@@ -1,75 +1,28 @@
-💥 ERREUR BLOQUANTE
-ReferenceError: Star is not defined
+661aa9d51efce74b.js:1
+POST https://api.smart-odc.com/awsodclearning/courses/2/reviews?rating=4&comment=Un+cour+complet 404 (Not Found)
+request @ 661aa9d51efce74b.js:1
+post @ 661aa9d51efce74b.js:1
+addReview @ 661aa9d51efce74b.js:1
+mutationFn @ 8125c49d40c5bf1c.js:10
+fn @ 250e1c751a012ca9.js:3
+m @ aed27c3fd59ab5f5.js:1
+start @ aed27c3fd59ab5f5.js:1
+execute @ 250e1c751a012ca9.js:3
+await in execute
+mutate @ 8125c49d40c5bf1c.js:10
+(anonymous) @ 8125c49d40c5bf1c.js:10
+onClick @ 8125c49d40c5bf1c.js:10
+sX @ 50cc9bab3846708c.js:1
+(anonymous) @ 50cc9bab3846708c.js:1
+tI @ 50cc9bab3846708c.js:1
+s3 @ 50cc9bab3846708c.js:1
+fC @ 50cc9bab3846708c.js:1
+fN @ 50cc9bab3846708c.js:1
+Turn on Console insights in Settings to receive AI assistance for understanding and addressing console warnings and errors. Learn more
 
-Ce que ça veut dire (sans détour)
+﻿
 
-👉 Tu utilises un composant <Star />
-👉 Mais il n’est PAS importé
-👉 Donc JavaScript plante → React plante → ErrorBoundary
-
-📍 Où est le bug
-
-Dans un composant qui fait un .map() (probablement cours / modules / rating / features)
-
-Exemple typique :
-
-{items.map(item => (
-  <Star className="w-4 h-4 text-yellow-500" />
-))}
-
-
-Mais en haut du fichier, tu n’as PAS :
-
-import { Star } from "lucide-react"
-
-✅ CORRECTION IMMÉDIATE
-Si tu utilises lucide-react (le plus probable)
-
-Ajoute en haut du fichier concerné :
-
-import { Star } from "lucide-react"
-
-
-💡 Si tu as aussi Play, Check, etc. :
-
-import { Star, Play, Check } from "lucide-react"
-
-Si tu voulais utiliser une icône différente
-
-Soit tu :
-
-changes <Star /> → <span>⭐</span>
-
-ou tu importes depuis la bonne lib (react-icons, etc.)
-
-🔍 Pourquoi ça arrive seulement maintenant ?
-
-Parce que :
-
-Le composant est rendu seulement quand les données arrivent
-
-Avant, le 403 empêchait ce rendu
-
-Maintenant que l’API répond → React entre dans le .map() → 💥
-
-⚠️ À propos du warning contentUrl introuvable
-
-Je confirme :
-🟡 ce warning n’est PAS responsable du crash
-
-Tu peux le laisser pour l’instant ou le rendre safe :
-
-contentUrl: raw.contentUrl ?? null
-
-🧠 Résumé clair
-Message	Impact
-contentUrl introuvable	🟡 Warning
-Star is not defined	🔴 CRASH
-ErrorBoundary	🧯 Conséquence
-✅ Checklist rapide
-
- Ajouter import { Star } from "lucide-react"
-
- Vérifier le fichier exact mentionné (4d01f5de7184ed64.js → source originale)
-
- Rebuild / redeploy
+Press ctrl i to turn on code suggestions. Press ctrl x to disable code suggestions.
+ctrl
+i
+to turn on code suggestions. Don't show again NEW

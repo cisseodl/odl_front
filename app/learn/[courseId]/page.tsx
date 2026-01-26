@@ -820,6 +820,25 @@ export default function LearnPage({ params }: LearnPageProps) {
       </div>
 
       {/* Add Review Form */}
+
+
+      {/* Note: Les labs associés à la leçon actuelle sont affichés juste après le contenu de la leçon */}
+
+      {/* Mini Player */}
+      {currentLessonData?.type === "video" && showMiniPlayer && (
+        <MiniPlayer
+          title={currentLessonData?.title || "Leçon"}
+          thumbnail={course?.imageUrl}
+          videoRef={videoRef}
+          onExpand={() => {
+            // Scroll to top to show full player
+            window.scrollTo({ top: 0, behavior: "smooth" })
+          }}
+          onClose={() => setShowMiniPlayer(false)}
+        />
+      )}
+
+      {/* Add Review Form */}
       <div className="container max-w-6xl mx-auto p-4 md:p-6 space-y-6">
         <Card className="border-2">
           <CardContent className="p-6 space-y-4">
@@ -863,22 +882,6 @@ export default function LearnPage({ params }: LearnPageProps) {
           </CardContent>
         </Card>
       </div>
-
-      {/* Note: Les labs associés à la leçon actuelle sont affichés juste après le contenu de la leçon */}
-
-      {/* Mini Player */}
-      {currentLessonData?.type === "video" && showMiniPlayer && (
-        <MiniPlayer
-          title={currentLessonData?.title || "Leçon"}
-          thumbnail={course?.imageUrl}
-          videoRef={videoRef}
-          onExpand={() => {
-            // Scroll to top to show full player
-            window.scrollTo({ top: 0, behavior: "smooth" })
-          }}
-          onClose={() => setShowMiniPlayer(false)}
-        />
-      )}
       </div>
     </ProtectedRoute>
   )
