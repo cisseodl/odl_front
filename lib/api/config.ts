@@ -145,6 +145,11 @@ export const API_ENDPOINTS = {
     update: "/api/odc-formations",
     delete: "/api/odc-formations",
   },
+  // Testimonials
+  testimonials: {
+    getAll: "/api/testimonials",
+    save: "/api/testimonials", // for POST
+  },
   // Evaluations (Exams)
   evaluations: {
     getAll: "/api/evaluations/get-all",

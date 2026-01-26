@@ -328,6 +328,29 @@ export const reviewService = {
   },
 }
 
+// ============ Testimonial Services ============
+export const testimonialService = {
+  async getAllTestimonials(): Promise<any[]> {
+    try {
+      const response = await apiClient.get<any>(API_ENDPOINTS.testimonials.getAll);
+      if (response.ok && response.data) {
+        const testimonials = Array.isArray(response.data)
+          ? response.data
+          : (response.data.data && Array.isArray(response.data.data) ? response.data.data : []);
+        return testimonials;
+      }
+      return [];
+    } catch (error) {
+      console.error("Error fetching testimonials:", error);
+      return [];
+    }
+  },
+
+  async addTestimonial(content: string): Promise<ApiResponse<any>> {
+    return apiClient.post(API_ENDPOINTS.testimonials.save, { content });
+  },
+}
+
 
 // ============ Category Services ============
 export const categoryService = {

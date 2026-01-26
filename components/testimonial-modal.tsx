@@ -18,19 +18,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
 import { StatusDialog } from "./status-dialog" // New import
 
-// Simuler un service API pour les témoignages
-const testimonialService = {
-  addTestimonial: async (content: string) => {
-    console.log("Submitting testimonial:", content)
-    // Simuler un délai réseau
-    await new Promise(resolve => setTimeout(resolve, 1000))
-    if (content.trim().length < 10) {
-      throw new Error("Le témoignage doit contenir au moins 10 caractères.")
-    }
-    // Simuler une réponse de succès
-    return { success: true, message: "Témoignage ajouté avec succès !" }
-  },
-}
+import { testimonialService } from "@/lib/api/services" // Import the real testimonial service
 
 interface TestimonialModalProps {
   isOpen: boolean

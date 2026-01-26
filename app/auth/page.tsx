@@ -58,7 +58,7 @@ export default function AuthPage() {
       toast.success("Connexion réussie !", {
         description: "Bienvenue sur Orange Digital Learning",
       })
-      router.push("/dashboard")
+      router.push("/")
       router.refresh()
     } catch (error) {
       // Afficher le dialog d'erreur au lieu du toast
