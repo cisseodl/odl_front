@@ -405,6 +405,26 @@ export function CourseDetailClient({ course }: CourseDetailClientProps) {
   }, [course.curriculum, dynamicCurriculum])
   const totalLectures = getTotalLectures(curriculum)
 
+  const totalRealDuration = useMemo(() => {
+    return curriculum.reduce((totalMinutes, module) => {
+      const moduleMinutes = module.lessons?.reduce((acc, lesson) => {
+        const duration = lesson.duration || "0m"
+        const minutes = parseInt(duration.replace(/[^0-9]/g, "")) || 0
+        return acc + minutes
+      }, 0) || 0
+      return totalMinutes + moduleMinutes
+    }, 0);
+  }, [curriculum]);
+
+  const formattedTotalRealDuration = useMemo(() => {
+    if (totalRealDuration === 0) return "0m";
+    const hours = Math.floor(totalRealDuration / 60);
+    const minutes = totalRealDuration % 60;
+    if (hours > 0 && minutes > 0) return `${hours}h ${minutes}m`;
+    if (hours > 0) return `${hours}h`;
+    return `${minutes}m`;
+  }, [totalRealDuration]);
+
   // Scroll spy for tabs
   const sectionIds = ["overview", "content", "instructor", "reviews", "faq"]
   const activeSection = useScrollSpy({ sectionIds, offset: 150 })
@@ -713,11 +733,11 @@ export function CourseDetailClient({ course }: CourseDetailClientProps) {
                     <div className="flex items-center justify-between mb-4">
                       <h3 className="text-xl font-bold text-foreground">Contenu du cours</h3>
                       <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                        <span>{curriculum.length} sections</span>
+                        <span>{curriculum.length} modules</span>
                         <span>•</span>
-                        <span>{totalLectures || 398} leçons</span>
+                        <span>{totalLectures} leçons</span>
                         <span>•</span>
-                        <span>{course.duration}h de contenu</span>
+                        <span>{formattedTotalRealDuration} de contenu</span>
                       </div>
                     </div>
                     <Accordion type="multiple" className="w-full space-y-3" defaultValue={curriculum.length > 0 && curriculum[0]?.id ? [String(curriculum[0].id)] : []}>
