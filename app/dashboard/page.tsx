@@ -445,51 +445,34 @@ export default function DashboardPage() {
                   ) : enrolledCoursesWithProgress.length > 0 ? (
                     enrolledCoursesWithProgress.map((course, index) => (
                       <FadeInView key={course.id} delay={0.3 + index * 0.1}>
-                        <div className="group p-4 border-2 rounded-xl hover:border-primary/40 hover:bg-primary/5 transition-all duration-300 hover:shadow-lg">
-                          <div className="flex items-start justify-between gap-4">
-                            <div className="flex-1 space-y-3">
-                              <div className="flex items-start justify-between gap-2">
-                                <div className="flex-1">
-                                  <h4 className="font-bold text-base line-clamp-1 group-hover:text-primary transition-colors">
-                                    {course.title}
-                                  </h4>
-                                  <div className="flex items-center gap-2 mt-1">
-                                    <Badge variant="outline" className="text-xs">
-                                      {course.category || "Non catégorisé"}
-                                    </Badge>
-                                    <p className="text-sm text-muted-foreground">
-                                    {course.instructor?.name || "Formateur"}
-                                  </p>
-                                </div>
-                                </div>
-                                {(course.progress || 0) === 100 && (
-                                <Badge className="bg-primary text-white font-semibold border-0 shadow-sm">
-                                    Complété
-                                </Badge>
-                                )}
-                              </div>
-                            </div>
-                            <div className="flex items-center gap-2">
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-9 w-9"
-                                onClick={() => setShowMiniPlayer(!showMiniPlayer)}
-                                title="Afficher le mini player"
-                              >
-                                <Play className="h-4 w-4" />
-                              </Button>
-                            <Button 
-                              className="h-7 px-2 text-xs bg-primary text-white hover:bg-primary/90 font-semibold shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105" // Custom smaller size
-                              asChild
-                            >
-                              <Link href={`/learn/${course.id}`}>
-                                Reprendre
-                              </Link>
-                            </Button>
-                            </div>
-                          </div>
-                        </div>
+                                                <Link href={`/learn/${course.id}`} className="block"> {/* Wrapped with Link */}
+                                                  <div className="group p-4 border-2 rounded-xl hover:border-primary/40 hover:bg-primary/5 transition-all duration-300 hover:shadow-lg">
+                                                    <div className="flex items-start justify-between gap-4">
+                                                      <div className="flex-1 space-y-3">
+                                                        <div className="flex items-start justify-between gap-2">
+                                                          <div className="flex-1">
+                                                            <h4 className="font-bold text-base line-clamp-1 group-hover:text-primary transition-colors">
+                                                              {course.title}
+                                                            </h4>
+                                                            <div className="flex items-center gap-2 mt-1">
+                                                              <Badge variant="outline" className="text-xs">
+                                                                {course.category || "Non catégorisé"}
+                                                              </Badge>
+                                                              <p className="text-sm text-muted-foreground">
+                                                              {course.instructor?.name || "Formateur"}
+                                                            </p>
+                                                          </div>
+                                                          </div>
+                                                          {(course.progress || 0) === 100 && (
+                                                          <Badge className="bg-primary text-white font-semibold border-0 shadow-sm">
+                                                              Complété
+                                                          </Badge>
+                                                          )}
+                                                        </div>
+                                                      </div>
+                                                    </div>
+                                                  </div>
+                                                </Link>
                       </FadeInView>
                     ))
                   ) : (
