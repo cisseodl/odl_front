@@ -480,13 +480,11 @@ export default function DashboardPage() {
                                 <Play className="h-4 w-4" />
                               </Button>
                             <Button 
-                              size="sm" 
-                              className="bg-primary text-white hover:bg-primary/90 font-semibold shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105"
+                              className="h-7 px-2 text-xs bg-primary text-white hover:bg-primary/90 font-semibold shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105" // Custom smaller size
                               asChild
                             >
                               <Link href={`/learn/${course.id}`}>
                                 Reprendre
-                                <Play className="h-4 w-4 ml-1.5" />
                               </Link>
                             </Button>
                             </div>
