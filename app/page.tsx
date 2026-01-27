@@ -317,7 +317,7 @@ export default function HomePage() {
           <FadeInView delay={0.1}>
             <div className="text-center mb-8 lg:mb-12">
               <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-black mb-4 tracking-tight">
-                Annonce
+                Orange Digital Center
               </h2>
               <p className="text-sm text-muted-foreground max-w-2xl mx-auto">
                 Découvrez nos programmes de formation et accompagnement
