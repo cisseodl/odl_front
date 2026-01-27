@@ -196,7 +196,7 @@ export function LessonContentViewer({ contentUrl, title, type, className }: Less
             />
           ) : isPDF ? (
             <iframe
-              src={getViewerUrl()}
+              src={fullUrl} // Directement l'URL du PDF
               title={title}
               className="w-full h-[600px] md:h-[800px] border-0"
               onLoad={() => setIsLoading(false)}
@@ -204,8 +204,9 @@ export function LessonContentViewer({ contentUrl, title, type, className }: Less
                 setIsLoading(false)
                 setError("Impossible de charger le document PDF")
               }}
-              allow="fullscreen"
+              allowFullScreen={true}
               type="application/pdf"
+              referrerPolicy="no-referrer"
             />
           ) : isWord ? (
             <div className="w-full h-[600px] flex flex-col items-center justify-center bg-muted rounded-lg p-8">
