@@ -311,7 +311,7 @@ export const courseService = {
 export const reviewService = {
   async getReviewsByCourse(courseId: number): Promise<any[]> { // Return type should be more specific, e.g., Review[]
     try {
-      const response = await apiClient.get<any>(`${API_ENDPOINTS.courses.getReviewsByCourse}/${courseId}/reviews`);
+      const response = await apiClient.get<any>(`${API_ENDPOINTS.reviews.getByCourse}/${courseId}`);
 
       if (response.ok && response.data) {
         // Assume backend returns a list of reviews or a CResponse containing a list
