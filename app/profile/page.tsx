@@ -15,12 +15,12 @@ import { CourseCard } from "@/components/course-card"
 import { mockCourses } from "@/lib/data"
 import { ProtectedRoute } from "@/components/protected-route"
 import { useQuery } from "@tanstack/react-query"
-import { apprenantService, cohorteService, profileService, certificateService, courseService } from "@/lib/api/services"
+import { apprenantService, profileService, certificateService, courseService } from "@/lib/api/services"
 import { useAuthStore } from "@/lib/store/auth-store"
 import { toast } from "sonner"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
-import type { ApprenantCreateRequest, ApprenantUpdateRequest, Cohorte, CertificateDto, Apprenant } from "@/lib/api/types"
+import type { ApprenantCreateRequest, ApprenantUpdateRequest, CertificateDto, Apprenant } from "@/lib/api/types"
 
 export default function ProfilePage() {
   const router = useRouter()
@@ -758,25 +758,6 @@ export default function ProfilePage() {
                     className="bg-white"
                     placeholder="Ex: Informatique, Commerce, etc."
                   />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="cohorteId" className="text-black">Cohorte</Label>
-                  <Select
-                    value={apprenantForm.cohorteId?.toString() || ""}
-                    onValueChange={(value) => setApprenantForm({ ...apprenantForm, cohorteId: value ? Number(value) : undefined })}
-                  >
-                    <SelectTrigger className="bg-white">
-                      <SelectValue placeholder="Sélectionnez une cohorte (optionnel)" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {cohortes.map((cohorte) => (
-                        <SelectItem key={cohorte.id} value={cohorte.id.toString()}>
-                          {cohorte.nom}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
                 </div>
 
                 <div className="space-y-2">
