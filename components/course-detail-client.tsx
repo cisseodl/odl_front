@@ -921,63 +921,112 @@ export function CourseDetailClient({ course }: CourseDetailClientProps) {
 
                     {/* Reviews List */}
                     <div className="space-y-4">
-                      {reviews && Array.isArray(reviews) && reviews.length > 0 ? reviews.map((review) => {
-                        // S'assurer que toutes les valeurs sont des primitives
-                        const reviewId = review?.id ? String(review.id) : `review-${Math.random()}`;
-                        const userName = review?.user?.fullName || review?.user?.email || "Utilisateur inconnu";
-                        const userAvatar = review?.user?.avatar || "/placeholder-user.jpg";
-                        const userInitial = userName && typeof userName === 'string' ? userName[0] : "U";
-                        const rating = typeof review?.rating === 'number' ? review.rating : 0;
-                        const comment = review?.comment || "";
-                        
-                        // Gérer createdAt - peut être une string ou un objet Date
-                        let reviewDate = "Date inconnue";
-                        try {
-                          if (review?.createdAt) {
-                            const dateValue = typeof review.createdAt === 'string' 
-                              ? new Date(review.createdAt) 
-                              : review.createdAt instanceof Date 
-                                ? review.createdAt 
-                                : new Date(String(review.createdAt));
-                            if (!isNaN(dateValue.getTime())) {
-                              reviewDate = dateValue.toLocaleDateString("fr-FR", { 
-                                day: "numeric", 
-                                month: "short", 
-                                year: "numeric" 
-                              });
+                      {reviews && Array.isArray(reviews) && reviews.length > 0 ? reviews
+                        .filter((review) => {
+                          // Filtrer les reviews invalides
+                          if (!review || typeof review !== 'object') return false;
+                          // S'assurer que review n'est pas null/undefined et a au moins un id ou une propriété valide
+                          return review.id !== null && review.id !== undefined;
+                        })
+                        .map((review, index) => {
+                          // S'assurer que toutes les valeurs sont des primitives
+                          const reviewId = review?.id 
+                            ? (typeof review.id === 'number' ? String(review.id) : String(review.id))
+                            : `review-${index}-${Date.now()}`;
+                          
+                          // Extraire les valeurs primitives de user
+                          const userObj = review?.user;
+                          const userName = (userObj && typeof userObj === 'object')
+                            ? (String(userObj.fullName || userObj.email || "Utilisateur inconnu"))
+                            : "Utilisateur inconnu";
+                          const userAvatar = (userObj && typeof userObj === 'object' && typeof userObj.avatar === 'string')
+                            ? userObj.avatar
+                            : "/placeholder-user.jpg";
+                          const userInitial = userName && typeof userName === 'string' && userName.length > 0
+                            ? userName[0].toUpperCase()
+                            : "U";
+                          
+                          // Extraire rating et comment
+                          const rating = (typeof review?.rating === 'number' && !isNaN(review.rating))
+                            ? Math.max(0, Math.min(5, review.rating))
+                            : 0;
+                          const comment = (typeof review?.comment === 'string')
+                            ? review.comment
+                            : "";
+                          
+                          // Gérer createdAt - peut être une string ou un objet Date
+                          let reviewDate = "Date inconnue";
+                          try {
+                            if (review?.createdAt) {
+                              let dateValue: Date;
+                              if (typeof review.createdAt === 'string') {
+                                dateValue = new Date(review.createdAt);
+                              } else if (review.createdAt instanceof Date) {
+                                dateValue = review.createdAt;
+                              } else if (typeof review.createdAt === 'object' && review.createdAt !== null) {
+                                // Si c'est un objet, essayer de le convertir en string puis en Date
+                                dateValue = new Date(String(review.createdAt));
+                              } else {
+                                dateValue = new Date(String(review.createdAt));
+                              }
+                              
+                              if (!isNaN(dateValue.getTime())) {
+                                reviewDate = dateValue.toLocaleDateString("fr-FR", { 
+                                  day: "numeric", 
+                                  month: "short", 
+                                  year: "numeric" 
+                                });
+                              }
                             }
+                          } catch (e) {
+                            console.warn("Erreur lors du formatage de la date:", e);
+                            reviewDate = "Date inconnue";
                           }
-                        } catch (e) {
-                          console.warn("Erreur lors du formatage de la date:", e);
-                        }
 
-                        return (
-                          <Card key={reviewId} className="border-2 hover:border-primary/20 transition-all">
-                            <CardContent className="p-6">
-                              <div className="flex items-start gap-4">
-                                <Avatar className="h-12 w-12 border-2 border-primary/30">
-                                  <AvatarImage src={userAvatar} alt={userName} />
-                                  <AvatarFallback className="bg-primary text-white font-bold">
-                                    {userInitial}
-                                  </AvatarFallback>
-                                </Avatar>
-                                <div className="flex-1 space-y-2">
-                                  <div className="flex items-start justify-between gap-4">
-                                    <div>
-                                      <p className="font-bold text-sm text-foreground">{userName}</p>
-                                      <div className="flex items-center gap-2 mt-1">
-                                        <RatingStars rating={rating} size="sm" />
-                                        <span className="text-xs text-muted-foreground">{reviewDate}</span>
+                          // Vérifier que toutes les valeurs sont des primitives avant le rendu
+                          if (typeof userName !== 'string' || typeof userAvatar !== 'string' || 
+                              typeof userInitial !== 'string' || typeof comment !== 'string' ||
+                              typeof reviewDate !== 'string' || typeof rating !== 'number') {
+                            console.warn("Valeurs non primitives détectées dans review:", {
+                              reviewId,
+                              userName: typeof userName,
+                              userAvatar: typeof userAvatar,
+                              rating: typeof rating,
+                              comment: typeof comment,
+                              reviewDate: typeof reviewDate
+                            });
+                            return null; // Ne pas rendre si les valeurs ne sont pas primitives
+                          }
+
+                          return (
+                            <Card key={reviewId} className="border-2 hover:border-primary/20 transition-all">
+                              <CardContent className="p-6">
+                                <div className="flex items-start gap-4">
+                                  <Avatar className="h-12 w-12 border-2 border-primary/30">
+                                    <AvatarImage src={userAvatar} alt={userName} />
+                                    <AvatarFallback className="bg-primary text-white font-bold">
+                                      {userInitial}
+                                    </AvatarFallback>
+                                  </Avatar>
+                                  <div className="flex-1 space-y-2">
+                                    <div className="flex items-start justify-between gap-4">
+                                      <div>
+                                        <p className="font-bold text-sm text-foreground">{userName}</p>
+                                        <div className="flex items-center gap-2 mt-1">
+                                          <RatingStars rating={rating} size="sm" />
+                                          <span className="text-xs text-muted-foreground">{reviewDate}</span>
+                                        </div>
                                       </div>
                                     </div>
+                                    <p className="text-sm text-muted-foreground leading-relaxed">{comment}</p>
                                   </div>
-                                  <p className="text-sm text-muted-foreground leading-relaxed">{comment}</p>
                                 </div>
-                              </div>
-                            </CardContent>
-                          </Card>
-                        );
-                      }) : (
+                              </CardContent>
+                            </Card>
+                          );
+                        })
+                        .filter((element) => element !== null) // Filtrer les éléments null
+                      : (
                         <div className="p-8 text-center text-muted-foreground border-2 border-dashed border-border rounded-xl">
                           <p>Aucun avis pour le moment. Soyez le premier à en laisser un !</p>
                         </div>
