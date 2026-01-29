@@ -751,6 +751,52 @@ export default function LearnPage({ params }: LearnPageProps) {
               </Tabs>
             )}
 
+            {/* Section Avis - Affichée après le contenu (vidéo/PDF) mais avant les labs */}
+            <div className="mt-8 space-y-4">
+              <Separator />
+              <Card className="border-2">
+                <CardContent className="p-6 space-y-4">
+                  <h3 className="text-xl font-bold">Laissez votre avis sur ce cours</h3>
+                  <div>
+                    <p className="font-medium mb-2">Votre note</p>
+                    <div className="flex items-center gap-1">
+                      {[1, 2, 3, 4, 5].map((star) => (
+                        <Star
+                          key={star}
+                          className={cn(
+                            "h-6 w-6 cursor-pointer transition-colors",
+                            star <= newReview.rating
+                              ? "fill-primary text-primary"
+                              : "text-gray-300 hover:text-gray-400"
+                          )}
+                          onClick={() => setNewReview({ ...newReview, rating: star })}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                  <div>
+                    <p className="font-medium mb-2">Votre commentaire</p>
+                    <Textarea
+                      placeholder="Partagez votre expérience avec ce cours..."
+                      value={newReview.comment}
+                      onChange={(e) => setNewReview({ ...newReview, comment: e.target.value })}
+                      rows={4}
+                    />
+                  </div>
+                  <Button onClick={handleReviewSubmit} disabled={addReviewMutation.isPending}>
+                    {addReviewMutation.isPending ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Envoi en cours...
+                      </>
+                    ) : (
+                      "Envoyer mon avis"
+                    )}
+                  </Button>
+                </CardContent>
+              </Card>
+            </div>
+
             {/* Labs associés à la leçon actuelle */}
             {(() => {
               // Filtrer les labs pour n'afficher que ceux associés à la leçon actuelle
@@ -824,11 +870,6 @@ export default function LearnPage({ params }: LearnPageProps) {
         </div>
       </div>
 
-      {/* Add Review Form */}
-
-
-      {/* Note: Les labs associés à la leçon actuelle sont affichés juste après le contenu de la leçon */}
-
       {/* Mini Player */}
       {currentLessonData?.type === "video" && showMiniPlayer && (
         <MiniPlayer
@@ -842,51 +883,6 @@ export default function LearnPage({ params }: LearnPageProps) {
           onClose={() => setShowMiniPlayer(false)}
         />
       )}
-
-      {/* Add Review Form */}
-      <div className="container max-w-6xl mx-auto p-4 md:p-6 space-y-6">
-        <Card className="border-2">
-          <CardContent className="p-6 space-y-4">
-            <h3 className="text-xl font-bold">Laissez votre avis sur ce cours</h3>
-            <div>
-              <p className="font-medium mb-2">Votre note</p>
-              <div className="flex items-center gap-1">
-                {[1, 2, 3, 4, 5].map((star) => (
-                  <Star
-                    key={star}
-                    className={cn(
-                      "h-6 w-6 cursor-pointer transition-colors",
-                      star <= newReview.rating
-                        ? "fill-primary text-primary"
-                        : "text-gray-300 hover:text-gray-400"
-                    )}
-                    onClick={() => setNewReview({ ...newReview, rating: star })}
-                  />
-                ))}
-              </div>
-            </div>
-            <div>
-              <p className="font-medium mb-2">Votre commentaire</p>
-              <Textarea
-                placeholder="Partagez votre expérience avec ce cours..."
-                value={newReview.comment}
-                onChange={(e) => setNewReview({ ...newReview, comment: e.target.value })}
-                rows={4}
-              />
-            </div>
-            <Button onClick={handleReviewSubmit} disabled={addReviewMutation.isPending}>
-              {addReviewMutation.isPending ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Envoi en cours...
-                </>
-              ) : (
-                "Envoyer mon avis"
-              )}
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
       </div>
       <ReviewSuccessDialog
         isOpen={showSuccessDialog}

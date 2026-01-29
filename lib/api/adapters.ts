@@ -287,7 +287,10 @@ export function adaptModule(moduleDto: ModuleDto | any): Module {
           contentUrl: adapted.contentUrl
         })
       } else {
-        console.warn(`⚠️ [ADAPTER] adaptModule - contentUrl introuvable dans données brutes pour leçon ${rawLesson.id}`)
+        // Ne pas afficher de warning si contentUrl n'est pas nécessaire pour ce type de leçon
+        if (rawLesson.type === "DOCUMENT" || rawLesson.type === "document") {
+          console.warn(`⚠️ [ADAPTER] adaptModule - contentUrl introuvable dans données brutes pour leçon ${rawLesson.id} (type: ${rawLesson.type})`)
+        }
       }
     } else if (adapted.contentUrl) {
       console.log(`✅ [ADAPTER] adaptModule - contentUrl déjà présent après adaptation:`, {
