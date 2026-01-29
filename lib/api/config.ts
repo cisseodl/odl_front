@@ -9,11 +9,13 @@
 const getBaseURL = (): string => {
   const envURL = process.env.NEXT_PUBLIC_API_FRONT
   if (envURL) {
+    // Nettoyer l'URL (enlever les slashes finaux)
+    const cleanURL = envURL.trim().replace(/\/+$/, '')
     // Si l'URL d'environnement ne contient pas déjà le context path, l'ajouter
-    if (!envURL.includes('/awsodclearning')) {
-      return `${envURL}/awsodclearning`
+    if (!cleanURL.includes('/awsodclearning')) {
+      return `${cleanURL}/awsodclearning`
     }
-    return envURL
+    return cleanURL
   }
   // URL par défaut avec context path
   return "https://api.smart-odc.com/awsodclearning"

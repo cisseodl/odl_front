@@ -38,25 +38,42 @@ export function TestimonialModal({ isOpen, onOpenChange }: TestimonialModalProps
   const addTestimonialMutation = useMutation({
     mutationFn: testimonialService.addTestimonial,
     onSuccess: (response) => {
-      // Invalider les queries pour rafraîchir la liste des témoignages
-      queryClient.invalidateQueries({ queryKey: ["testimonials"] })
-      
-      onOpenChange(false) // Close the testimonial input modal
-      setShowStatusDialog(true)
-      setStatusDialogProps({
-        title: "Témoignage Soumis avec Succès !",
-        description: response.data?.message || response.message || "Votre témoignage a été soumis avec succès.",
-        status: "success",
-      })
-      setContent("") // Réinitialiser le champ
+      // Vérifier que la réponse est vraiment un succès
+      if (response.ok && !response.ko) {
+        // Invalider les queries pour rafraîchir la liste des témoignages
+        queryClient.invalidateQueries({ queryKey: ["testimonials"] })
+        
+        onOpenChange(false) // Close the testimonial input modal
+        setShowStatusDialog(true)
+        setStatusDialogProps({
+          title: "Témoignage Soumis avec Succès !",
+          description: response.data?.message || response.message || "Votre témoignage a été soumis avec succès.",
+          status: "success",
+        })
+        setContent("") // Réinitialiser le champ
+      } else {
+        // Si la réponse indique une erreur, traiter comme une erreur
+        onOpenChange(false)
+        setShowStatusDialog(true)
+        setStatusDialogProps({
+          title: "Erreur lors de la Soumission",
+          description: response.message || "Une erreur est survenue lors de l'envoi de votre témoignage.",
+          status: "error",
+        })
+      }
     },
     onError: (error: any) => {
+      console.error("Erreur lors de la soumission du témoignage:", error)
       onOpenChange(false) // Close the testimonial input modal
       setShowStatusDialog(true)
       
       // Extraire le message d'erreur depuis la réponse API
       let errorMessage = "Une erreur est survenue lors de l'envoi de votre témoignage."
-      if (error?.response?.data?.message) {
+      
+      // Gérer les erreurs 404 spécifiquement
+      if (error?.message?.includes("404") || error?.response?.status === 404) {
+        errorMessage = "L'endpoint de témoignages n'est pas disponible. Veuillez contacter l'administrateur."
+      } else if (error?.response?.data?.message) {
         errorMessage = error.response.data.message
       } else if (error?.message) {
         errorMessage = error.message

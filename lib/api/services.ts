@@ -351,7 +351,30 @@ export const testimonialService = {
   },
 
   async addTestimonial(content: string): Promise<ApiResponse<any>> {
-    return apiClient.post(API_ENDPOINTS.testimonials.save, { content });
+    try {
+      const response = await apiClient.post(API_ENDPOINTS.testimonials.save, { content });
+      
+      // Vérifier explicitement si la réponse est un succès
+      if (!response.ok || response.ko) {
+        console.error("Erreur lors de l'ajout du témoignage:", response);
+        return {
+          ...response,
+          ok: false,
+          ko: true,
+          message: response.message || "Erreur lors de l'envoi du témoignage",
+        };
+      }
+      
+      return response;
+    } catch (error: any) {
+      console.error("Exception lors de l'ajout du témoignage:", error);
+      return {
+        data: undefined,
+        ok: false,
+        ko: true,
+        message: error?.message || "Une erreur est survenue lors de l'envoi de votre témoignage.",
+      };
+    }
   },
 }
 
