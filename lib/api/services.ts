@@ -289,21 +289,12 @@ export const courseService = {
 
   /**
    * Ajouter un avis à un cours
-   * POST /api/courses/{courseId}/reviews
-   * Paramètres de requête: rating (Integer), comment (String)
+   * POST /reviews/add/{courseId}
+   * Body: { rating: number, comment: string }
    */
   async addReview(courseId: number, review: { rating: number; comment: string }): Promise<ApiResponse<any>> {
-    const endpoint = `${API_ENDPOINTS.courses.addReview}/${courseId}/reviews`;
-    const queryParams = new URLSearchParams({
-      rating: review.rating.toString(),
-      comment: review.comment,
-    }).toString();
-
-    // apiClient.postByQueryParams allows passing query parameters directly for POST requests
-    // Assuming apiClient has a method for this, otherwise we construct the URL
-    // For now, let's assume apiClient.post can handle a body and the query params are part of the URL
-    // If not, a specific method would be needed in apiClient
-    return apiClient.post(`${endpoint}?${queryParams}`, {}); // Empty body as per API spec from PRIORITIES.md
+    const endpoint = `${API_ENDPOINTS.reviews.add}/${courseId}`;
+    return apiClient.post(endpoint, { rating: review.rating, comment: review.comment });
   },
 }
 

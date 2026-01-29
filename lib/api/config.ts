@@ -55,6 +55,7 @@ export const API_ENDPOINTS = {
   // Review
   reviews: {
     getByCourse: "/reviews/course",
+    add: "/reviews/add",
   },
   categories: {
     getAll: "/api/categories/read",
