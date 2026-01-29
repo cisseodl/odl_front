@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect } from "react"
+import { useEffect, useRef } from "react"
 import { useRouter } from "next/navigation"
 import { useAuthStore } from "@/lib/store/auth-store"
 
@@ -10,9 +10,16 @@ interface ProtectedRouteProps {
 
 export function ProtectedRoute({ children }: ProtectedRouteProps) {
   const router = useRouter()
-  const { isAuthenticated, isLoading, checkAuth, logout } = useAuthStore()
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
+  const isLoading = useAuthStore((s) => s.isLoading)
+  const checkAuth = useAuthStore((s) => s.checkAuth)
+  const logout = useAuthStore((s) => s.logout)
+  const checkAuthRan = useRef(false)
 
+  // Vérifier l'auth une seule fois au montage pour éviter une boucle de re-renders (React #185)
   useEffect(() => {
+    if (checkAuthRan.current) return
+    checkAuthRan.current = true
     checkAuth()
   }, [checkAuth])
 
@@ -29,11 +36,13 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
     }
   }, [logout, router])
 
+  // Rediriger vers /auth si non authentifié (une fois le chargement terminé). Ne pas dépendre de router pour éviter boucle lors de la navigation.
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
       router.push("/auth")
     }
-  }, [isAuthenticated, isLoading, router])
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- router exclu volontairement pour éviter Maximum update depth
+  }, [isAuthenticated, isLoading])
 
   if (isLoading) {
     return (

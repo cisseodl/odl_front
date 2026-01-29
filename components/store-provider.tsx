@@ -1,15 +1,18 @@
 "use client"
 
-import { useEffect } from "react"
+import { useEffect, useRef } from "react"
 import { useAuthStore } from "@/lib/store/auth-store"
 import { apiClient } from "@/lib/api/client"
 
 export function StoreProvider({ children }: { children: React.ReactNode }) {
-  const { checkAuth } = useAuthStore()
+  const checkAuth = useAuthStore((s) => s.checkAuth)
+  const hasRunInit = useRef(false)
 
-  // Charger le token et vérifier l'authentification au démarrage
+  // Charger le token et vérifier l'authentification une seule fois au démarrage (évite boucle React #185)
   useEffect(() => {
-    // Synchroniser le token depuis localStorage avec apiClient
+    if (hasRunInit.current) return
+    hasRunInit.current = true
+
     if (typeof window !== "undefined") {
       const token = localStorage.getItem("auth_token")
       if (token) {
@@ -17,8 +20,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         apiClient.setToken(token)
       }
     }
-    
-    // Vérifier l'authentification
+
     checkAuth()
   }, [checkAuth])
 

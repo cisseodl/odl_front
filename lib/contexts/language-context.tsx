@@ -1,6 +1,6 @@
 "use client"
 
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react'
+import { createContext, useContext, useState, useEffect, useCallback, useMemo, ReactNode } from 'react'
 import { Locale, locales, defaultLocale } from '@/lib/locales'
 
 type LanguageContextType = {
@@ -26,21 +26,20 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
     setMounted(true)
   }, [])
 
-  const setLocale = (newLocale: Locale) => {
+  const setLocale = useCallback((newLocale: Locale) => {
     setLocaleState(newLocale)
     if (typeof window !== 'undefined') {
       localStorage.setItem('locale', newLocale)
     }
-  }
+  }, [])
 
-  const t = (key: string): string => {
+  const t = useCallback((key: string): string => {
     const keys = key.split('.')
     let value: any = locales[locale]
-    
+
     for (const k of keys) {
       value = value?.[k]
       if (value === undefined) {
-        // Fallback sur le français si la clé n'existe pas
         value = locales[defaultLocale]
         for (const fallbackKey of keys) {
           value = value?.[fallbackKey]
@@ -48,13 +47,14 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
         break
       }
     }
-    
-    return typeof value === 'string' ? value : key
-  }
 
-  // Toujours rendre le Provider, même avant le montage
+    return typeof value === 'string' ? value : key
+  }, [locale])
+
+  const value = useMemo(() => ({ locale, setLocale, t }), [locale, setLocale, t])
+
   return (
-    <LanguageContext.Provider value={{ locale, setLocale, t }}>
+    <LanguageContext.Provider value={value}>
       {children}
     </LanguageContext.Provider>
   )
