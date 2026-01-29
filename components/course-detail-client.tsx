@@ -652,12 +652,30 @@ export function CourseDetailClient({ course }: CourseDetailClientProps) {
                     <div>
                       <h3 className="text-xl font-bold mb-4 text-foreground">Ce que vous apprendrez</h3>
                       <div className="grid md:grid-cols-2 gap-3">
-                        {course.objectives && Array.isArray(course.objectives) ? course.objectives.map((objective, index) => (
-                          <div key={index} className="flex items-start gap-3">
-                            <CheckCircle2 className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
-                            <span className="text-muted-foreground">{objective}</span>
-                          </div>
-                        )) : null}
+                        {course.objectives && Array.isArray(course.objectives) 
+                          ? course.objectives
+                              .filter((objective) => objective !== null && objective !== undefined)
+                              .map((objective, index) => {
+                                // S'assurer que objective est une string primitive
+                                const objectiveText = typeof objective === 'string' 
+                                  ? objective 
+                                  : (typeof objective === 'object' && objective !== null
+                                      ? String(objective.title || objective.text || objective.name || JSON.stringify(objective))
+                                      : String(objective || ''));
+                                
+                                if (!objectiveText || objectiveText.trim() === '') {
+                                  return null;
+                                }
+                                
+                                return (
+                                  <div key={index} className="flex items-start gap-3">
+                                    <CheckCircle2 className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
+                                    <span className="text-muted-foreground">{objectiveText}</span>
+                                  </div>
+                                );
+                              })
+                              .filter((element) => element !== null)
+                          : null}
                       </div>
                     </div>
                   )}
@@ -666,15 +684,32 @@ export function CourseDetailClient({ course }: CourseDetailClientProps) {
                   <div>
                     <h3 className="text-xl font-bold mb-4 text-foreground">Ce que vous obtenez</h3>
                     <div className="grid md:grid-cols-2 gap-4">
-                      {course.features && Array.isArray(course.features) ? course.features.map((feature, index) => (
-                        <div key={index} className="flex items-center gap-3 p-3 border-2 rounded-lg hover:border-primary/40 hover:bg-primary/5 transition-all">
-                          <div className="rounded-lg bg-primary/10 p-2 border border-primary/20">
-                            <CheckCircle2 className="h-4 w-4 text-primary" />
-                          </div>
-                          <span className="text-sm font-medium text-foreground">{feature}</span>
-                        </div>
-                      )) : null}
-                    </div>
+                      {course.features && Array.isArray(course.features) 
+                        ? course.features
+                            .filter((feature) => feature !== null && feature !== undefined)
+                            .map((feature, index) => {
+                              // S'assurer que feature est une string primitive
+                              const featureText = typeof feature === 'string' 
+                                ? feature 
+                                : (typeof feature === 'object' && feature !== null
+                                    ? String(feature.title || feature.text || feature.name || JSON.stringify(feature))
+                                    : String(feature || ''));
+                              
+                              if (!featureText || featureText.trim() === '') {
+                                return null;
+                              }
+                              
+                              return (
+                                <div key={index} className="flex items-center gap-3 p-3 border-2 rounded-lg hover:border-primary/40 hover:bg-primary/5 transition-all">
+                                  <div className="rounded-lg bg-primary/10 p-2 border border-primary/20">
+                                    <CheckCircle2 className="h-4 w-4 text-primary" />
+                                  </div>
+                                  <span className="text-sm font-medium text-foreground">{featureText}</span>
+                                </div>
+                              );
+                            })
+                            .filter((element) => element !== null)
+                        : null}
                     </div>
                   </div>
                 </TabsContent>
