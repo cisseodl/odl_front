@@ -14,21 +14,26 @@ import { Switch } from "@/components/ui/switch"
 import { CourseCard } from "@/components/course-card"
 import { mockCourses } from "@/lib/data"
 import { ProtectedRoute } from "@/components/protected-route"
-import { useQuery } from "@tanstack/react-query"
+import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { apprenantService, profileService, certificateService, courseService } from "@/lib/api/services"
 import { useAuthStore } from "@/lib/store/auth-store"
 import { toast } from "sonner"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
+import { ProfileUpdateDialog } from "@/components/profile-update-dialog"
 import type { ApprenantCreateRequest, ApprenantUpdateRequest, CertificateDto, Apprenant } from "@/lib/api/types"
 
 export default function ProfilePage() {
   const router = useRouter()
+  const queryClient = useQueryClient()
   const [emailNotifications, setEmailNotifications] = useState(true)
   const [courseUpdates, setCourseUpdates] = useState(true)
   const { user, logout } = useAuthStore()
   const [isEditing, setIsEditing] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
+  const [showUpdateDialog, setShowUpdateDialog] = useState(false)
+  const [updateDialogSuccess, setUpdateDialogSuccess] = useState(false)
+  const [updateDialogMessage, setUpdateDialogMessage] = useState<string>("")
 
   // État du formulaire apprenant
   const [apprenantForm, setApprenantForm] = useState<ApprenantCreateRequest>({
@@ -128,18 +133,27 @@ export default function ProfilePage() {
   // Le backend retourne l'apprenant dans user.learner lors de la connexion
   const learner = (user as any)?.learner as Apprenant | undefined
   
-  // Charger les données de l'apprenant si elles ne sont pas déjà présentes
+  // Charger les données de l'apprenant depuis l'API si elles ne sont pas déjà présentes
   const { data: apprenantData } = useQuery({
-    queryKey: ["apprenant", user?.id],
+    queryKey: ["apprenant", user?.id, user?.email],
     queryFn: async () => {
       // Si l'utilisateur a un learner, on l'utilise directement
       if (learner) {
         return learner
       }
-      // Sinon, on pourrait charger depuis l'API si nécessaire
-      return null
+      // Sinon, récupérer depuis l'API en filtrant par email
+      try {
+        const allApprenants = await apprenantService.getAllApprenants()
+        const userApprenant = allApprenants.find((a: any) => 
+          a.userEmail === user?.email || a.email === user?.email
+        )
+        return userApprenant || null
+      } catch (error) {
+        console.error("Erreur lors de la récupération de l'apprenant:", error)
+        return null
+      }
     },
-    enabled: !!user && !learner,
+    enabled: !!user && !learner && !!user?.email,
     staleTime: 10 * 60 * 1000,
   })
   
@@ -217,45 +231,90 @@ export default function ProfilePage() {
     attentes: isEditing ? editForm.attentes : (finalLearner?.attentes || ""),
   }
 
-  // Récupérer l'ID de l'apprenant
-  const apprenantId = finalLearner?.id || (profile as any)?.apprenantId || (user as any)?.learner?.id
+  // Récupérer l'ID de l'apprenant - essayer plusieurs sources
+  const apprenantId = finalLearner?.id || (profile as any)?.apprenantId || (user as any)?.learner?.id || (user as any)?.learner?.apprenantId
 
   // Fonction pour sauvegarder les modifications
   const handleSaveProfile = async () => {
+    console.log("=== DÉBUT DE LA MISE À JOUR DU PROFIL ===")
+    console.log("Apprenant ID:", apprenantId)
+    console.log("Données du formulaire:", editForm)
+    console.log("User:", user)
+    console.log("Final Learner:", finalLearner)
+    console.log("Profile:", profile)
+
     if (!apprenantId) {
-      toast.error("Impossible de trouver l'ID de l'apprenant")
+      const errorMsg = "Impossible de trouver l'ID de l'apprenant. Veuillez vous assurer que votre profil apprenant est créé."
+      console.error("❌ ERREUR:", errorMsg)
+      setUpdateDialogMessage(errorMsg)
+      setUpdateDialogSuccess(false)
+      setShowUpdateDialog(true)
+      return
+    }
+
+    // Validation des champs requis
+    if (!editForm.username || editForm.username.trim().length === 0) {
+      const errorMsg = "Le nom complet est requis."
+      setUpdateDialogMessage(errorMsg)
+      setUpdateDialogSuccess(false)
+      setShowUpdateDialog(true)
       return
     }
 
     setIsSaving(true)
     try {
+      console.log("Envoi de la requête PUT à l'API...")
       const response = await apprenantService.updateApprenant(apprenantId, {
         userDetails: {
-          fullName: editForm.username,
+          fullName: editForm.username.trim(),
           email: displayUser.email,
-          phone: editForm.phone || undefined,
+          phone: editForm.phone?.trim() || undefined,
         },
-        username: editForm.username,
-        numero: editForm.phone,
-        profession: editForm.profession || undefined,
+        username: editForm.username.trim(),
+        numero: editForm.phone?.trim() || undefined,
+        profession: editForm.profession?.trim() || undefined,
         niveauEtude: editForm.niveauEtude || undefined,
-        filiere: editForm.filiere || undefined,
-        attentes: editForm.attentes || undefined,
+        filiere: editForm.filiere?.trim() || undefined,
+        attentes: editForm.attentes?.trim() || undefined,
       })
 
+      console.log("Réponse de l'API:", response)
+
       if (response.ok) {
-        toast.success("Profil mis à jour avec succès !")
+        console.log("✅ Mise à jour réussie")
         setIsEditing(false)
-        // Recharger les données
-        window.location.reload()
+        setUpdateDialogMessage("Vos informations personnelles ont été mises à jour avec succès.")
+        setUpdateDialogSuccess(true)
+        setShowUpdateDialog(true)
+        
+        // Invalider les queries pour recharger les données
+        queryClient.invalidateQueries({ queryKey: ["profile", user?.id] })
+        queryClient.invalidateQueries({ queryKey: ["apprenant", user?.id] })
+        
+        // Mettre à jour le store utilisateur si nécessaire
+        if (user) {
+          // Recharger les données utilisateur
+          const updatedProfile = await profileService.getMyProfile()
+          if (updatedProfile) {
+            // Les données seront automatiquement mises à jour via les queries invalidées
+          }
+        }
       } else {
-        toast.error(response.message || "Erreur lors de la mise à jour du profil")
+        console.error("❌ Erreur de l'API:", response.message)
+        const errorMsg = response.message || "Erreur lors de la mise à jour du profil. Veuillez réessayer."
+        setUpdateDialogMessage(errorMsg)
+        setUpdateDialogSuccess(false)
+        setShowUpdateDialog(true)
       }
-    } catch (error) {
-      toast.error("Erreur lors de la mise à jour du profil")
-      console.error(error)
+    } catch (error: any) {
+      console.error("❌ Exception lors de la mise à jour:", error)
+      const errorMsg = error?.message || "Une erreur inattendue est survenue. Veuillez réessayer."
+      setUpdateDialogMessage(errorMsg)
+      setUpdateDialogSuccess(false)
+      setShowUpdateDialog(true)
     } finally {
       setIsSaving(false)
+      console.log("=== FIN DE LA MISE À JOUR DU PROFIL ===")
     }
   }
 
@@ -809,6 +868,14 @@ export default function ProfilePage() {
           </Card>
         </TabsContent>
       </Tabs>
+
+      {/* Dialogue de succès/erreur pour la mise à jour du profil */}
+      <ProfileUpdateDialog
+        isOpen={showUpdateDialog}
+        onOpenChange={setShowUpdateDialog}
+        isSuccess={updateDialogSuccess}
+        message={updateDialogMessage}
+      />
     </div>
     </ProtectedRoute>
   )
