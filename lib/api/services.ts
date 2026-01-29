@@ -306,9 +306,32 @@ export const reviewService = {
 
       if (response.ok && response.data) {
         // Assume backend returns a list of reviews or a CResponse containing a list
-        const reviews = Array.isArray(response.data)
+        let reviews = Array.isArray(response.data)
           ? response.data
           : (response.data.data && Array.isArray(response.data.data) ? response.data.data : []);
+        
+        // Normaliser les données pour éviter les erreurs de rendu
+        reviews = reviews.map((review: any) => {
+          // S'assurer que user est un objet avec des propriétés primitives
+          const normalizedReview = {
+            id: review?.id || null,
+            rating: typeof review?.rating === 'number' ? review.rating : 0,
+            comment: review?.comment || "",
+            createdAt: review?.createdAt || null,
+            user: review?.user ? {
+              id: review.user.id || null,
+              fullName: review.user.fullName || null,
+              email: review.user.email || null,
+              avatar: review.user.avatar || null,
+            } : null,
+            course: review?.course ? {
+              id: review.course.id || null,
+              title: review.course.title || null,
+            } : null,
+          };
+          return normalizedReview;
+        });
+        
         return reviews;
       }
       return [];

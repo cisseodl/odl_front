@@ -921,32 +921,63 @@ export function CourseDetailClient({ course }: CourseDetailClientProps) {
 
                     {/* Reviews List */}
                     <div className="space-y-4">
-                      {reviews && Array.isArray(reviews) && reviews.length > 0 ? reviews.map((review) => (
-                        <Card key={String(review.id)} className="border-2 hover:border-primary/20 transition-all">
-                          <CardContent className="p-6">
-                            <div className="flex items-start gap-4">
-                              <Avatar className="h-12 w-12 border-2 border-primary/30">
-                                <AvatarImage src={review.user?.avatar || "/placeholder-user.jpg"} alt={review.user?.fullName || review.user?.email || "Utilisateur inconnu"} />
-                                <AvatarFallback className="bg-primary text-white font-bold">
-                                  {(review.user?.fullName || review.user?.email || "U")[0]}
-                                </AvatarFallback>
-                              </Avatar>
-                              <div className="flex-1 space-y-2">
-                                <div className="flex items-start justify-between gap-4">
-                                  <div>
-                                    <p className="font-bold text-sm text-foreground">{review.user?.fullName || review.user?.email || "Utilisateur inconnu"}</p>
-                                    <div className="flex items-center gap-2 mt-1">
-                                      <RatingStars rating={review.rating} size="sm" />
-                                      <span className="text-xs text-muted-foreground">{new Date(review.createdAt).toLocaleDateString("fr-FR", { day: "numeric", month: "short", year: "numeric" })}</span>
+                      {reviews && Array.isArray(reviews) && reviews.length > 0 ? reviews.map((review) => {
+                        // S'assurer que toutes les valeurs sont des primitives
+                        const reviewId = review?.id ? String(review.id) : `review-${Math.random()}`;
+                        const userName = review?.user?.fullName || review?.user?.email || "Utilisateur inconnu";
+                        const userAvatar = review?.user?.avatar || "/placeholder-user.jpg";
+                        const userInitial = userName && typeof userName === 'string' ? userName[0] : "U";
+                        const rating = typeof review?.rating === 'number' ? review.rating : 0;
+                        const comment = review?.comment || "";
+                        
+                        // Gérer createdAt - peut être une string ou un objet Date
+                        let reviewDate = "Date inconnue";
+                        try {
+                          if (review?.createdAt) {
+                            const dateValue = typeof review.createdAt === 'string' 
+                              ? new Date(review.createdAt) 
+                              : review.createdAt instanceof Date 
+                                ? review.createdAt 
+                                : new Date(String(review.createdAt));
+                            if (!isNaN(dateValue.getTime())) {
+                              reviewDate = dateValue.toLocaleDateString("fr-FR", { 
+                                day: "numeric", 
+                                month: "short", 
+                                year: "numeric" 
+                              });
+                            }
+                          }
+                        } catch (e) {
+                          console.warn("Erreur lors du formatage de la date:", e);
+                        }
+
+                        return (
+                          <Card key={reviewId} className="border-2 hover:border-primary/20 transition-all">
+                            <CardContent className="p-6">
+                              <div className="flex items-start gap-4">
+                                <Avatar className="h-12 w-12 border-2 border-primary/30">
+                                  <AvatarImage src={userAvatar} alt={userName} />
+                                  <AvatarFallback className="bg-primary text-white font-bold">
+                                    {userInitial}
+                                  </AvatarFallback>
+                                </Avatar>
+                                <div className="flex-1 space-y-2">
+                                  <div className="flex items-start justify-between gap-4">
+                                    <div>
+                                      <p className="font-bold text-sm text-foreground">{userName}</p>
+                                      <div className="flex items-center gap-2 mt-1">
+                                        <RatingStars rating={rating} size="sm" />
+                                        <span className="text-xs text-muted-foreground">{reviewDate}</span>
+                                      </div>
                                     </div>
                                   </div>
+                                  <p className="text-sm text-muted-foreground leading-relaxed">{comment}</p>
                                 </div>
-                                <p className="text-sm text-muted-foreground leading-relaxed">{review.comment}</p>
                               </div>
-                            </div>
-                          </CardContent>
-                        </Card>
-                      )) : (
+                            </CardContent>
+                          </Card>
+                        );
+                      }) : (
                         <div className="p-8 text-center text-muted-foreground border-2 border-dashed border-border rounded-xl">
                           <p>Aucun avis pour le moment. Soyez le premier à en laisser un !</p>
                         </div>
