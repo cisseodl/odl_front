@@ -1174,12 +1174,31 @@ export function CourseDetailClient({ course }: CourseDetailClientProps) {
                   <div className="pt-4 border-t border-border">
                     <h4 className="font-bold text-sm mb-3 text-foreground">Ce que vous obtenez :</h4>
                     <div className="space-y-2">
-                      {course.features && Array.isArray(course.features) ? course.features.slice(0, 4).map((feature, index) => (
-                        <div key={index} className="flex items-center gap-2">
-                          <CheckCircle2 className="h-4 w-4 text-primary flex-shrink-0" />
-                          <span className="text-sm text-muted-foreground">{feature}</span>
-                        </div>
-                      )) : null}
+                      {course.features && Array.isArray(course.features) 
+                        ? course.features
+                            .slice(0, 4)
+                            .filter((feature) => feature !== null && feature !== undefined)
+                            .map((feature, index) => {
+                              // S'assurer que feature est une string primitive
+                              const featureText = typeof feature === 'string' 
+                                ? feature 
+                                : (typeof feature === 'object' && feature !== null
+                                    ? String(feature.title || feature.text || feature.name || JSON.stringify(feature))
+                                    : String(feature || ''));
+                              
+                              if (!featureText || featureText.trim() === '') {
+                                return null;
+                              }
+                              
+                              return (
+                                <div key={index} className="flex items-center gap-2">
+                                  <CheckCircle2 className="h-4 w-4 text-primary flex-shrink-0" />
+                                  <span className="text-sm text-muted-foreground">{featureText}</span>
+                                </div>
+                              );
+                            })
+                            .filter((element) => element !== null)
+                        : null}
                     </div>
                   </div>
 
