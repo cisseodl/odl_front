@@ -20,20 +20,15 @@ import { useAuthStore } from "@/lib/store/auth-store"
 import { toast } from "sonner"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
-import type { ApprenantCreateRequest, Cohorte, CertificateDto, Apprenant } from "@/lib/api/types"
+import type { ApprenantCreateRequest, ApprenantUpdateRequest, Cohorte, CertificateDto, Apprenant } from "@/lib/api/types"
 
 export default function ProfilePage() {
   const router = useRouter()
   const [emailNotifications, setEmailNotifications] = useState(true)
   const [courseUpdates, setCourseUpdates] = useState(true)
   const { user, logout } = useAuthStore()
-
-  // Charger les cohortes pour le formulaire
-  const { data: cohortes = [] } = useQuery({
-    queryKey: ["cohortes"],
-    queryFn: () => cohorteService.getAllCohortes(),
-    staleTime: 10 * 60 * 1000,
-  })
+  const [isEditing, setIsEditing] = useState(false)
+  const [isSaving, setIsSaving] = useState(false)
 
   // État du formulaire apprenant
   const [apprenantForm, setApprenantForm] = useState<ApprenantCreateRequest>({
@@ -179,6 +174,30 @@ export default function ProfilePage() {
     }
   }
 
+  // État du formulaire d'édition
+  const [editForm, setEditForm] = useState({
+    username: "",
+    profession: "",
+    niveauEtude: "",
+    filiere: "",
+    attentes: "",
+    phone: "",
+  })
+
+  // Initialiser le formulaire d'édition avec les données actuelles
+  useEffect(() => {
+    if (finalLearner || profile) {
+      setEditForm({
+        username: finalLearner?.username || user?.name || "",
+        profession: finalLearner?.profession || "",
+        niveauEtude: finalLearner?.niveauEtude || "",
+        filiere: finalLearner?.filiere || "",
+        attentes: finalLearner?.attentes || "",
+        phone: finalLearner?.phone || finalLearner?.numero || (user as any)?.phone || "",
+      })
+    }
+  }, [finalLearner, profile, user])
+
   // Utiliser les données de l'utilisateur authentifié et du profil
   // Le backend retourne ApprenantWithUserDto avec username (pas nom/prenom séparés)
   const displayUser = {
@@ -190,12 +209,68 @@ export default function ProfilePage() {
       ? `${profile.enrolledCourses.length} cours inscrits` 
       : "Non spécifié"),
     avatar: user?.avatar || profile?.avatar || finalLearner?.avatar || "/placeholder.svg",
-    username: finalLearner?.username || user?.name || "",
-    phone: finalLearner?.phone || finalLearner?.numero || (user as any)?.phone || "",
-    profession: finalLearner?.profession || "",
-    niveauEtude: finalLearner?.niveauEtude || "",
-    filiere: finalLearner?.filiere || "",
-    attentes: finalLearner?.attentes || "",
+    username: isEditing ? editForm.username : (finalLearner?.username || user?.name || ""),
+    phone: isEditing ? editForm.phone : (finalLearner?.phone || finalLearner?.numero || (user as any)?.phone || ""),
+    profession: isEditing ? editForm.profession : (finalLearner?.profession || ""),
+    niveauEtude: isEditing ? editForm.niveauEtude : (finalLearner?.niveauEtude || ""),
+    filiere: isEditing ? editForm.filiere : (finalLearner?.filiere || ""),
+    attentes: isEditing ? editForm.attentes : (finalLearner?.attentes || ""),
+  }
+
+  // Récupérer l'ID de l'apprenant
+  const apprenantId = finalLearner?.id || (profile as any)?.apprenantId || (user as any)?.learner?.id
+
+  // Fonction pour sauvegarder les modifications
+  const handleSaveProfile = async () => {
+    if (!apprenantId) {
+      toast.error("Impossible de trouver l'ID de l'apprenant")
+      return
+    }
+
+    setIsSaving(true)
+    try {
+      const response = await apprenantService.updateApprenant(apprenantId, {
+        userDetails: {
+          fullName: editForm.username,
+          email: displayUser.email,
+          phone: editForm.phone || undefined,
+        },
+        username: editForm.username,
+        numero: editForm.phone,
+        profession: editForm.profession || undefined,
+        niveauEtude: editForm.niveauEtude || undefined,
+        filiere: editForm.filiere || undefined,
+        attentes: editForm.attentes || undefined,
+      })
+
+      if (response.ok) {
+        toast.success("Profil mis à jour avec succès !")
+        setIsEditing(false)
+        // Recharger les données
+        window.location.reload()
+      } else {
+        toast.error(response.message || "Erreur lors de la mise à jour du profil")
+      }
+    } catch (error) {
+      toast.error("Erreur lors de la mise à jour du profil")
+      console.error(error)
+    } finally {
+      setIsSaving(false)
+    }
+  }
+
+  // Fonction pour annuler l'édition
+  const handleCancelEdit = () => {
+    setIsEditing(false)
+    // Réinitialiser le formulaire avec les données actuelles
+    setEditForm({
+      username: finalLearner?.username || user?.name || "",
+      profession: finalLearner?.profession || "",
+      niveauEtude: finalLearner?.niveauEtude || "",
+      filiere: finalLearner?.filiere || "",
+      attentes: finalLearner?.attentes || "",
+      phone: finalLearner?.phone || finalLearner?.numero || (user as any)?.phone || "",
+    })
   }
 
 
@@ -308,16 +383,25 @@ export default function ProfilePage() {
             {/* Edit Form */}
             <Card className="lg:col-span-2 bg-white">
               <CardHeader>
-                <CardTitle className="text-black">Informations Personnelles</CardTitle>
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-black">Informations Personnelles</CardTitle>
+                  {!isEditing && (
+                    <Button onClick={() => setIsEditing(true)} variant="outline">
+                      Modifier
+                    </Button>
+                  )}
+                </div>
               </CardHeader>
               <CardContent className="space-y-6">
                 <div className="space-y-2">
                   <Label htmlFor="username" className="text-black">Nom complet (Prénom Nom)</Label>
                   <Input 
                     id="username" 
-                    defaultValue={displayUser.username} 
+                    value={displayUser.username}
+                    onChange={(e) => setEditForm({ ...editForm, username: e.target.value })}
                     className="bg-white" 
                     placeholder="Ex: Amadou Diallo"
+                    disabled={!isEditing}
                   />
                   <p className="text-xs text-muted-foreground">
                     Entrez votre prénom suivi de votre nom
@@ -329,7 +413,7 @@ export default function ProfilePage() {
                 <Input 
                   id="email" 
                   type="email" 
-                  defaultValue={displayUser.email} 
+                  value={displayUser.email} 
                   className="bg-white" 
                   disabled
                 />
@@ -339,29 +423,49 @@ export default function ProfilePage() {
                 <Label htmlFor="profession" className="text-black">Profession</Label>
                 <Input 
                   id="profession" 
-                  defaultValue={displayUser.profession} 
+                  value={displayUser.profession}
+                  onChange={(e) => setEditForm({ ...editForm, profession: e.target.value })}
                   className="bg-white" 
                   placeholder="Ex: Étudiant, Entrepreneur, Développeur..."
+                  disabled={!isEditing}
                 />
               </div>
 
               <div className="grid md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="niveauEtude" className="text-black">Niveau d'étude</Label>
-                  <Input 
-                    id="niveauEtude" 
-                    defaultValue={displayUser.niveauEtude} 
-                    className="bg-white" 
-                    placeholder="Ex: Licence, Master..."
-                  />
+                  {isEditing ? (
+                    <Select
+                      value={editForm.niveauEtude || ""}
+                      onValueChange={(value) => setEditForm({ ...editForm, niveauEtude: value })}
+                    >
+                      <SelectTrigger className="bg-white">
+                        <SelectValue placeholder="Sélectionnez votre niveau" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Bac">Bac</SelectItem>
+                        <SelectItem value="Bac+2">Bac+2</SelectItem>
+                        <SelectItem value="Licence">Licence</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  ) : (
+                    <Input 
+                      id="niveauEtude" 
+                      value={displayUser.niveauEtude || "Non spécifié"} 
+                      className="bg-white" 
+                      disabled
+                    />
+                  )}
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="filiere" className="text-black">Filière</Label>
                   <Input 
                     id="filiere" 
-                    defaultValue={displayUser.filiere} 
+                    value={displayUser.filiere}
+                    onChange={(e) => setEditForm({ ...editForm, filiere: e.target.value })}
                     className="bg-white" 
                     placeholder="Ex: Informatique, Commerce..."
+                    disabled={!isEditing}
                   />
                 </div>
               </div>
@@ -370,42 +474,41 @@ export default function ProfilePage() {
                 <Label htmlFor="attentes" className="text-black">Attentes</Label>
                 <Textarea 
                   id="attentes" 
-                  defaultValue={displayUser.attentes} 
+                  value={displayUser.attentes}
+                  onChange={(e) => setEditForm({ ...editForm, attentes: e.target.value })}
                   className="bg-white" 
                   placeholder="Décrivez vos attentes concernant la formation..."
                   rows={3}
+                  disabled={!isEditing}
                 />
               </div>
 
-              <div className="grid md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="cohorte" className="text-black">Cohorte</Label>
-                  <Input 
-                    id="cohorte" 
-                    defaultValue={displayUser.location !== "Non spécifié" ? displayUser.location : ""} 
-                    className="bg-white" 
-                    placeholder="Votre cohorte"
-                    disabled
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="phone" className="text-black">Téléphone</Label>
-                  <Input 
-                    id="phone" 
-                    type="tel" 
-                    defaultValue={displayUser.phone} 
-                    placeholder="+223 XX XX XX XX" 
-                    className="bg-white" 
-                  />
-                </div>
+              <div className="space-y-2">
+                <Label htmlFor="phone" className="text-black">Téléphone</Label>
+                <Input 
+                  id="phone" 
+                  type="tel" 
+                  value={displayUser.phone}
+                  onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })}
+                  placeholder="+223 XX XX XX XX" 
+                  className="bg-white"
+                  disabled={!isEditing}
+                />
               </div>
 
-                <Separator />
-
-                <div className="flex gap-3">
-                  <Button>Enregistrer les modifications</Button>
-                  <Button variant="outline">Annuler</Button>
-                </div>
+                {isEditing && (
+                  <>
+                    <Separator />
+                    <div className="flex gap-3">
+                      <Button onClick={handleSaveProfile} disabled={isSaving}>
+                        {isSaving ? "Enregistrement..." : "Enregistrer les modifications"}
+                      </Button>
+                      <Button variant="outline" onClick={handleCancelEdit} disabled={isSaving}>
+                        Annuler
+                      </Button>
+                    </div>
+                  </>
+                )}
               </CardContent>
             </Card>
           </div>
