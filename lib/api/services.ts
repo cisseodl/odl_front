@@ -152,8 +152,15 @@ export const courseService = {
           }
         }
         
+        // Filtrer pour ne garder que les cours publiés (pour le frontend apprenant)
+        const publishedCourses = courses.filter((course: any) => {
+          // Si le statut n'est pas défini, considérer le cours comme publié (pour compatibilité)
+          // Sinon, ne garder que les cours avec le statut "PUBLIE"
+          return !course.status || course.status === "PUBLIE"
+        })
+        
         // Adapter les cours avec gestion optimisée des catégories
-        const adaptedCourses = adaptCourses(courses)
+        const adaptedCourses = adaptCourses(publishedCourses)
         return adaptedCourses
       }
       
