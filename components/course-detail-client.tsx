@@ -712,6 +712,7 @@ export function CourseDetailClient({ course }: CourseDetailClientProps) {
                         : null}
                     </div>
                   </div>
+                  </div>
                 </TabsContent>
 
                 {/* Content Tab */}
