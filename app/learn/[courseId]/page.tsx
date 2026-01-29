@@ -19,8 +19,8 @@ import { TranscriptWithTimestamps } from "@/components/transcript-with-timestamp
 import { LessonContentViewer } from "@/components/lesson-content-viewer"
 import { cn } from "@/lib/utils"
 import { ProtectedRoute } from "@/components/protected-route"
-import { useQuery, useMutation } from "@tanstack/react-query"
-import { courseService, learnerService, moduleService, evaluationService, labService } from "@/lib/api/services"
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
+import { courseService, learnerService, moduleService, evaluationService, labService, reviewService } from "@/lib/api/services"
 import { adaptModule } from "@/lib/api/adapters"
 import { useRouter } from "next/navigation"
 import { FileCheck, Award, GraduationCap } from "lucide-react"
@@ -116,26 +116,40 @@ export default function LearnPage({ params }: LearnPageProps) {
   const [newReview, setNewReview] = useState({ rating: 0, comment: "" }) // Ajout de l'état pour l'avis
   const [showSuccessDialog, setShowSuccessDialog] = useState(false) // New state for success dialog
   const videoRef = useRef<HTMLVideoElement>(null)
+  const queryClient = useQueryClient()
 
   const addReviewMutation = useMutation({
     mutationFn: ({ rating, comment }: { rating: number; comment: string }) => {
       if (!courseIdNum) {
         throw new Error("ID du cours invalide");
       }
-      // Assuming courseService has an addReview method
-      return courseService.addReview(courseIdNum, { rating, comment });
+      return reviewService.addReview(courseIdNum, { rating, comment });
     },
-    onSuccess: () => {
-      toast.success("Avis ajouté avec succès !");
-      // Open the success dialog
-      setShowSuccessDialog(true);
-      // Invalidate queries to refetch reviews for this course, if any are displayed
-      // We don't have review display here so no invalidation needed.
-      setNewReview({ rating: 0, comment: "" });
+    onSuccess: (response) => {
+      // Vérifier que la réponse est un succès
+      if (response.ok && !response.ko) {
+        // Afficher le dialog de succès
+        setShowSuccessDialog(true);
+        // Réinitialiser le formulaire
+        setNewReview({ rating: 0, comment: "" });
+        // Invalider les queries pour rafraîchir la liste des avis
+        queryClient.invalidateQueries({ queryKey: ["reviews", courseIdNum] });
+        // Invalider aussi les données du cours pour mettre à jour le nombre d'avis
+        queryClient.invalidateQueries({ queryKey: ["course", courseIdNum] });
+      } else {
+        // Si la réponse indique une erreur, afficher le message d'erreur
+        const errorMessage = response.message || "Erreur lors de l'ajout de l'avis";
+        toast.error(errorMessage);
+      }
     },
     onError: (error: any) => {
+      console.error("Erreur lors de l'ajout de l'avis:", error);
+      const errorMessage = error?.response?.data?.message || 
+                          error?.message || 
+                          error?.data?.message ||
+                          "Veuillez réessayer. Assurez-vous d'être inscrit au cours.";
       toast.error("Erreur lors de l'ajout de l'avis", {
-        description: error.message || "Veuillez réessayer.",
+        description: errorMessage,
       });
     },
   });

@@ -340,6 +340,16 @@ export const reviewService = {
       return [];
     }
   },
+
+  /**
+   * Ajouter un avis à un cours
+   * POST /reviews/add/{courseId}
+   * Body: { rating: number, comment: string }
+   */
+  async addReview(courseId: number, review: { rating: number; comment: string }): Promise<ApiResponse<any>> {
+    const endpoint = `${API_ENDPOINTS.reviews.add}/${courseId}`;
+    return apiClient.post(endpoint, { rating: review.rating, comment: review.comment });
+  },
 }
 
 // ============ Testimonial Services ============
