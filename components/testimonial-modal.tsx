@@ -37,12 +37,15 @@ export function TestimonialModal({ isOpen, onOpenChange }: TestimonialModalProps
 
   const addTestimonialMutation = useMutation({
     mutationFn: testimonialService.addTestimonial,
-    onSuccess: (data) => {
+    onSuccess: (response) => {
+      // Invalider les queries pour rafraîchir la liste des témoignages
+      queryClient.invalidateQueries({ queryKey: ["testimonials"] })
+      
       onOpenChange(false) // Close the testimonial input modal
       setShowStatusDialog(true)
       setStatusDialogProps({
         title: "Témoignage Soumis avec Succès !",
-        description: data.message,
+        description: response.data?.message || response.message || "Votre témoignage a été soumis avec succès.",
         status: "success",
       })
       setContent("") // Réinitialiser le champ
@@ -50,9 +53,20 @@ export function TestimonialModal({ isOpen, onOpenChange }: TestimonialModalProps
     onError: (error: any) => {
       onOpenChange(false) // Close the testimonial input modal
       setShowStatusDialog(true)
+      
+      // Extraire le message d'erreur depuis la réponse API
+      let errorMessage = "Une erreur est survenue lors de l'envoi de votre témoignage."
+      if (error?.response?.data?.message) {
+        errorMessage = error.response.data.message
+      } else if (error?.message) {
+        errorMessage = error.message
+      } else if (typeof error === 'string') {
+        errorMessage = error
+      }
+      
       setStatusDialogProps({
         title: "Erreur lors de la Soumission",
-        description: error.message || "Une erreur est survenue lors de l'envoi de votre témoignage.",
+        description: errorMessage,
         status: "error",
       })
     },

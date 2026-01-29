@@ -334,9 +334,13 @@ export const testimonialService = {
     try {
       const response = await apiClient.get<any>(API_ENDPOINTS.testimonials.getAll);
       if (response.ok && response.data) {
+        // Le backend retourne CResponse<List<TestimonialResponse>>
+        // Structure: { ok: true, data: [...], message: "..." }
         const testimonials = Array.isArray(response.data)
           ? response.data
-          : (response.data.data && Array.isArray(response.data.data) ? response.data.data : []);
+          : (response.data.data && Array.isArray(response.data.data) 
+              ? response.data.data 
+              : []);
         return testimonials;
       }
       return [];

@@ -140,11 +140,40 @@ export default function HomePage() {
           };
         };
   
-  const { data: testimonials = [] } = useQuery({
+  const { data: testimonialsRaw = [] } = useQuery({
     queryKey: ["testimonials"],
     queryFn: () => testimonialService.getAllTestimonials(),
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
+
+  // Adapter les témoignages pour l'affichage
+  const testimonials = useMemo(() => {
+    if (!Array.isArray(testimonialsRaw)) return []
+    
+    // Le backend retourne CResponse<List<TestimonialResponse>>
+    // TestimonialResponse a: { id, content, user: { id, fullName, email }, createdAt }
+    const testimonialsList = Array.isArray(testimonialsRaw) 
+      ? testimonialsRaw 
+      : (testimonialsRaw?.data && Array.isArray(testimonialsRaw.data) 
+          ? testimonialsRaw.data 
+          : [])
+    
+    return testimonialsList.map((testimonial: any) => {
+      // Gérer les deux formats possibles : direct ou avec data wrapper
+      const testimonialData = testimonial.data || testimonial
+      const user = testimonialData.user || testimonialData.userInfo
+      
+      return {
+        id: testimonialData.id || testimonial.id,
+        content: testimonialData.content || testimonial.content,
+        name: user?.fullName || user?.name || "Apprenant",
+        role: "Apprenant", // Tous les témoignages sont d'apprenants
+        avatar: user?.avatar || null, // Avatar peut ne pas être disponible
+        email: user?.email || null,
+        createdAt: testimonialData.createdAt || testimonial.createdAt,
+      }
+    })
+  }, [testimonialsRaw])
 
   // Hero slides data
   const heroSlides = [
