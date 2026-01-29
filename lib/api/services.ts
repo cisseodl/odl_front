@@ -311,26 +311,72 @@ export const reviewService = {
           : (response.data.data && Array.isArray(response.data.data) ? response.data.data : []);
         
         // Normaliser les données pour éviter les erreurs de rendu
-        reviews = reviews.map((review: any) => {
-          // S'assurer que user est un objet avec des propriétés primitives
-          const normalizedReview = {
-            id: review?.id || null,
-            rating: typeof review?.rating === 'number' ? review.rating : 0,
-            comment: review?.comment || "",
-            createdAt: review?.createdAt || null,
-            user: review?.user ? {
-              id: review.user.id || null,
-              fullName: review.user.fullName || null,
-              email: review.user.email || null,
-              avatar: review.user.avatar || null,
-            } : null,
-            course: review?.course ? {
-              id: review.course.id || null,
-              title: review.course.title || null,
-            } : null,
-          };
-          return normalizedReview;
-        });
+        reviews = reviews
+          .filter((review: any) => review && typeof review === 'object' && review !== null)
+          .map((review: any) => {
+            // S'assurer que toutes les valeurs sont des primitives
+            const normalizedId = review?.id !== null && review?.id !== undefined
+              ? (typeof review.id === 'number' ? review.id : (typeof review.id === 'string' ? parseInt(review.id, 10) : null))
+              : null;
+            
+            const normalizedRating = typeof review?.rating === 'number' && !isNaN(review.rating)
+              ? Math.max(0, Math.min(5, review.rating))
+              : 0;
+            
+            const normalizedComment = typeof review?.comment === 'string'
+              ? review.comment
+              : (review?.comment ? String(review.comment) : "");
+            
+            const normalizedCreatedAt = review?.createdAt !== null && review?.createdAt !== undefined
+              ? (typeof review.createdAt === 'string' 
+                  ? review.createdAt 
+                  : (review.createdAt instanceof Date 
+                      ? review.createdAt.toISOString() 
+                      : String(review.createdAt)))
+              : null;
+            
+            // Normaliser user - s'assurer que toutes les propriétés sont des primitives
+            let normalizedUser = null;
+            if (review?.user && typeof review.user === 'object' && review.user !== null) {
+              normalizedUser = {
+                id: review.user.id !== null && review.user.id !== undefined
+                  ? (typeof review.user.id === 'number' ? review.user.id : (typeof review.user.id === 'string' ? parseInt(review.user.id, 10) : null))
+                  : null,
+                fullName: typeof review.user.fullName === 'string'
+                  ? review.user.fullName
+                  : (review.user.fullName ? String(review.user.fullName) : null),
+                email: typeof review.user.email === 'string'
+                  ? review.user.email
+                  : (review.user.email ? String(review.user.email) : null),
+                avatar: typeof review.user.avatar === 'string'
+                  ? review.user.avatar
+                  : (review.user.avatar ? String(review.user.avatar) : null),
+              };
+            }
+            
+            // Normaliser course
+            let normalizedCourse = null;
+            if (review?.course && typeof review.course === 'object' && review.course !== null) {
+              normalizedCourse = {
+                id: review.course.id !== null && review.course.id !== undefined
+                  ? (typeof review.course.id === 'number' ? review.course.id : (typeof review.course.id === 'string' ? parseInt(review.course.id, 10) : null))
+                  : null,
+                title: typeof review.course.title === 'string'
+                  ? review.course.title
+                  : (review.course.title ? String(review.course.title) : null),
+              };
+            }
+            
+            return {
+              id: normalizedId,
+              rating: normalizedRating,
+              comment: normalizedComment,
+              createdAt: normalizedCreatedAt,
+              user: normalizedUser,
+              course: normalizedCourse,
+            };
+          })
+          .filter((review: any) => review.id !== null); // Filtrer les reviews sans ID valide
         
         return reviews;
       }
