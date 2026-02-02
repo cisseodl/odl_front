@@ -291,20 +291,28 @@ export function CourseDetailClient({ course }: CourseDetailClientProps) {
     enabled: courseIdNum !== null && !Number.isNaN(courseIdNum!),
     staleTime: 5 * 60 * 1000, // Cache pendant 5 minutes
     retry: 1, // Réessayer 1 fois en cas d'erreur
-    onError: (error: any) => {
-      console.error("Erreur lors du chargement des modules:", error)
+  })
+
+  // Gérer les erreurs de chargement des modules
+  useEffect(() => {
+    if (modulesError) {
+      console.error("Erreur lors du chargement des modules:", modulesError)
       // Si l'erreur indique qu'il faut s'inscrire, l'utilisateur n'est pas inscrit
-      const errorMessage = error?.message || ""
+      const errorMessage = String(modulesError?.message || "")
       if (errorMessage.includes("inscrire") || errorMessage.includes("inscription") || errorMessage.includes("inscrit")) {
         setIsEnrolled(false)
       } else {
         // Autre erreur, on considère que l'utilisateur n'est pas inscrit
         setIsEnrolled(false)
       }
-    },
-    onSuccess: (data) => {
+    }
+  }, [modulesError])
+
+  // Gérer le succès du chargement des modules
+  useEffect(() => {
+    if (modulesFromApi !== undefined) {
       // Seulement si les modules se chargent AVEC DU CONTENU, l'utilisateur est inscrit
-      if (data && Array.isArray(data) && data.length > 0) {
+      if (modulesFromApi && Array.isArray(modulesFromApi) && modulesFromApi.length > 0) {
         setIsEnrolled(true)
         console.log("✅ [ENROLLMENT] Modules chargés avec succès (contenu présent), utilisateur inscrit")
       } else {
@@ -313,7 +321,7 @@ export function CourseDetailClient({ course }: CourseDetailClientProps) {
         console.log("⚠️ [ENROLLMENT] Modules chargés mais tableau vide, isEnrolled = false (BOUTON VISIBLE)")
       }
     }
-  })
+  }, [modulesFromApi])
 
   // IMPORTANT: Ne PAS rediriger automatiquement depuis course-detail-client
   // La redirection ne doit se faire que:
@@ -706,12 +714,12 @@ export function CourseDetailClient({ course }: CourseDetailClientProps) {
                         {course.objectives && Array.isArray(course.objectives) 
                           ? course.objectives
                               .filter((objective) => objective !== null && objective !== undefined)
-                              .map((objective, index) => {
+                              .map((objective: any, index) => {
                                 // S'assurer que objective est une string primitive
                                 const objectiveText = typeof objective === 'string' 
                                   ? objective 
                                   : (typeof objective === 'object' && objective !== null
-                                      ? String(objective.title || objective.text || objective.name || JSON.stringify(objective))
+                                      ? String((objective as any).title || (objective as any).text || (objective as any).name || JSON.stringify(objective))
                                       : String(objective || ''));
                                 
                                 if (!objectiveText || objectiveText.trim() === '') {
@@ -738,12 +746,12 @@ export function CourseDetailClient({ course }: CourseDetailClientProps) {
                       {course.features && Array.isArray(course.features) 
                         ? course.features
                             .filter((feature) => feature !== null && feature !== undefined)
-                            .map((feature, index) => {
+                            .map((feature: any, index) => {
                               // S'assurer que feature est une string primitive
                               const featureText = typeof feature === 'string' 
                                 ? feature 
                                 : (typeof feature === 'object' && feature !== null
-                                    ? String(feature.title || feature.text || feature.name || JSON.stringify(feature))
+                                    ? String((feature as any).title || (feature as any).text || (feature as any).name || JSON.stringify(feature))
                                     : String(feature || ''));
                               
                               if (!featureText || featureText.trim() === '') {
@@ -798,22 +806,39 @@ export function CourseDetailClient({ course }: CourseDetailClientProps) {
                         </div>
                       ) : curriculum.length > 0 ? (
                         curriculum
-                          .filter(module => module && module.id && typeof module.id === 'string')
+                          .filter(module => {
+                            // Filtrer strictement : seulement les modules valides
+                            if (!module || typeof module !== 'object') return false
+                            const id = module.id
+                            const title = module.title
+                            return id !== null && id !== undefined && 
+                                   title !== null && title !== undefined &&
+                                   String(title).trim() !== ''
+                          })
                           .map((module, moduleIndex) => {
-                            // S'assurer que les leçons sont bien un tableau
-                            const lessons = Array.isArray(module.lessons) ? module.lessons : []
-                            const totalLessons = lessons.length
-                            const totalDuration = lessons.reduce((acc, lesson) => {
-                              if (!lesson || typeof lesson.duration !== 'string') return acc
-                              const duration = lesson.duration || "0m"
-                              const minutes = parseInt(duration.replace(/[^0-9]/g, "")) || 0
-                              return acc + minutes
-                            }, 0)
-                          const formattedDuration = totalDuration > 60 
-                            ? `${Math.floor(totalDuration / 60)}h ${totalDuration % 60}m`
-                            : `${totalDuration}m`
+                            try {
+                              // S'assurer que les leçons sont bien un tableau
+                              const lessons = Array.isArray(module.lessons) 
+                                ? module.lessons.filter(lesson => lesson && typeof lesson === 'object')
+                                : []
+                              const totalLessons = lessons.length
+                              const totalDuration = lessons.reduce((acc, lesson) => {
+                                if (!lesson || typeof lesson.duration !== 'string') return acc
+                                const duration = lesson.duration || "0m"
+                                const minutes = parseInt(duration.replace(/[^0-9]/g, "")) || 0
+                                return acc + minutes
+                              }, 0)
+                              const formattedDuration = totalDuration > 60 
+                                ? `${Math.floor(totalDuration / 60)}h ${totalDuration % 60}m`
+                                : `${totalDuration}m`
+                              const moduleId = String(module.id || "")
+                              const moduleTitle = String(module.title || "").trim()
 
-                          return (
+                              if (!moduleId || moduleId === "" || !moduleTitle || moduleTitle === "") {
+                                return null
+                              }
+
+                              return (
                             <AccordionItem 
                               key={String(module.id)} 
                               value={String(module.id)} 
@@ -847,23 +872,32 @@ export function CourseDetailClient({ course }: CourseDetailClientProps) {
                                 <div className="space-y-1.5 mt-3 ml-14">
                                   {lessons.length > 0 ? (
                                     lessons
-                                      .filter(lesson => lesson && lesson.id && typeof lesson.id === 'string')
+                                      .filter(lesson => {
+                                        // Filtrer strictement : seulement les leçons valides avec ID et titre
+                                        if (!lesson || typeof lesson !== 'object') return false
+                                        const id = lesson.id
+                                        const title = lesson.title
+                                        return id !== null && id !== undefined && 
+                                               title !== null && title !== undefined &&
+                                               String(title).trim() !== ''
+                                      })
                                       .map((lesson, lessonIndex) => {
-                                      // S'assurer que toutes les valeurs sont des primitives
-                                      const lessonId = String(lesson.id || "")
-                                      const lessonTitle = String(lesson.title || "")
-                                      const lessonType = String(lesson.type || "video")
-                                      const lessonDuration = lesson.duration ? String(lesson.duration) : undefined
-                                      const lessonNumber = lessonIndex + 1
-                                      const isVideo = lessonType === "video"
-                                      const isQuiz = lessonType === "quiz"
-                                      
-                                      // Vérifier que les valeurs sont valides avant de rendre
-                                      if (!lessonId || !lessonTitle) {
-                                        return null
-                                      }
-                                      
-                                      return (
+                                      try {
+                                        // S'assurer que toutes les valeurs sont des primitives
+                                        const lessonId = String(lesson.id || "")
+                                        const lessonTitle = String(lesson.title || "").trim()
+                                        const lessonType = String(lesson.type || "video")
+                                        const lessonDuration = lesson.duration ? String(lesson.duration) : undefined
+                                        const lessonNumber = lessonIndex + 1
+                                        const isVideo = lessonType === "video"
+                                        const isQuiz = lessonType === "quiz"
+                                        
+                                        // Vérifier que les valeurs sont valides avant de rendre
+                                        if (!lessonId || lessonId === "" || !lessonTitle || lessonTitle === "") {
+                                          return null
+                                        }
+                                        
+                                        return (
                                   <Link
                                     key={lessonId}
                                     href={`/learn/${course.id}?lesson=${lessonId}`}
@@ -907,9 +941,13 @@ export function CourseDetailClient({ course }: CourseDetailClientProps) {
                                             </div>
                                     </div>
                                   </Link>
-                                      )
+                                        )
+                                      } catch (error) {
+                                        console.error("Erreur lors du rendu d'une leçon:", error, lesson)
+                                        return null
+                                      }
                                     })
-                                    .filter(Boolean) // Filtrer les null
+                                    .filter((item): item is React.ReactElement => item !== null && item !== undefined)
                                   ) : (
                                     <div className="p-4 text-center text-sm text-muted-foreground bg-muted/50 rounded-lg">
                                       Aucune leçon disponible dans ce module
@@ -918,8 +956,13 @@ export function CourseDetailClient({ course }: CourseDetailClientProps) {
                               </div>
                             </AccordionContent>
                           </AccordionItem>
-                          )
-                        })
+                            )
+                            } catch (error) {
+                              console.error("Erreur lors du rendu d'un module:", error, module)
+                              return null
+                            }
+                          })
+                          .filter((item): item is React.ReactElement => item !== null && item !== undefined)
                       ) : (
                         <div className="p-8 text-center border-2 border-dashed border-border rounded-xl bg-muted/30">
                           <BookOpen className="h-12 w-12 text-muted-foreground mx-auto mb-4 opacity-50" />
@@ -1248,12 +1291,12 @@ export function CourseDetailClient({ course }: CourseDetailClientProps) {
                         ? course.features
                             .slice(0, 4)
                             .filter((feature) => feature !== null && feature !== undefined)
-                            .map((feature, index) => {
+                            .map((feature: any, index) => {
                               // S'assurer que feature est une string primitive
                               const featureText = typeof feature === 'string' 
                                 ? feature 
                                 : (typeof feature === 'object' && feature !== null
-                                    ? String(feature.title || feature.text || feature.name || JSON.stringify(feature))
+                                    ? String((feature as any).title || (feature as any).text || (feature as any).name || JSON.stringify(feature))
                                     : String(feature || ''));
                               
                               if (!featureText || featureText.trim() === '') {
