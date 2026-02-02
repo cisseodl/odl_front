@@ -34,7 +34,10 @@ export function useScrollSpy({ sectionIds, offset = 100, rootMargin = "0px" }: U
         (entries) => {
           entries.forEach((entry) => {
             if (entry.isIntersecting) {
-              setActiveSection(id)
+              setActiveSection((prev) => {
+                // Ne mettre à jour que si la section a vraiment changé
+                return prev !== id ? id : prev
+              })
             }
           })
         },
@@ -45,21 +48,33 @@ export function useScrollSpy({ sectionIds, offset = 100, rootMargin = "0px" }: U
       observers.push(observer)
     })
 
-    // Fallback: check scroll position
+    // Fallback: check scroll position avec debounce pour éviter les vibrations
+    let scrollTimeout: NodeJS.Timeout | null = null
     const handleScroll = () => {
-      const scrollPosition = window.scrollY + offset
-
-      for (let i = sectionIds.length - 1; i >= 0; i--) {
-        const id = sectionIds[i]
-        const element = elements.get(id)
-        if (!element) continue
-
-        const elementTop = element.getBoundingClientRect().top + window.scrollY
-        if (scrollPosition >= elementTop) {
-          setActiveSection(id)
-          break
-        }
+      // Annuler le timeout précédent
+      if (scrollTimeout) {
+        clearTimeout(scrollTimeout)
       }
+      
+      // Debounce pour éviter les appels trop fréquents
+      scrollTimeout = setTimeout(() => {
+        const scrollPosition = window.scrollY + offset
+
+        for (let i = sectionIds.length - 1; i >= 0; i--) {
+          const id = sectionIds[i]
+          const element = elements.get(id)
+          if (!element) continue
+
+          const elementTop = element.getBoundingClientRect().top + window.scrollY
+          if (scrollPosition >= elementTop) {
+            setActiveSection((prev) => {
+              // Ne mettre à jour que si la section a vraiment changé
+              return prev !== id ? id : prev
+            })
+            break
+          }
+        }
+      }, 50) // Debounce de 50ms pour réduire les vibrations
     }
 
     window.addEventListener("scroll", handleScroll, { passive: true })
@@ -68,6 +83,9 @@ export function useScrollSpy({ sectionIds, offset = 100, rootMargin = "0px" }: U
     return () => {
       observers.forEach((observer) => observer.disconnect())
       window.removeEventListener("scroll", handleScroll)
+      if (scrollTimeout) {
+        clearTimeout(scrollTimeout)
+      }
     }
   }, [sectionIds, offset, rootMargin])
 

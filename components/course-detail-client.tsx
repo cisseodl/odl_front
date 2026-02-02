@@ -85,6 +85,9 @@ export function CourseDetailClient({ course }: CourseDetailClientProps) {
   // Scroll spy for tabs
   const sectionIds = ["overview", "content", "instructor", "reviews", "faq"]
   const activeSection = useScrollSpy({ sectionIds, offset: 150 })
+  
+  // Timeout pour gérer la fin du scroll programmatique
+  const scrollTimeoutRef = useRef<NodeJS.Timeout | null>(null)
 
   // Update active tab based on scroll position
   // PROTECTION: Ne pas mettre à jour pendant un scroll programmatique
@@ -100,6 +103,11 @@ export function CourseDetailClient({ course }: CourseDetailClientProps) {
 
   // Handle tab click with smooth scroll
   const handleTabClick = (value: string) => {
+    // Annuler le timeout précédent s'il existe
+    if (scrollTimeoutRef.current) {
+      clearTimeout(scrollTimeoutRef.current)
+    }
+    
     setActiveTab(value)
     
     // Marquer que le scroll est programmatique
@@ -117,11 +125,22 @@ export function CourseDetailClient({ course }: CourseDetailClientProps) {
       })
     }
     
-    // Libérer le flag après l'animation de scroll (500ms pour smooth scroll)
-    setTimeout(() => {
+    // Libérer le flag après l'animation de scroll
+    // Augmenter à 800ms pour être sûr que le smooth scroll est terminé
+    scrollTimeoutRef.current = setTimeout(() => {
       isProgrammaticScroll.current = false
-    }, 500)
+      scrollTimeoutRef.current = null
+    }, 800)
   }
+  
+  // Cleanup du timeout au démontage
+  useEffect(() => {
+    return () => {
+      if (scrollTimeoutRef.current) {
+        clearTimeout(scrollTimeoutRef.current)
+      }
+    }
+  }, [])
 
   // Extended description
   const fullDescription = `${course.description}\n\nCe cours vous guidera à travers tous les concepts essentiels et avancés. Vous travaillerez sur des projets réels et obtiendrez les compétences nécessaires pour exceller dans votre domaine. Notre approche pratique vous permettra de mettre immédiatement en application ce que vous apprenez.`
