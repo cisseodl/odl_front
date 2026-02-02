@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { useState, useEffect, useMemo } from "react"
+import { useState, useEffect, useMemo, useCallback, useRef, startTransition } from "react"
 import { useRouter } from "next/navigation"
 import { Share2, Bookmark, MoreVertical, Play, Plus, Star, Clock, Users, Award, CheckCircle2, FileText, Video, BookOpen, HelpCircle, ArrowLeft, Globe, BarChart3, Infinity, Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -63,6 +63,46 @@ export function CourseDetailClient({ course }: CourseDetailClientProps) {
   const [isEnrolled, setIsEnrolled] = useState(false)
   const [showExpectationsModal, setShowExpectationsModal] = useState(false)
   const queryClient = useQueryClient()
+  const isMountedRef = useRef(true)
+  
+  // S'assurer que le composant est monté avant de mettre à jour l'état
+  useEffect(() => {
+    isMountedRef.current = true
+    return () => {
+      isMountedRef.current = false
+    }
+  }, [])
+
+  // Fonction pour nettoyer récursivement les modules et leçons
+  // Utiliser useCallback pour éviter les re-créations à chaque rendu
+  // DOIT être défini AVANT les useEffect et useMemo qui l'utilisent
+  const cleanModule = useCallback((module: any): Module | null => {
+    if (!module || !module.id) return null
+    
+    try {
+      return {
+        id: String(module.id),
+        title: String(module.title || ""),
+        duration: String(module.duration || "0h 0m"),
+        lessons: Array.isArray(module.lessons) 
+          ? module.lessons
+              .filter((lesson: any) => lesson && lesson.id)
+              .map((lesson: any) => ({
+                id: String(lesson.id),
+                title: String(lesson.title || ""),
+                type: String(lesson.type || "video"),
+                contentUrl: lesson.contentUrl ? String(lesson.contentUrl) : undefined,
+                duration: String(lesson.duration || "0m"),
+                completed: Boolean(lesson.completed),
+                locked: Boolean(lesson.locked),
+              }))
+          : [],
+      }
+    } catch (error) {
+      console.error("Erreur lors du nettoyage du module:", error)
+      return null
+    }
+  }, [])
 
   // Convertir course.id en nombre de manière sécurisée
   // Utiliser une valeur stable pour éviter les re-renders infinis
@@ -295,32 +335,48 @@ export function CourseDetailClient({ course }: CourseDetailClientProps) {
 
   // Gérer les erreurs de chargement des modules
   useEffect(() => {
-    if (modulesError) {
-      console.error("Erreur lors du chargement des modules:", modulesError)
-      // Si l'erreur indique qu'il faut s'inscrire, l'utilisateur n'est pas inscrit
-      const errorMessage = String(modulesError?.message || "")
-      if (errorMessage.includes("inscrire") || errorMessage.includes("inscription") || errorMessage.includes("inscrit")) {
-        setIsEnrolled(false)
-      } else {
-        // Autre erreur, on considère que l'utilisateur n'est pas inscrit
-        setIsEnrolled(false)
-      }
-    }
+    const timeoutId = setTimeout(() => {
+      if (!isMountedRef.current) return
+      
+      startTransition(() => {
+        if (modulesError) {
+          console.error("Erreur lors du chargement des modules:", modulesError)
+          // Si l'erreur indique qu'il faut s'inscrire, l'utilisateur n'est pas inscrit
+          const errorMessage = String(modulesError?.message || "")
+          if (errorMessage.includes("inscrire") || errorMessage.includes("inscription") || errorMessage.includes("inscrit")) {
+            setIsEnrolled(false)
+          } else {
+            // Autre erreur, on considère que l'utilisateur n'est pas inscrit
+            setIsEnrolled(false)
+          }
+        }
+      })
+    }, 0)
+    
+    return () => clearTimeout(timeoutId)
   }, [modulesError])
 
   // Gérer le succès du chargement des modules
   useEffect(() => {
-    if (modulesFromApi !== undefined) {
-      // Seulement si les modules se chargent AVEC DU CONTENU, l'utilisateur est inscrit
-      if (modulesFromApi && Array.isArray(modulesFromApi) && modulesFromApi.length > 0) {
-        setIsEnrolled(true)
-        console.log("✅ [ENROLLMENT] Modules chargés avec succès (contenu présent), utilisateur inscrit")
-      } else {
-        // Tableau vide = pas de modules, considérer comme NON inscrit pour afficher le bouton
-        setIsEnrolled(false)
-        console.log("⚠️ [ENROLLMENT] Modules chargés mais tableau vide, isEnrolled = false (BOUTON VISIBLE)")
-      }
-    }
+    const timeoutId = setTimeout(() => {
+      if (!isMountedRef.current) return
+      
+      startTransition(() => {
+        if (modulesFromApi !== undefined) {
+          // Seulement si les modules se chargent AVEC DU CONTENU, l'utilisateur est inscrit
+          if (modulesFromApi && Array.isArray(modulesFromApi) && modulesFromApi.length > 0) {
+            setIsEnrolled(true)
+            console.log("✅ [ENROLLMENT] Modules chargés avec succès (contenu présent), utilisateur inscrit")
+          } else {
+            // Tableau vide = pas de modules, considérer comme NON inscrit pour afficher le bouton
+            setIsEnrolled(false)
+            console.log("⚠️ [ENROLLMENT] Modules chargés mais tableau vide, isEnrolled = false (BOUTON VISIBLE)")
+          }
+        }
+      })
+    }, 0)
+    
+    return () => clearTimeout(timeoutId)
   }, [modulesFromApi])
 
   // IMPORTANT: Ne PAS rediriger automatiquement depuis course-detail-client
@@ -337,105 +393,95 @@ export function CourseDetailClient({ course }: CourseDetailClientProps) {
   // Ne mettre isEnrolled à true QUE si on est ABSOLUMENT CERTAIN qu'il est inscrit
   // Cela garantit que le bouton "S'inscrire gratuitement" est TOUJOURS visible par défaut
   useEffect(() => {
-    // Si on charge encore, ne rien faire (garder isEnrolled = false par défaut)
-    if (isLoadingModules) {
-      console.log("⏳ [ENROLLMENT] Chargement en cours, garder isEnrolled = false")
-      return
-    }
-
-    // Si pas de courseIdNum, garder false
-    if (!courseIdNum) {
-      setIsEnrolled(false)
-      return
-    }
-
-    // Seulement si les modules sont chargés AVEC DU CONTENU, alors l'utilisateur est inscrit
-    if (modulesFromApi !== undefined && Array.isArray(modulesFromApi) && !modulesError && modulesFromApi.length > 0) {
-      // Modules chargés avec contenu = utilisateur inscrit
-      setIsEnrolled(true)
-      console.log("✅ [ENROLLMENT] Utilisateur inscrit (modules avec contenu détectés)")
-    } else if (modulesError) {
-      // Si erreur, vérifier si c'est une erreur d'inscription
-      const errorMessage = String(modulesError?.message || "")
-      const isEnrollmentError = errorMessage.includes("inscrire") || 
-                                errorMessage.includes("inscription") || 
-                                errorMessage.includes("inscrit") ||
-                                errorMessage.includes("non inscrit") ||
-                                errorMessage.includes("403") ||
-                                errorMessage.includes("401") ||
-                                errorMessage.includes("Forbidden") ||
-                                errorMessage.includes("Unauthorized")
+    // Utiliser setTimeout pour s'assurer que la mise à jour d'état se fait après le rendu
+    const timeoutId = setTimeout(() => {
+      if (!isMountedRef.current) return
       
-      if (isEnrollmentError) {
-        // Erreur d'inscription = utilisateur NON inscrit
-        setIsEnrolled(false)
-        console.log("❌ [ENROLLMENT] Erreur d'inscription détectée, isEnrolled = false (BOUTON VISIBLE)")
-      } else {
-        // Erreur technique = par défaut NON inscrit pour afficher le bouton
-        setIsEnrolled(false)
-        console.log("⚠️ [ENROLLMENT] Erreur technique, isEnrolled = false (BOUTON VISIBLE)")
-      }
-    } else {
-      // Aucune donnée ou tableau vide = NON inscrit par défaut
-      setIsEnrolled(false)
-      console.log("⚠️ [ENROLLMENT] Pas de modules ou tableau vide, isEnrolled = false (BOUTON VISIBLE)")
-    }
+      // Utiliser startTransition pour les mises à jour d'état non urgentes
+      startTransition(() => {
+        // Si on charge encore, ne rien faire (garder isEnrolled = false par défaut)
+        if (isLoadingModules) {
+          console.log("⏳ [ENROLLMENT] Chargement en cours, garder isEnrolled = false")
+          return
+        }
+
+        // Si pas de courseIdNum, garder false
+        if (!courseIdNum) {
+          setIsEnrolled(false)
+          return
+        }
+
+        // Seulement si les modules sont chargés AVEC DU CONTENU, alors l'utilisateur est inscrit
+        if (modulesFromApi !== undefined && Array.isArray(modulesFromApi) && !modulesError && modulesFromApi.length > 0) {
+          // Modules chargés avec contenu = utilisateur inscrit
+          setIsEnrolled(true)
+          console.log("✅ [ENROLLMENT] Utilisateur inscrit (modules avec contenu détectés)")
+        } else if (modulesError) {
+          // Si erreur, vérifier si c'est une erreur d'inscription
+          const errorMessage = String(modulesError?.message || "")
+          const isEnrollmentError = errorMessage.includes("inscrire") || 
+                                    errorMessage.includes("inscription") || 
+                                    errorMessage.includes("inscrit") ||
+                                    errorMessage.includes("non inscrit") ||
+                                    errorMessage.includes("403") ||
+                                    errorMessage.includes("401") ||
+                                    errorMessage.includes("Forbidden") ||
+                                    errorMessage.includes("Unauthorized")
+          
+          if (isEnrollmentError) {
+            // Erreur d'inscription = utilisateur NON inscrit
+            setIsEnrolled(false)
+            console.log("❌ [ENROLLMENT] Erreur d'inscription détectée, isEnrolled = false (BOUTON VISIBLE)")
+          } else {
+            // Erreur technique = par défaut NON inscrit pour afficher le bouton
+            setIsEnrolled(false)
+            console.log("⚠️ [ENROLLMENT] Erreur technique, isEnrolled = false (BOUTON VISIBLE)")
+          }
+        } else {
+          // Aucune donnée ou tableau vide = NON inscrit par défaut
+          setIsEnrolled(false)
+          console.log("⚠️ [ENROLLMENT] Pas de modules ou tableau vide, isEnrolled = false (BOUTON VISIBLE)")
+        }
+      })
+    }, 0)
+    
+    return () => clearTimeout(timeoutId)
   }, [courseIdNum, isLoadingModules, modulesFromApi, modulesError])
 
   // Adapter les modules de l'API si nécessaire
   useEffect(() => {
-    if (modulesFromApi) {
-      if (modulesFromApi.length > 0) {
-        try {
-          const adaptedModules = modulesFromApi.map(adaptModule)
-          // Nettoyer et sérialiser les modules adaptés pour éviter les erreurs React #185
-          const cleanedModules = adaptedModules
-            .map(cleanModule)
-            .filter((m): m is Module => m !== null)
-          const serializedModules = serializeData(cleanedModules)
-          setDynamicCurriculum(serializedModules as Module[])
-        } catch (error) {
-          console.error("Erreur lors de l'adaptation des modules:", error)
-          setDynamicCurriculum([])
+    // Utiliser setTimeout pour s'assurer que la mise à jour d'état se fait après le rendu
+    const timeoutId = setTimeout(() => {
+      if (!isMountedRef.current) return
+      
+      startTransition(() => {
+        if (modulesFromApi) {
+          if (modulesFromApi.length > 0) {
+            try {
+              const adaptedModules = modulesFromApi.map(adaptModule)
+              // Nettoyer et sérialiser les modules adaptés pour éviter les erreurs React #185
+              const cleanedModules = adaptedModules
+                .map(cleanModule)
+                .filter((m): m is Module => m !== null)
+              const serializedModules = serializeData(cleanedModules)
+              setDynamicCurriculum(serializedModules as Module[])
+            } catch (error) {
+              console.error("Erreur lors de l'adaptation des modules:", error)
+              setDynamicCurriculum([])
+            }
+          } else {
+            // Si l'API retourne un tableau vide, réinitialiser
+            setDynamicCurriculum([])
+          }
+        } else if (modulesFromApi === null || modulesFromApi === undefined) {
+          // Si la requête n'a pas encore été exécutée ou a échoué, ne pas réinitialiser
+          // On garde dynamicCurriculum tel quel
         }
-      } else {
-        // Si l'API retourne un tableau vide, réinitialiser
-        setDynamicCurriculum([])
-      }
-    } else if (modulesFromApi === null || modulesFromApi === undefined) {
-      // Si la requête n'a pas encore été exécutée ou a échoué, ne pas réinitialiser
-      // On garde dynamicCurriculum tel quel
-    }
-  }, [modulesFromApi])
-
-  // Fonction pour nettoyer récursivement les modules et leçons
-  const cleanModule = (module: any): Module | null => {
-    if (!module || !module.id) return null
+      })
+    }, 0)
     
-    try {
-      return {
-        id: String(module.id),
-        title: String(module.title || ""),
-        duration: String(module.duration || "0h 0m"),
-        lessons: Array.isArray(module.lessons) 
-          ? module.lessons
-              .filter((lesson: any) => lesson && lesson.id)
-              .map((lesson: any) => ({
-                id: String(lesson.id),
-                title: String(lesson.title || ""),
-                type: String(lesson.type || "video"),
-                contentUrl: lesson.contentUrl ? String(lesson.contentUrl) : undefined,
-                duration: String(lesson.duration || "0m"),
-                completed: Boolean(lesson.completed),
-                locked: Boolean(lesson.locked),
-              }))
-          : [],
-      }
-    } catch (error) {
-      console.error("Erreur lors du nettoyage du module:", error)
-      return null
-    }
-  }
+    return () => clearTimeout(timeoutId)
+  }, [modulesFromApi, cleanModule])
 
   // Utiliser le curriculum du cours s'il existe et n'est pas vide, sinon utiliser les modules chargés dynamiquement
   // Priorité : modules chargés dynamiquement > curriculum du cours (pour avoir les données les plus récentes)
@@ -461,7 +507,7 @@ export function CourseDetailClient({ course }: CourseDetailClientProps) {
       console.error("Erreur lors de la sérialisation du curriculum:", error)
       return []
     }
-  }, [course.curriculum, dynamicCurriculum])
+  }, [course.curriculum, dynamicCurriculum, cleanModule])
   const totalLectures = getTotalLectures(curriculum)
 
   const totalRealDuration = useMemo(() => {
