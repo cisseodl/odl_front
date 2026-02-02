@@ -1,7 +1,8 @@
 "use client"
 
 import { useState, useMemo, useEffect } from "react"
-import { SlidersHorizontal, X, Loader2 } from "lucide-react"
+import { SlidersHorizontal, X, Loader2, Search } from "lucide-react"
+import { Input } from "@/components/ui/input"
 import { CourseCard } from "@/components/course-card"
 import { CourseCardList } from "@/components/course-card-list"
 import { Button } from "@/components/ui/button"
@@ -27,6 +28,7 @@ export default function CoursesPage() {
   const [selectedLanguage, setSelectedLanguage] = useState<string[]>([])
   const [sortBy, setSortBy] = useState<SortOption>("popularity")
   const [viewMode, setViewMode] = useState<ViewMode>("grid")
+  const [searchQuery, setSearchQuery] = useState("")
   
   // Charger les cours depuis l'API
   const {
@@ -100,8 +102,18 @@ export default function CoursesPage() {
       filtered = filtered.filter((course) => selectedLanguage.includes(course.language))
     }
 
+    // Search filter
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase()
+      filtered = filtered.filter((course) =>
+        course.title.toLowerCase().includes(query) ||
+        course.description?.toLowerCase().includes(query) ||
+        course.category?.toLowerCase().includes(query)
+      )
+    }
+
     return filtered
-  }, [courses, selectedCategory, selectedLevel, selectedDuration, minRating, selectedLanguage])
+  }, [courses, selectedCategory, selectedLevel, selectedDuration, minRating, selectedLanguage, searchQuery])
 
   // Sort courses
   const sortedCourses = useMemo(() => {
@@ -125,6 +137,7 @@ export default function CoursesPage() {
     setSelectedDuration([])
     setMinRating(0)
     setSelectedLanguage([])
+    setSearchQuery("")
   }
 
   // Get active filters for chips display
@@ -229,6 +242,21 @@ export default function CoursesPage() {
 
           {/* Main Content */}
           <div className="flex-1 min-w-0">
+            {/* Search Bar */}
+            <div className="mb-6">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+                <Input
+                  type="search"
+                  placeholder="Rechercher un cours..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-10 h-10 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
+                  aria-label="Rechercher un cours"
+                />
+              </div>
+            </div>
+
             {/* Mobile Filter Button & Sort */}
             <div className="flex items-center justify-between gap-4 mb-6 flex-wrap">
               {/* Mobile Filters */}

@@ -514,8 +514,10 @@ export default function HomePage() {
       {/* How Learners Achieve Goals - Style Orange Mali */}
       <section className="py-16 lg:py-20 bg-white">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-center mb-12">
-
+          <div className="text-center mb-12">
+            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-primary mb-8 tracking-tight" style={{ color: 'var(--primary)' }}>
+              Laisser un témoignage
+            </h2>
             <Button
               variant="outline"
               size="lg"
