@@ -59,8 +59,9 @@ export default function LearnPage({ params }: LearnPageProps) {
     enabled: !Number.isNaN(courseIdNum) && !!course,
   })
 
-  // TOUJOURS charger les modules pour vérifier l'inscription (même si le cours a un curriculum)
-  // Cela garantit que l'utilisateur est bien inscrit avant d'accéder à /learn/[id]
+  // VÉRIFICATION STRICTE D'INSCRIPTION : TOUJOURS charger les modules pour vérifier l'inscription
+  // Même si le cours a un curriculum, on doit TOUJOURS vérifier l'inscription via les modules
+  // Cela garantit que l'utilisateur est bien inscrit à CE cours en particulier avant d'accéder à /learn/[id]
   const {
     data: modulesFromApi,
     isLoading: isLoadingModules,
@@ -70,6 +71,7 @@ export default function LearnPage({ params }: LearnPageProps) {
     queryFn: async () => {
       try {
         const modules = await moduleService.getModulesByCourse(courseIdNum)
+        // Si on peut charger les modules (même un tableau vide), l'utilisateur est inscrit
         return modules || []
       } catch (error: any) {
         // Re-lancer l'erreur pour qu'elle soit détectée par React Query
@@ -82,8 +84,16 @@ export default function LearnPage({ params }: LearnPageProps) {
     gcTime: 30 * 60 * 1000,
   })
 
-  // Rediriger vers /courses/[id] si l'utilisateur n'est pas inscrit
-  // WORKFLOW: /learn/id → Si non inscrit → rediriger vers /courses/id, sinon afficher le contenu
+  // Vérifier si l'utilisateur est inscrit
+  // L'utilisateur est inscrit UNIQUEMENT si modulesFromApi est défini (même tableau vide) ET qu'il n'y a pas d'erreur
+  const isEnrolled = useMemo(() => {
+    if (isLoadingModules) return false // En cours de vérification
+    if (modulesError) return false // Erreur = non inscrit
+    // Si modulesFromApi est défini (même []), l'utilisateur est inscrit
+    return modulesFromApi !== undefined && modulesFromApi !== null
+  }, [modulesFromApi, isLoadingModules, modulesError])
+
+  // Rediriger IMMÉDIATEMENT vers /courses/[id] si l'utilisateur n'est pas inscrit
   useEffect(() => {
     // Attendre que le chargement soit terminé
     if (isLoadingModules || courseLoading) return
@@ -108,25 +118,13 @@ export default function LearnPage({ params }: LearnPageProps) {
       }
     }
     
-    // VÉRIFICATION STRICTE : Si aucun module n'a été chargé OU s'il y a une erreur, l'utilisateur n'est PAS inscrit
-    // IMPORTANT : Même si le cours a un curriculum, on doit TOUJOURS vérifier l'inscription via les modules
-    // Si modulesError existe, c'est une erreur d'inscription → rediriger
-    if (modulesError) {
-      console.log("❌ [ENROLLMENT] Erreur modules détectée, redirection vers /courses/id")
+    // Si l'utilisateur n'est pas inscrit (modulesFromApi est undefined/null), rediriger
+    if (!isEnrolled) {
+      console.log("⚠️ [ENROLLMENT] Utilisateur non inscrit (modulesFromApi undefined/null), redirection vers /courses/id")
       router.replace(`/courses/${courseIdNum}`)
       return
     }
-    
-    // Si aucun module n'a été chargé après le chargement, l'utilisateur n'est PAS inscrit
-    // Même si le cours a un curriculum, on doit pouvoir charger les modules pour être inscrit
-    // modulesFromApi peut être un tableau vide [] (cours sans modules) mais pas undefined/null
-    // IMPORTANT: Si modulesFromApi est undefined ou null après le chargement, c'est que l'utilisateur n'est pas inscrit
-    if (!isLoadingModules && (modulesFromApi === undefined || modulesFromApi === null)) {
-      console.log("⚠️ [ENROLLMENT] Aucun module chargé (undefined/null), redirection vers /courses/id")
-      router.replace(`/courses/${courseIdNum}`)
-      return
-    }
-  }, [course?.curriculum, modulesFromApi, modulesError, isLoadingModules, courseLoading, courseIdNum, router])
+  }, [isEnrolled, modulesError, isLoadingModules, courseLoading, courseIdNum, router])
 
   const [currentLesson, setCurrentLesson] = useState(0)
   const [sidebarOpen, setSidebarOpen] = useState(true)
