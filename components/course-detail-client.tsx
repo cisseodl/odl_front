@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import React, { useState, useEffect, useMemo, useRef } from "react"
+import React, { useState, useMemo } from "react"
 import { Share2, Bookmark, MoreVertical, Play, Star, Clock, Users, Award, CheckCircle2, FileText, Video, BookOpen, ArrowLeft, Globe, BarChart3, Infinity } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
