@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import React, { useState, useEffect, useMemo } from "react"
+import React, { useState, useEffect, useMemo, useRef } from "react"
 import { Share2, Bookmark, MoreVertical, Play, Star, Clock, Users, Award, CheckCircle2, FileText, Video, BookOpen, ArrowLeft, Globe, BarChart3, Infinity } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -49,6 +49,9 @@ const getTotalLectures = (curriculum: Course["curriculum"]) => {
 export function CourseDetailClient({ course }: CourseDetailClientProps) {
   const [showFullDescription, setShowFullDescription] = useState(false)
   const [activeTab, setActiveTab] = useState("content")
+  
+  // Flag pour empêcher la boucle scroll ↔ state
+  const isProgrammaticScroll = useRef(false)
 
   // Utiliser le curriculum du cours de manière statique
   const curriculum = useMemo(() => {
@@ -84,25 +87,40 @@ export function CourseDetailClient({ course }: CourseDetailClientProps) {
   const activeSection = useScrollSpy({ sectionIds, offset: 150 })
 
   // Update active tab based on scroll position
+  // PROTECTION: Ne pas mettre à jour pendant un scroll programmatique
   useEffect(() => {
-    if (activeSection) {
-      setActiveTab(activeSection)
-    }
-  }, [activeSection])
+    if (!activeSection) return
+    // Ignorer les changements pendant un scroll programmatique
+    if (isProgrammaticScroll.current) return
+    // Éviter les mises à jour inutiles
+    if (activeSection === activeTab) return
+    
+    setActiveTab(activeSection)
+  }, [activeSection, activeTab])
 
   // Handle tab click with smooth scroll
   const handleTabClick = (value: string) => {
     setActiveTab(value)
+    
+    // Marquer que le scroll est programmatique
+    isProgrammaticScroll.current = true
+    
     const element = document.getElementById(value)
     if (element) {
       const offset = 120
       const elementPosition = element.getBoundingClientRect().top
       const offsetPosition = elementPosition + window.pageYOffset - offset
+      
       window.scrollTo({
         top: offsetPosition,
         behavior: "smooth",
       })
     }
+    
+    // Libérer le flag après l'animation de scroll (500ms pour smooth scroll)
+    setTimeout(() => {
+      isProgrammaticScroll.current = false
+    }, 500)
   }
 
   // Extended description
