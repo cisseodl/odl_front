@@ -233,11 +233,11 @@ export function adaptModule(moduleDto: ModuleDto | any): Module {
   })
   
   // IMPORTANT: Préserver contentUrl depuis les données brutes AVANT l'adaptation
-  // Créer un map des leçons brutes pour récupérer contentUrl si l'adapter le perd
-  const rawLessonsMap = new Map<number | string, any>()
+  // Créer un objet simple (pas un Map) pour éviter les erreurs React #185
+  const rawLessonsMap: Record<string | number, any> = {}
   rawLessons.forEach((rawLesson: any) => {
     if (rawLesson && rawLesson.id) {
-      rawLessonsMap.set(rawLesson.id, rawLesson)
+      rawLessonsMap[rawLesson.id] = rawLesson
       // Log pour chaque leçon brute
       if (rawLesson.type === "DOCUMENT" || rawLesson.type === "document") {
         console.log(`🟡 [ADAPTER] Leçon brute (document) ajoutée au map:`, {

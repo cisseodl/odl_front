@@ -25,6 +25,7 @@ import { useScrollSpy } from "@/hooks/use-scroll-spy"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { moduleService, courseService, reviewService } from "@/lib/api/services" // Added reviewService
 import { adaptModule } from "@/lib/api/adapters"
+import { serializeData } from "@/lib/utils/serialize"
 import { CourseSidebar } from "@/components/course-sidebar"
 import { useAuthStore } from "@/lib/store/auth-store"
 import { EnrollmentExpectationsModal } from "@/components/enrollment-expectations-modal"
@@ -377,8 +378,15 @@ export function CourseDetailClient({ course }: CourseDetailClientProps) {
   useEffect(() => {
     if (modulesFromApi) {
       if (modulesFromApi.length > 0) {
-        const adaptedModules = modulesFromApi.map(adaptModule)
-        setDynamicCurriculum(adaptedModules)
+        try {
+          const adaptedModules = modulesFromApi.map(adaptModule)
+          // Sérialiser les modules adaptés pour éviter les erreurs React #185
+          const serializedModules = serializeData(adaptedModules)
+          setDynamicCurriculum(serializedModules as Module[])
+        } catch (error) {
+          console.error("Erreur lors de l'adaptation des modules:", error)
+          setDynamicCurriculum([])
+        }
       } else {
         // Si l'API retourne un tableau vide, réinitialiser
         setDynamicCurriculum([])
@@ -392,16 +400,24 @@ export function CourseDetailClient({ course }: CourseDetailClientProps) {
   // Utiliser le curriculum du cours s'il existe et n'est pas vide, sinon utiliser les modules chargés dynamiquement
   // Priorité : modules chargés dynamiquement > curriculum du cours (pour avoir les données les plus récentes)
   const curriculum = useMemo(() => {
+    let result: Module[] = []
+    
     // Priorité 1 : Utiliser les modules chargés dynamiquement depuis l'API (données les plus récentes)
     if (dynamicCurriculum && Array.isArray(dynamicCurriculum) && dynamicCurriculum.length > 0) {
-      return dynamicCurriculum
+      result = dynamicCurriculum
     }
     // Priorité 2 : Utiliser le curriculum du cours s'il existe
-    if (course.curriculum && Array.isArray(course.curriculum) && course.curriculum.length > 0) {
-      return course.curriculum
+    else if (course.curriculum && Array.isArray(course.curriculum) && course.curriculum.length > 0) {
+      result = course.curriculum
     }
-    // Si aucun des deux n'est disponible, retourner un tableau vide
-    return []
+    
+    // Sérialiser le résultat pour éviter les erreurs React #185
+    try {
+      return serializeData(result) as Module[]
+    } catch (error) {
+      console.error("Erreur lors de la sérialisation du curriculum:", error)
+      return []
+    }
   }, [course.curriculum, dynamicCurriculum])
   const totalLectures = getTotalLectures(curriculum)
 

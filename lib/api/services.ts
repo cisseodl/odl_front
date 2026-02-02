@@ -25,6 +25,7 @@ import type {
   CourseProgressDto,
 } from "./types"
 import { adaptCourse, adaptCourses, adaptUser, adaptQuiz, adaptLab } from "./adapters"
+import { serializeData } from "../utils/serialize"
 import type { Course, User, Quiz, Lab } from "../types"
 import type { ApiResponse } from "./client"
 import { logger } from "../utils/logger"
@@ -645,7 +646,8 @@ export const moduleService = {
         }
         
         console.log(`🔵 [SERVICE] ===== FIN getModulesByCourse =====`)
-        return modules
+        // Sérialiser les modules pour éviter les erreurs React #185
+        return serializeData(modules) as ModuleDto[]
       }
       
       // Si la réponse indique une erreur, vérifier si c'est une erreur d'inscription
