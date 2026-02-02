@@ -59,27 +59,37 @@ export default function LearnPage({ params }: LearnPageProps) {
     enabled: !Number.isNaN(courseIdNum) && !!course,
   })
 
-  // Charger les modules depuis l'API si le curriculum est vide
+  // TOUJOURS charger les modules pour vérifier l'inscription (même si le cours a un curriculum)
+  // Cela garantit que l'utilisateur est bien inscrit avant d'accéder à /learn/[id]
   const {
     data: modulesFromApi,
     isLoading: isLoadingModules,
     error: modulesError,
   } = useQuery({
-    queryKey: ["modules", courseIdNum],
-    queryFn: () => moduleService.getModulesByCourse(courseIdNum),
-    enabled: !Number.isNaN(courseIdNum) && !!course && (!course.curriculum || course.curriculum.length === 0),
+    queryKey: ["modules", courseIdNum, "enrollment-check"],
+    queryFn: async () => {
+      try {
+        const modules = await moduleService.getModulesByCourse(courseIdNum)
+        return modules || []
+      } catch (error: any) {
+        // Re-lancer l'erreur pour qu'elle soit détectée par React Query
+        throw error
+      }
+    },
+    enabled: !Number.isNaN(courseIdNum) && !!course,
     retry: false, // Ne pas réessayer si erreur d'inscription
+    staleTime: 10 * 60 * 1000,
+    gcTime: 30 * 60 * 1000,
   })
 
   // Rediriger vers /courses/[id] si l'utilisateur n'est pas inscrit
   // WORKFLOW: /learn/id → Si non inscrit → rediriger vers /courses/id, sinon afficher le contenu
   useEffect(() => {
     // Attendre que le chargement soit terminé
-    if (isLoadingModules) return
+    if (isLoadingModules || courseLoading) return
     
-    // Si le cours n'a pas de curriculum et qu'il y a une erreur lors du chargement des modules
-    // cela signifie probablement que l'utilisateur n'est pas inscrit
-    if ((!course?.curriculum || course.curriculum.length === 0) && modulesError) {
+    // Si erreur lors du chargement des modules, vérifier si c'est une erreur d'inscription
+    if (modulesError) {
       const errorMessage = String(modulesError?.message || "")
       const isEnrollmentError = errorMessage.includes("inscrire") || 
                                 errorMessage.includes("inscription") || 
@@ -88,7 +98,8 @@ export default function LearnPage({ params }: LearnPageProps) {
                                 errorMessage.includes("403") ||
                                 errorMessage.includes("401") ||
                                 errorMessage.includes("Forbidden") ||
-                                errorMessage.includes("Unauthorized")
+                                errorMessage.includes("Unauthorized") ||
+                                errorMessage.includes("authentifié")
       
       if (isEnrollmentError) {
         console.log("❌ [ENROLLMENT] Utilisateur non inscrit détecté dans /learn, redirection vers /courses/id")
@@ -97,15 +108,14 @@ export default function LearnPage({ params }: LearnPageProps) {
       }
     }
     
-    // Si le cours n'a pas de curriculum et qu'aucun module n'a été chargé (même après chargement)
-    // et qu'il n'y a pas d'erreur explicite, vérifier si c'est parce que l'utilisateur n'est pas inscrit
-    if ((!course?.curriculum || course.curriculum.length === 0) && !isLoadingModules && !modulesFromApi) {
-      // Si le cours existe mais qu'on ne peut pas charger les modules, c'est probablement une erreur d'inscription
+    // Si aucun module n'a été chargé (même après chargement) et qu'il n'y a pas de curriculum
+    // cela signifie probablement que l'utilisateur n'est pas inscrit
+    if (!isLoadingModules && !modulesFromApi && (!course?.curriculum || course.curriculum.length === 0)) {
       console.log("⚠️ [ENROLLMENT] Aucun module chargé et pas de curriculum, redirection vers /courses/id")
       router.replace(`/courses/${courseIdNum}`)
       return
     }
-  }, [course?.curriculum, modulesFromApi, modulesError, isLoadingModules, courseIdNum, router])
+  }, [course?.curriculum, modulesFromApi, modulesError, isLoadingModules, courseLoading, courseIdNum, router])
 
   const [currentLesson, setCurrentLesson] = useState(0)
   const [sidebarOpen, setSidebarOpen] = useState(true)
