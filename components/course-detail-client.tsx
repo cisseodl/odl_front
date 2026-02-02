@@ -423,10 +423,19 @@ export function CourseDetailClient({ course }: CourseDetailClientProps) {
   }, [modulesFromApi])
   
   const prevModulesKeyRef = useRef<string | null>(null)
+  const prevDynamicCurriculumRef = useRef<Module[] | null>(null)
+  const modulesFromApiRef = useRef<typeof modulesFromApi>(modulesFromApi)
+  
+  // Mettre à jour le ref à chaque changement de modulesFromApi
+  useEffect(() => {
+    modulesFromApiRef.current = modulesFromApi
+  }, [modulesFromApi])
   
   useEffect(() => {
     // Éviter les mises à jour répétées pour les mêmes données
     if (prevModulesKeyRef.current === modulesKey) return
+    
+    // Marquer immédiatement pour éviter les appels répétés
     prevModulesKeyRef.current = modulesKey
     
     // Utiliser setTimeout pour s'assurer que la mise à jour d'état se fait après le rendu
@@ -434,25 +443,42 @@ export function CourseDetailClient({ course }: CourseDetailClientProps) {
       if (!isMountedRef.current) return
       
       startTransition(() => {
-        if (modulesFromApi && Array.isArray(modulesFromApi)) {
-          if (modulesFromApi.length > 0) {
+        // Utiliser modulesFromApi depuis le ref pour éviter les dépendances circulaires
+        const currentModules = modulesFromApiRef.current
+        
+        if (currentModules && Array.isArray(currentModules)) {
+          if (currentModules.length > 0) {
             try {
-              const adaptedModules = modulesFromApi.map(adaptModule)
+              const adaptedModules = currentModules.map(adaptModule)
               // Nettoyer et sérialiser les modules adaptés pour éviter les erreurs React #185
               const cleanedModules = adaptedModules
                 .map(cleanModule)
                 .filter((m): m is Module => m !== null)
-              const serializedModules = serializeData(cleanedModules)
-              setDynamicCurriculum(serializedModules as Module[])
+              const serializedModules = serializeData(cleanedModules) as Module[]
+              
+              // Comparer avec la valeur précédente pour éviter les mises à jour inutiles
+              const prevKey = prevDynamicCurriculumRef.current?.map(m => m.id).join(",")
+              const newKey = serializedModules.map(m => m.id).join(",")
+              
+              if (prevKey !== newKey) {
+                setDynamicCurriculum(serializedModules)
+                prevDynamicCurriculumRef.current = serializedModules
+              }
             } catch (error) {
               console.error("Erreur lors de l'adaptation des modules:", error)
-              setDynamicCurriculum([])
+              if (prevDynamicCurriculumRef.current?.length !== 0) {
+                setDynamicCurriculum([])
+                prevDynamicCurriculumRef.current = []
+              }
             }
           } else {
-            // Si l'API retourne un tableau vide, réinitialiser
-            setDynamicCurriculum([])
+            // Si l'API retourne un tableau vide, réinitialiser seulement si nécessaire
+            if (prevDynamicCurriculumRef.current?.length !== 0) {
+              setDynamicCurriculum([])
+              prevDynamicCurriculumRef.current = []
+            }
           }
-        } else if (modulesFromApi === null || modulesFromApi === undefined) {
+        } else if (currentModules === null || currentModules === undefined) {
           // Si la requête n'a pas encore été exécutée ou a échoué, ne pas réinitialiser
           // On garde dynamicCurriculum tel quel
         }
@@ -460,7 +486,7 @@ export function CourseDetailClient({ course }: CourseDetailClientProps) {
     }, 0)
     
     return () => clearTimeout(timeoutId)
-  }, [modulesKey, modulesFromApi, cleanModule])
+  }, [modulesKey, cleanModule]) // Retirer modulesFromApi des dépendances pour éviter les boucles infinies
 
   // Utiliser le curriculum du cours s'il existe et n'est pas vide, sinon utiliser les modules chargés dynamiquement
   // Priorité : modules chargés dynamiquement > curriculum du cours (pour avoir les données les plus récentes)
