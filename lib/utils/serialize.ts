@@ -68,12 +68,34 @@ export function serializeData<T>(data: T, visited = new WeakSet()): T {
     
     // Pour les autres types d'objets (classes, etc.), essayer de les convertir en objet simple
     try {
-      const jsonString = JSON.stringify(data)
+      // Utiliser JSON.stringify/parse pour forcer la sérialisation
+      const jsonString = JSON.stringify(data, (key, value) => {
+        // Ignorer les fonctions
+        if (typeof value === 'function') {
+          return undefined
+        }
+        // Convertir les dates en string
+        if (value instanceof Date) {
+          return value.toISOString()
+        }
+        // Convertir les Maps en objets
+        if (value instanceof Map) {
+          return Object.fromEntries(value)
+        }
+        // Convertir les Sets en arrays
+        if (value instanceof Set) {
+          return Array.from(value)
+        }
+        return value
+      })
       const parsed = JSON.parse(jsonString)
       return serializeData(parsed, visited) as T
     } catch (error) {
-      // Si la sérialisation JSON échoue, retourner un objet vide
-      console.warn('Impossible de sérialiser l\'objet:', error)
+      // Si la sérialisation JSON échoue, retourner null ou un objet vide selon le type
+      console.warn('Impossible de sérialiser l\'objet:', error, data)
+      if (Array.isArray(data)) {
+        return [] as unknown as T
+      }
       return {} as T
     }
   } finally {

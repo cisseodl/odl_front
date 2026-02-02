@@ -380,8 +380,11 @@ export function CourseDetailClient({ course }: CourseDetailClientProps) {
       if (modulesFromApi.length > 0) {
         try {
           const adaptedModules = modulesFromApi.map(adaptModule)
-          // Sérialiser les modules adaptés pour éviter les erreurs React #185
-          const serializedModules = serializeData(adaptedModules)
+          // Nettoyer et sérialiser les modules adaptés pour éviter les erreurs React #185
+          const cleanedModules = adaptedModules
+            .map(cleanModule)
+            .filter((m): m is Module => m !== null)
+          const serializedModules = serializeData(cleanedModules)
           setDynamicCurriculum(serializedModules as Module[])
         } catch (error) {
           console.error("Erreur lors de l'adaptation des modules:", error)
@@ -397,6 +400,35 @@ export function CourseDetailClient({ course }: CourseDetailClientProps) {
     }
   }, [modulesFromApi])
 
+  // Fonction pour nettoyer récursivement les modules et leçons
+  const cleanModule = (module: any): Module | null => {
+    if (!module || !module.id) return null
+    
+    try {
+      return {
+        id: String(module.id),
+        title: String(module.title || ""),
+        duration: String(module.duration || "0h 0m"),
+        lessons: Array.isArray(module.lessons) 
+          ? module.lessons
+              .filter((lesson: any) => lesson && lesson.id)
+              .map((lesson: any) => ({
+                id: String(lesson.id),
+                title: String(lesson.title || ""),
+                type: String(lesson.type || "video"),
+                contentUrl: lesson.contentUrl ? String(lesson.contentUrl) : undefined,
+                duration: String(lesson.duration || "0m"),
+                completed: Boolean(lesson.completed),
+                locked: Boolean(lesson.locked),
+              }))
+          : [],
+      }
+    } catch (error) {
+      console.error("Erreur lors du nettoyage du module:", error)
+      return null
+    }
+  }
+
   // Utiliser le curriculum du cours s'il existe et n'est pas vide, sinon utiliser les modules chargés dynamiquement
   // Priorité : modules chargés dynamiquement > curriculum du cours (pour avoir les données les plus récentes)
   const curriculum = useMemo(() => {
@@ -411,9 +443,12 @@ export function CourseDetailClient({ course }: CourseDetailClientProps) {
       result = course.curriculum
     }
     
-    // Sérialiser le résultat pour éviter les erreurs React #185
+    // Nettoyer et sérialiser le résultat pour éviter les erreurs React #185
     try {
-      return serializeData(result) as Module[]
+      const cleaned = result
+        .map(cleanModule)
+        .filter((m): m is Module => m !== null)
+      return serializeData(cleaned) as Module[]
     } catch (error) {
       console.error("Erreur lors de la sérialisation du curriculum:", error)
       return []
@@ -762,13 +797,18 @@ export function CourseDetailClient({ course }: CourseDetailClientProps) {
                           </div>
                         </div>
                       ) : curriculum.length > 0 ? (
-                        curriculum.filter(module => module && module.id).map((module, moduleIndex) => {
-                          const totalLessons = module.lessons?.length || 0
-                          const totalDuration = module.lessons?.reduce((acc, lesson) => {
-                            const duration = lesson.duration || "0m"
-                            const minutes = parseInt(duration.replace(/[^0-9]/g, "")) || 0
-                            return acc + minutes
-                          }, 0) || 0
+                        curriculum
+                          .filter(module => module && module.id && typeof module.id === 'string')
+                          .map((module, moduleIndex) => {
+                            // S'assurer que les leçons sont bien un tableau
+                            const lessons = Array.isArray(module.lessons) ? module.lessons : []
+                            const totalLessons = lessons.length
+                            const totalDuration = lessons.reduce((acc, lesson) => {
+                              if (!lesson || typeof lesson.duration !== 'string') return acc
+                              const duration = lesson.duration || "0m"
+                              const minutes = parseInt(duration.replace(/[^0-9]/g, "")) || 0
+                              return acc + minutes
+                            }, 0)
                           const formattedDuration = totalDuration > 60 
                             ? `${Math.floor(totalDuration / 60)}h ${totalDuration % 60}m`
                             : `${totalDuration}m`
@@ -787,7 +827,7 @@ export function CourseDetailClient({ course }: CourseDetailClientProps) {
                                     </div>
                                 <div className="flex-1 text-left">
                                       <div className="font-bold text-lg text-foreground mb-1.5">
-                                        {module.title}
+                                        {String(module.title || "")}
                                   </div>
                                       <div className="flex items-center gap-4 text-sm text-muted-foreground">
                                         <span className="flex items-center gap-1.5">
@@ -805,16 +845,28 @@ export function CourseDetailClient({ course }: CourseDetailClientProps) {
                             </AccordionTrigger>
                               <AccordionContent className="px-6 pb-5 pt-0">
                                 <div className="space-y-1.5 mt-3 ml-14">
-                                  {module.lessons && Array.isArray(module.lessons) && module.lessons.length > 0 ? (
-                                    module.lessons.filter(lesson => lesson && lesson.id).map((lesson, lessonIndex) => {
+                                  {lessons.length > 0 ? (
+                                    lessons
+                                      .filter(lesson => lesson && lesson.id && typeof lesson.id === 'string')
+                                      .map((lesson, lessonIndex) => {
+                                      // S'assurer que toutes les valeurs sont des primitives
+                                      const lessonId = String(lesson.id || "")
+                                      const lessonTitle = String(lesson.title || "")
+                                      const lessonType = String(lesson.type || "video")
+                                      const lessonDuration = lesson.duration ? String(lesson.duration) : undefined
                                       const lessonNumber = lessonIndex + 1
-                                      const isVideo = lesson.type === "video"
-                                      const isQuiz = lesson.type === "quiz"
+                                      const isVideo = lessonType === "video"
+                                      const isQuiz = lessonType === "quiz"
+                                      
+                                      // Vérifier que les valeurs sont valides avant de rendre
+                                      if (!lessonId || !lessonTitle) {
+                                        return null
+                                      }
                                       
                                       return (
                                   <Link
-                                    key={String(lesson.id)}
-                                    href={`/learn/${course.id}?lesson=${lesson.id}`}
+                                    key={lessonId}
+                                    href={`/learn/${course.id}?lesson=${lessonId}`}
                                           className="flex items-center justify-between p-4 rounded-lg hover:bg-primary/5 hover:border-l-4 hover:border-primary transition-all duration-200 group border border-transparent hover:border-primary/20 bg-muted/30"
                                         >
                                           <div className="flex items-center gap-4 flex-1 min-w-0">
@@ -834,7 +886,7 @@ export function CourseDetailClient({ course }: CourseDetailClientProps) {
                                                 {isVideo && <Video className="h-4 w-4 text-muted-foreground flex-shrink-0" />}
                                                 {isQuiz && <FileText className="h-4 w-4 text-primary flex-shrink-0" />}
                                                 <span className="text-sm font-medium text-foreground/90 group-hover:text-foreground truncate">
-                                          {lesson.title}
+                                          {lessonTitle}
                                         </span>
                                       </div>
                                               {isQuiz && (
@@ -845,9 +897,9 @@ export function CourseDetailClient({ course }: CourseDetailClientProps) {
                                     </div>
                                           </div>
                                           <div className="flex items-center gap-3 flex-shrink-0 ml-4">
-                                            {lesson.duration && (
+                                            {lessonDuration && (
                                               <span className="text-xs text-muted-foreground font-medium whitespace-nowrap">
-                                                {lesson.duration}
+                                                {lessonDuration}
                                               </span>
                                             )}
                                             <div className="w-6 h-6 rounded-full bg-background border border-border flex items-center justify-center group-hover:border-primary group-hover:bg-primary/10 transition-colors">
@@ -857,6 +909,7 @@ export function CourseDetailClient({ course }: CourseDetailClientProps) {
                                   </Link>
                                       )
                                     })
+                                    .filter(Boolean) // Filtrer les null
                                   ) : (
                                     <div className="p-4 text-center text-sm text-muted-foreground bg-muted/50 rounded-lg">
                                       Aucune leçon disponible dans ce module
