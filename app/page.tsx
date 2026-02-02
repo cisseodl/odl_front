@@ -471,7 +471,7 @@ export default function HomePage() {
               <Card key={course.id} className="border border-border hover:shadow-xl hover:border-primary transition-all duration-300 hover:-translate-y-1 bg-white">
                 <CardContent className="p-5">
                   <div className="flex gap-4">
-                    <Link href={`/learn/${course.id}`} className="relative w-32 h-20 flex-shrink-0 rounded-lg overflow-hidden bg-black/5 group/thumb">
+                    <Link href={`/courses/${course.id}`} className="relative w-32 h-20 flex-shrink-0 rounded-lg overflow-hidden bg-black/5 group/thumb">
                       <Image
                         src={course.imageUrl || "/placeholder.svg"}
                         alt={course.title}
@@ -484,7 +484,7 @@ export default function HomePage() {
                     </Link>
                     <div className="flex-1 min-w-0">
                       <p className="text-xs text-muted-foreground mb-1.5 font-semibold uppercase tracking-wide">{course.category}</p>
-                      <Link href={`/learn/${course.id}`}>
+                      <Link href={`/courses/${course.id}`}>
                         <h3 className="font-bold text-sm line-clamp-2 mb-3 hover:text-primary transition-colors leading-snug text-black">{course.title}</h3>
                       </Link>
                     </div>
