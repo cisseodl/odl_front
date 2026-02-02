@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { useState, useEffect, useMemo } from "react"
+import React, { useState, useEffect, useMemo } from "react"
 import { Share2, Bookmark, MoreVertical, Play, Star, Clock, Users, Award, CheckCircle2, FileText, Video, BookOpen, ArrowLeft, Globe, BarChart3, Infinity } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -451,7 +451,7 @@ export function CourseDetailClient({ course }: CourseDetailClientProps) {
                                               return null
                                             }
                                     })
-                                          .filter((item): item is JSX.Element => item !== null && item !== undefined)
+                                          .filter((item): item is React.ReactElement => item !== null && item !== undefined)
                                   ) : (
                                         <div className="p-4 text-center text-muted-foreground border-2 border-dashed border-border rounded-lg">
                                       Aucune leçon disponible dans ce module
@@ -466,7 +466,7 @@ export function CourseDetailClient({ course }: CourseDetailClientProps) {
                               return null
                             }
                         })
-                          .filter((item): item is JSX.Element => item !== null && item !== undefined)}
+                          .filter((item): item is React.ReactElement => item !== null && item !== undefined)}
                       </Accordion>
                       ) : (
                         <div className="p-8 text-center border-2 border-dashed border-border rounded-xl bg-muted/30">
@@ -501,12 +501,12 @@ export function CourseDetailClient({ course }: CourseDetailClientProps) {
                             </div>
                                 <div className="flex items-center gap-1.5">
                                   <Users className="h-4 w-4" />
-                                  <span>{course.instructor.students.toLocaleString()} Étudiants</span>
-                              </div>
+                                  <span>{(course.instructor as any).students?.toLocaleString() || "0"} Étudiants</span>
+                                </div>
                                 <div className="flex items-center gap-1.5">
                                   <Award className="h-4 w-4" />
-                                  <span>{course.instructor.courses} Cours</span>
-                            </div>
+                                  <span>{(course.instructor as any).courses || "0"} Cours</span>
+                                </div>
                               </div>
                               <p className="text-muted-foreground">{course.instructor.bio}</p>
                         </div>
@@ -559,10 +559,10 @@ export function CourseDetailClient({ course }: CourseDetailClientProps) {
               <Card className="sticky top-24 border-2 shadow-lg">
                 <CardContent className="p-6">
                   {/* Course Preview Image */}
-                  {course.thumbnail && (
+                  {(course as any).thumbnail && (
                     <div className="relative w-full aspect-video mb-4 rounded-lg overflow-hidden border-2 border-border">
                       <img
-                        src={course.thumbnail}
+                        src={(course as any).thumbnail}
                         alt={course.title}
                         className="w-full h-full object-cover"
                       />
@@ -572,11 +572,11 @@ export function CourseDetailClient({ course }: CourseDetailClientProps) {
                   {/* Price */}
                   <div className="mb-4">
                     <div className="text-3xl font-bold text-foreground mb-1">
-                      {course.price === 0 ? "Gratuit" : `${course.price.toLocaleString()} FCFA`}
+                      {(course as any).price === 0 ? "Gratuit" : `${((course as any).price || 0).toLocaleString()} FCFA`}
                     </div>
-                    {course.originalPrice && course.originalPrice > course.price && (
+                    {(course as any).originalPrice && (course as any).originalPrice > ((course as any).price || 0) && (
                       <div className="text-sm text-muted-foreground line-through">
-                        {course.originalPrice.toLocaleString()} FCFA
+                        {(course as any).originalPrice.toLocaleString()} FCFA
                       </div>
                     )}
                   </div>
@@ -594,8 +594,8 @@ export function CourseDetailClient({ course }: CourseDetailClientProps) {
                   <div className="space-y-3 mb-4 pb-4 border-b border-border">
                     <div className="flex items-center justify-between text-sm">
                       <span className="text-muted-foreground">Niveau</span>
-                      <Badge className={getDifficultyColor(course.difficulty)}>
-                        {course.difficulty}
+                      <Badge className={getDifficultyColor((course as any).difficulty || "Débutant")}>
+                        {(course as any).difficulty || "Débutant"}
                       </Badge>
                     </div>
                     <div className="flex items-center justify-between text-sm">
