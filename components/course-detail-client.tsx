@@ -4,7 +4,7 @@ import Link from "next/link"
 import React, { useState, useMemo } from "react"
 import { useQuery } from "@tanstack/react-query"
 import { reviewService } from "@/lib/api/services"
-import { Share2, Bookmark, MoreVertical, Play, Star, Clock, Users, Award, CheckCircle2, FileText, Video, BookOpen, ArrowLeft, Globe, BarChart3, Infinity } from "lucide-react"
+import { Share2, Bookmark, MoreVertical, Play, Star, Clock, Users, Award, CheckCircle2, FileText, Video, BookOpen, ArrowLeft, Globe, BarChart3, Infinity, Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
@@ -48,8 +48,116 @@ const getTotalLectures = (curriculum: Course["curriculum"]) => {
 }
 
 export function CourseDetailClient({ course }: CourseDetailClientProps) {
+  const router = useRouter()
+  const { user, isAuthenticated } = useAuthStore()
+  const queryClient = useQueryClient()
   const [showFullDescription, setShowFullDescription] = useState(false)
   const [activeTab, setActiveTab] = useState("content")
+  const [showEnrollmentModal, setShowEnrollmentModal] = useState(false)
+
+  const courseIdNum = useMemo(() => {
+    if (!course?.id) return null
+    const id = typeof course.id === 'string' ? parseInt(course.id, 10) : course.id
+    return Number.isNaN(id) ? null : id
+  }, [course?.id])
+
+  // Vérifier l'inscription en essayant de charger les modules
+  const { data: modules, isLoading: isLoadingEnrollment, error: enrollmentError } = useQuery({
+    queryKey: ["modules", courseIdNum, "enrollment-check"],
+    queryFn: async () => {
+      if (!courseIdNum) return null
+      try {
+        const modulesData = await moduleService.getModulesByCourse(courseIdNum)
+        return modulesData || []
+      } catch (error: any) {
+        const errorMessage = String(error?.message || "")
+        const isEnrollmentError = errorMessage.includes("inscrire") || 
+                                  errorMessage.includes("inscription") || 
+                                  errorMessage.includes("inscrit") ||
+                                  errorMessage.includes("authentifié") ||
+                                  errorMessage.includes("403") ||
+                                  errorMessage.includes("401") ||
+                                  errorMessage.includes("Forbidden") ||
+                                  errorMessage.includes("Unauthorized")
+        if (isEnrollmentError) {
+          throw error
+        }
+        throw error
+      }
+    },
+    enabled: isAuthenticated && !!user && !!courseIdNum,
+    staleTime: 10 * 60 * 1000,
+    gcTime: 30 * 60 * 1000,
+    refetchOnWindowFocus: false,
+    retry: false,
+  })
+
+  // L'utilisateur est inscrit si les modules sont chargés avec succès
+  const isEnrolled = useMemo(() => {
+    if (!isAuthenticated || !user) return false
+    if (isLoadingEnrollment) return false
+    if (enrollmentError) return false
+    return modules !== undefined && modules !== null && !enrollmentError
+  }, [modules, isLoadingEnrollment, enrollmentError, isAuthenticated, user])
+
+  // Redirection automatique si déjà inscrit
+  useEffect(() => {
+    if (isAuthenticated && user && isEnrolled && !isLoadingEnrollment) {
+      router.push(`/learn/${course.id}`)
+    }
+  }, [isEnrolled, isLoadingEnrollment, isAuthenticated, user, course.id, router])
+
+  // Mutation pour l'inscription
+  const enrollMutation = useMutation({
+    mutationFn: (expectations: string) => {
+      if (!courseIdNum) throw new Error("ID du cours invalide")
+      return courseService.enrollInCourse(courseIdNum, expectations)
+    },
+    onSuccess: () => {
+      // Invalider les caches pour forcer le rechargement
+      queryClient.invalidateQueries({ queryKey: ["modules", courseIdNum] })
+      queryClient.invalidateQueries({ queryKey: ["profile"] })
+      queryClient.invalidateQueries({ queryKey: ["courses"] })
+      
+      toast.success("Inscription réussie", {
+        description: "Vous êtes maintenant inscrit à ce cours",
+      })
+      
+      setShowEnrollmentModal(false)
+      
+      // Rediriger vers la page d'apprentissage
+      router.push(`/learn/${course.id}`)
+    },
+    onError: (error: any) => {
+      const errorMessage = error?.message || "Une erreur est survenue lors de l'inscription"
+        toast.error("Erreur d'inscription", {
+          description: errorMessage,
+        })
+    },
+  })
+
+  // Gérer le clic sur "S'inscrire gratuitement"
+  const handleEnrollClick = () => {
+    if (!isAuthenticated || !user) {
+      // Rediriger vers la page de connexion
+      router.push(`/auth?redirect=/courses/${course.id}`)
+      return
+    }
+
+    // Si déjà inscrit, rediriger vers /learn/id
+    if (isEnrolled) {
+      router.push(`/learn/${course.id}`)
+      return
+    }
+
+    // Ouvrir le modal d'attentes
+    setShowEnrollmentModal(true)
+  }
+
+  // Gérer la confirmation d'inscription depuis le modal
+  const handleConfirmEnrollment = (expectations: string) => {
+    enrollMutation.mutate(expectations)
+  }
 
   // Charger les avis du cours
   const { data: reviews = [] } = useQuery({
@@ -550,8 +658,22 @@ export function CourseDetailClient({ course }: CourseDetailClientProps) {
                   <Button
                     className="w-full mb-4 h-12 text-base font-semibold"
                     size="lg"
-                  >
-                      S'inscrire gratuitement
+                    onClick={handleEnrollClick}
+                      disabled={enrollMutation.isPending}
+                    >
+                      {enrollMutation.isPending ? (
+                        <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Inscription...
+                        </>
+                    ) : isEnrolled ? (
+                        <>
+                        <Play className="mr-2 h-5 w-5" />
+                        Continuer le cours
+                        </>
+                    ) : (
+                      "S'inscrire gratuitement"
+                      )}
                   </Button>
 
                   {/* Course Stats */}
@@ -615,6 +737,15 @@ export function CourseDetailClient({ course }: CourseDetailClientProps) {
           </div>
         </div>
       </div>
+
+      {/* Modal d'attentes d'inscription */}
+      <EnrollmentExpectationsModal
+        open={showEnrollmentModal}
+        onOpenChange={setShowEnrollmentModal}
+        onConfirm={handleConfirmEnrollment}
+        courseTitle={course.title}
+        isLoading={enrollMutation.isPending}
+      />
     </div>
   )
 }
