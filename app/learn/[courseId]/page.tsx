@@ -119,16 +119,10 @@ export default function LearnPage({ params }: LearnPageProps) {
     
     // Si aucun module n'a été chargé après le chargement, l'utilisateur n'est PAS inscrit
     // Même si le cours a un curriculum, on doit pouvoir charger les modules pour être inscrit
-    if (!isLoadingModules && modulesFromApi === undefined && modulesFromApi === null) {
-      console.log("⚠️ [ENROLLMENT] Aucun module chargé, redirection vers /courses/id")
-      router.replace(`/courses/${courseIdNum}`)
-      return
-    }
-    
-    // Vérification finale : si modulesFromApi est un tableau vide mais qu'il n'y a pas d'erreur,
-    // c'est OK (cours sans modules). Mais si modulesFromApi est undefined/null, c'est un problème
+    // modulesFromApi peut être un tableau vide [] (cours sans modules) mais pas undefined/null
+    // IMPORTANT: Si modulesFromApi est undefined ou null après le chargement, c'est que l'utilisateur n'est pas inscrit
     if (!isLoadingModules && (modulesFromApi === undefined || modulesFromApi === null)) {
-      console.log("⚠️ [ENROLLMENT] modulesFromApi est undefined/null, redirection vers /courses/id")
+      console.log("⚠️ [ENROLLMENT] Aucun module chargé (undefined/null), redirection vers /courses/id")
       router.replace(`/courses/${courseIdNum}`)
       return
     }
