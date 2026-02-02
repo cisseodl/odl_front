@@ -2,6 +2,8 @@
 
 import Link from "next/link"
 import React, { useState, useMemo } from "react"
+import { useQuery } from "@tanstack/react-query"
+import { reviewService } from "@/lib/api/services"
 import { Share2, Bookmark, MoreVertical, Play, Star, Clock, Users, Award, CheckCircle2, FileText, Video, BookOpen, ArrowLeft, Globe, BarChart3, Infinity } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -48,6 +50,13 @@ const getTotalLectures = (curriculum: Course["curriculum"]) => {
 export function CourseDetailClient({ course }: CourseDetailClientProps) {
   const [showFullDescription, setShowFullDescription] = useState(false)
   const [activeTab, setActiveTab] = useState("content")
+
+  // Charger les avis du cours
+  const { data: reviews = [] } = useQuery({
+    queryKey: ["reviews", course.id],
+    queryFn: () => reviewService.getReviewsByCourse(typeof course.id === 'string' ? parseInt(course.id, 10) : course.id),
+    staleTime: 5 * 60 * 1000,
+  })
 
   // Utiliser le curriculum du cours de manière statique
   const curriculum = useMemo(() => {
@@ -207,7 +216,7 @@ export function CourseDetailClient({ course }: CourseDetailClientProps) {
             {/* Tabs Navigation */}
             <FadeInView>
               <Tabs value={activeTab} onValueChange={handleTabClick} className="w-full">
-                <TabsList className="grid w-full grid-cols-5 h-auto p-1 bg-muted/50">
+                <TabsList className={`grid w-full ${reviews.length > 0 ? 'grid-cols-4' : 'grid-cols-3'} h-auto p-1 bg-muted/50`}>
                   <TabsTrigger value="overview" className="text-xs sm:text-sm">
                     Aperçu
                   </TabsTrigger>
@@ -217,12 +226,11 @@ export function CourseDetailClient({ course }: CourseDetailClientProps) {
                   <TabsTrigger value="instructor" className="text-xs sm:text-sm">
                     Instructeur
                   </TabsTrigger>
-                  <TabsTrigger value="reviews" className="text-xs sm:text-sm">
-                    Avis
+                  {reviews.length > 0 && (
+                    <TabsTrigger value="reviews" className="text-xs sm:text-sm">
+                      Avis
                   </TabsTrigger>
-                  <TabsTrigger value="faq" className="text-xs sm:text-sm">
-                    FAQ
-                  </TabsTrigger>
+                  )}
                 </TabsList>
 
                 {/* Overview Tab */}
@@ -315,7 +323,7 @@ export function CourseDetailClient({ course }: CourseDetailClientProps) {
                   <div>
                     <h2 className="text-2xl font-bold mb-4 text-foreground">Contenu du cours</h2>
                     {curriculum && curriculum.length > 0 ? (
-                      <Accordion type="single" collapsible className="w-full space-y-3">
+                  <div className="space-y-4">
                         {curriculum
                           .filter(module => module && module.id && typeof module.id === 'string')
                           .map((module, moduleIndex) => {
@@ -323,134 +331,84 @@ export function CourseDetailClient({ course }: CourseDetailClientProps) {
                               const lessons = Array.isArray(module.lessons) 
                                 ? module.lessons.filter(lesson => lesson && typeof lesson === 'object')
                                 : []
-                              const totalLessons = lessons.length
-                              const totalDuration = lessons.reduce((acc, lesson) => {
-                                if (!lesson || typeof lesson.duration !== 'string') return acc
-                            const duration = lesson.duration || "0m"
-                            const minutes = parseInt(duration.replace(/[^0-9]/g, "")) || 0
-                            return acc + minutes
-                              }, 0)
-                          const formattedDuration = totalDuration > 60 
-                            ? `${Math.floor(totalDuration / 60)}h ${totalDuration % 60}m`
-                            : `${totalDuration}m`
-                              const moduleId = String(module.id || "")
                               const moduleTitle = String(module.title || "").trim()
 
-                              if (!moduleId || moduleId === "" || !moduleTitle || moduleTitle === "") {
+                              if (!moduleTitle || moduleTitle === "") {
                                 return null
                               }
 
                           return (
-                            <AccordionItem 
+                                <div 
                               key={String(module.id)} 
-                              value={String(module.id)} 
-                              className="border-2 border-border rounded-xl overflow-hidden hover:border-primary/50 transition-all duration-200 bg-card shadow-sm"
-                            >
-                              <AccordionTrigger className="hover:no-underline px-6 py-5">
-                                <div className="flex items-start justify-between w-full pr-6">
-                                  <div className="flex items-start gap-4 flex-1">
-                                    <div className="flex-shrink-0 w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center border-2 border-primary/20">
-                                      <span className="text-sm font-bold text-primary">{moduleIndex + 1}</span>
+                                  className="border-2 border-border rounded-xl p-4 hover:border-primary/50 transition-all duration-200 bg-card shadow-sm"
+                                >
+                                  <div className="font-bold text-lg text-foreground mb-3">
+                                    {moduleTitle}
                                     </div>
-                                <div className="flex-1 text-left">
-                                      <div className="font-bold text-lg text-foreground mb-1.5">
-                                            {String(module.title || "")}
-                                  </div>
-                                      <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                                        <span className="flex items-center gap-1.5">
-                                          <BookOpen className="h-4 w-4" />
-                                          {totalLessons} leçon{totalLessons > 1 ? "s" : ""}
-                                        </span>
-                                        <span className="flex items-center gap-1.5">
-                                          <Clock className="h-4 w-4" />
-                                          {formattedDuration}
-                                        </span>
-                                      </div>
-                                  </div>
-                                </div>
-                              </div>
-                            </AccordionTrigger>
-                              <AccordionContent className="px-6 pb-5 pt-0">
-                                <div className="space-y-1.5 mt-3 ml-14">
-                                      {lessons.length > 0 ? (
-                                        lessons
-                                          .filter(lesson => {
-                                            if (!lesson || typeof lesson !== 'object') return false
-                                            const id = lesson.id
-                                            const title = lesson.title
-                                            return id !== null && id !== undefined && 
-                                                   title !== null && title !== undefined &&
-                                                   String(title).trim() !== ''
-                                          })
-                                          .map((lesson, lessonIndex) => {
-                                            try {
-                                              const lessonId = String(lesson.id || "")
-                                              const lessonTitle = String(lesson.title || "").trim()
-                                              const lessonType = String(lesson.type || "video")
-                                              const lessonDuration = lesson.duration ? String(lesson.duration) : undefined
-                                      const lessonNumber = lessonIndex + 1
-                                              const isVideo = lessonType === "video"
-                                              const isQuiz = lessonType === "quiz"
-                                              
-                                              if (!lessonId || lessonId === "" || !lessonTitle || lessonTitle === "") {
-                                                return null
-                                              }
+                                  <div className="space-y-2">
+                                    {lessons.length > 0 ? (
+                                      lessons
+                                        .filter(lesson => {
+                                          if (!lesson || typeof lesson !== 'object') return false
+                                          const id = lesson.id
+                                          const title = lesson.title
+                                          return id !== null && id !== undefined && 
+                                                 title !== null && title !== undefined &&
+                                                 String(title).trim() !== ''
+                                        })
+                                        .map((lesson, lessonIndex) => {
+                                          try {
+                                            const lessonId = String(lesson.id || "")
+                                            const lessonTitle = String(lesson.title || "").trim()
+                                            const lessonType = String(lesson.type || "video")
+                                            const lessonDuration = lesson.duration ? String(lesson.duration) : undefined
+                                            const isVideo = lessonType === "video"
+                                            const isQuiz = lessonType === "quiz"
+                                            
+                                            if (!lessonId || lessonId === "" || !lessonTitle || lessonTitle === "") {
+                                              return null
+                                            }
                                       
                                       return (
                                   <Link
-                                                  key={lessonId}
-                                                  href={`/learn/${course.id}?lesson=${lessonId}`}
-                                                  className="group flex items-center gap-3 p-3 rounded-lg hover:bg-primary/5 hover:border-primary/20 border-2 border-transparent transition-all"
-                                                >
-                                                  <div className="flex items-center gap-3 flex-1 min-w-0">
-                                                    <div className="flex-shrink-0 w-8 h-8 rounded-full bg-muted flex items-center justify-center border border-border group-hover:bg-primary/10 group-hover:border-primary/30 transition-colors">
+                                                key={lessonId}
+                                                href={`/learn/${course.id}?lesson=${lessonId}`}
+                                                className="group flex items-center gap-3 p-2 rounded-lg hover:bg-primary/5 hover:border-primary/20 border border-transparent transition-all"
+                                              >
+                                                <div className="flex items-center gap-3 flex-1 min-w-0">
+                                                  <div className="flex-shrink-0 w-6 h-6 rounded-full bg-muted flex items-center justify-center border border-border group-hover:bg-primary/10 group-hover:border-primary/30 transition-colors">
                                               {isVideo ? (
-                                                        <Play className="h-4 w-4 text-muted-foreground group-hover:text-primary" />
+                                                      <Play className="h-3 w-3 text-muted-foreground group-hover:text-primary" />
                                               ) : isQuiz ? (
-                                                        <FileText className="h-4 w-4 text-muted-foreground group-hover:text-primary" />
+                                                      <FileText className="h-3 w-3 text-muted-foreground group-hover:text-primary" />
                                               ) : (
-                                                        <Video className="h-4 w-4 text-muted-foreground group-hover:text-primary" />
+                                                      <Video className="h-3 w-3 text-muted-foreground group-hover:text-primary" />
                                               )}
                                             </div>
-                                                    <div className="flex-1 min-w-0">
-                                                      <div className="flex items-center gap-2 mb-1">
-                                                        <span className="text-xs font-medium text-muted-foreground">
-                                                          Leçon {lessonNumber}
+                                                  <span className="text-sm text-foreground/90 group-hover:text-foreground">
+                                                    {lessonTitle}
                                         </span>
-                                              {isQuiz && (
-                                                          <Badge variant="secondary" className="text-xs px-1.5 py-0">
-                                          Quiz
-                                        </Badge>
-                                      )}
-                                    </div>
-                                                      <span className="text-sm font-medium text-foreground/90 group-hover:text-foreground truncate">
-                                                        {String(lesson.title)}
-                                                      </span>
-                                          </div>
-                                          <div className="flex items-center gap-3 flex-shrink-0 ml-4">
-                                                      {lessonDuration && (
+                                      </div>
+                                                {lessonDuration && (
                                               <span className="text-xs text-muted-foreground font-medium whitespace-nowrap">
-                                                          {lessonDuration}
+                                                    {lessonDuration}
                                               </span>
                                             )}
-                                            </div>
-                                    </div>
                                   </Link>
                                       )
-                                            } catch (error) {
-                                              console.error("Erreur lors du rendu d'une leçon:", error, lesson)
-                                              return null
-                                            }
+                                          } catch (error) {
+                                            console.error("Erreur lors du rendu d'une leçon:", error, lesson)
+                                            return null
+                                          }
                                     })
-                                          .filter((item): item is React.ReactElement => item !== null && item !== undefined)
+                                        .filter((item): item is React.ReactElement => item !== null && item !== undefined)
                                   ) : (
-                                        <div className="p-4 text-center text-muted-foreground border-2 border-dashed border-border rounded-lg">
+                                      <div className="p-2 text-center text-muted-foreground border border-dashed border-border rounded-lg text-sm">
                                       Aucune leçon disponible dans ce module
                                     </div>
                                   )}
                               </div>
-                            </AccordionContent>
-                          </AccordionItem>
+                                </div>
                           )
                             } catch (error) {
                               console.error("Erreur lors du rendu d'un module:", error, module)
@@ -458,7 +416,7 @@ export function CourseDetailClient({ course }: CourseDetailClientProps) {
                             }
                         })
                           .filter((item): item is React.ReactElement => item !== null && item !== undefined)}
-                      </Accordion>
+                      </div>
                       ) : (
                         <div className="p-8 text-center border-2 border-dashed border-border rounded-xl bg-muted/30">
                         <BookOpen className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
@@ -508,38 +466,66 @@ export function CourseDetailClient({ course }: CourseDetailClientProps) {
                   </div>
                 </TabsContent>
 
-                {/* Reviews Tab */}
-                <TabsContent value="reviews" id="reviews" className="mt-6">
+                {/* Reviews Tab - Dynamique */}
+                {reviews.length > 0 && (
+                  <TabsContent value="reviews" id="reviews" className="mt-6">
                   <div className="space-y-6">
-                    <div>
-                      <h2 className="text-2xl font-bold mb-4 text-foreground">Avis des étudiants</h2>
-                      <div className="flex items-center gap-4 mb-6">
-                        <div className="text-4xl font-bold text-foreground">{course.rating.toFixed(1)}</div>
-                        <div>
+                      <div>
+                        <h2 className="text-2xl font-bold mb-4 text-foreground">Avis des étudiants</h2>
+                        <div className="flex items-center gap-4 mb-6">
+                          <div className="text-4xl font-bold text-foreground">{course.rating.toFixed(1)}</div>
+                          <div>
                             <RatingStars rating={course.rating} size="lg" />
-                          <p className="text-sm text-muted-foreground mt-1">
+                            <p className="text-sm text-muted-foreground mt-1">
                               Basé sur {course.reviewCount.toLocaleString()} avis
                             </p>
                           </div>
                                 </div>
                               </div>
-                    <div className="p-8 text-center border-2 border-dashed border-border rounded-xl bg-muted/30">
-                      <Star className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                      <p className="text-muted-foreground">Aucun avis disponible pour le moment</p>
-                          </div>
-                        </div>
-                </TabsContent>
+                    <div className="space-y-4">
+                        {reviews.map((review: any, index: number) => {
+                          const userName = review.user?.fullName || review.user?.name || "Apprenant"
+                          const userAvatar = review.user?.avatar || null
+                          const rating = review.rating || 0
+                          const comment = review.comment || review.content || ""
+                          const createdAt = review.createdAt || ""
 
-                {/* FAQ Tab */}
-                <TabsContent value="faq" id="faq" className="mt-6">
-                  <div className="space-y-6">
-                    <h2 className="text-2xl font-bold text-foreground">Questions fréquentes</h2>
-                    <div className="p-8 text-center border-2 border-dashed border-border rounded-xl bg-muted/30">
-                      <Globe className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                      <p className="text-muted-foreground">Aucune FAQ disponible pour le moment</p>
+                          return (
+                            <Card key={review.id || index} className="border-2">
+                              <CardContent className="p-6">
+                                <div className="flex items-start gap-4">
+                                  <Avatar className="h-12 w-12 border-2 border-primary/20">
+                                    <AvatarImage src={userAvatar} alt={userName} />
+                                    <AvatarFallback className="bg-primary/10 text-primary font-bold">
+                                      {userName.charAt(0)}
+                                    </AvatarFallback>
+                                  </Avatar>
+                                  <div className="flex-1">
+                                    <div className="flex items-center justify-between mb-2">
+                                      <div>
+                                        <p className="font-bold text-foreground">{userName}</p>
+                                        <div className="flex items-center gap-2 mt-1">
+                                          <RatingStars rating={rating} size="sm" />
+                                          <span className="text-sm text-muted-foreground">{rating.toFixed(1)}</span>
+                                        </div>
+                                      </div>
+                                      {createdAt && (
+                                        <span className="text-xs text-muted-foreground">
+                                          {new Date(createdAt).toLocaleDateString('fr-FR')}
+                                        </span>
+                                      )}
+                                    </div>
+                                    <p className="text-muted-foreground mt-2">{comment}</p>
+                                  </div>
+                                </div>
+                              </CardContent>
+                            </Card>
+                          )
+                        })}
                     </div>
                   </div>
                 </TabsContent>
+                )}
               </Tabs>
             </FadeInView>
           </div>
@@ -560,25 +546,12 @@ export function CourseDetailClient({ course }: CourseDetailClientProps) {
                     </div>
                   )}
 
-                  {/* Price */}
-                  <div className="mb-4">
-                    <div className="text-3xl font-bold text-foreground mb-1">
-                      {(course as any).price === 0 ? "Gratuit" : `${((course as any).price || 0).toLocaleString()} FCFA`}
-                    </div>
-                    {(course as any).originalPrice && (course as any).originalPrice > ((course as any).price || 0) && (
-                      <div className="text-sm text-muted-foreground line-through">
-                        {(course as any).originalPrice.toLocaleString()} FCFA
-                      </div>
-                    )}
-                  </div>
-
                   {/* CTA Button */}
                   <Button
                     className="w-full mb-4 h-12 text-base font-semibold"
                     size="lg"
                   >
-                    <Play className="h-5 w-5 mr-2" />
-                    Commencer le cours
+                      S'inscrire gratuitement
                   </Button>
 
                   {/* Course Stats */}
@@ -607,9 +580,13 @@ export function CourseDetailClient({ course }: CourseDetailClientProps) {
                   <div className="pt-4 border-t border-border">
                     <h4 className="font-bold text-sm mb-3 text-foreground">Ce que vous obtenez :</h4>
                     <div className="space-y-2">
+                      <div className="flex items-center gap-2">
+                        <CheckCircle2 className="h-4 w-4 text-primary flex-shrink-0" />
+                        <span className="text-sm text-muted-foreground">Certificat</span>
+                      </div>
                       {course.features && Array.isArray(course.features) 
                         ? course.features
-                            .slice(0, 4)
+                            .slice(0, 3)
                             .filter((feature) => feature !== null && feature !== undefined)
                             .map((feature: any, index) => {
                               const featureText = typeof feature === 'string' 
