@@ -1,13 +1,11 @@
 "use client"
 
 import Link from "next/link"
-import { useState, useEffect, useMemo, useCallback, useRef, startTransition } from "react"
-import { useRouter } from "next/navigation"
-import { Share2, Bookmark, MoreVertical, Play, Plus, Star, Clock, Users, Award, CheckCircle2, FileText, Video, BookOpen, HelpCircle, ArrowLeft, Globe, BarChart3, Infinity, Loader2 } from "lucide-react"
+import { useState, useEffect, useMemo } from "react"
+import { Share2, Bookmark, MoreVertical, Play, Star, Clock, Users, Award, CheckCircle2, FileText, Video, BookOpen, ArrowLeft, Globe, BarChart3, Infinity } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
-import { VideoPlayer } from "@/components/video-player"
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -22,14 +20,7 @@ import { toast } from "sonner"
 import { RatingStars } from "@/components/rating-stars"
 import { FadeInView } from "@/components/fade-in-view"
 import { useScrollSpy } from "@/hooks/use-scroll-spy"
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
-import { moduleService, courseService, reviewService } from "@/lib/api/services" // Added reviewService
-import { adaptModule } from "@/lib/api/adapters"
-import { serializeData } from "@/lib/utils/serialize"
-import { CourseSidebar } from "@/components/course-sidebar"
-import { useAuthStore } from "@/lib/store/auth-store"
-import { EnrollmentExpectationsModal } from "@/components/enrollment-expectations-modal"
-import type { Course, Module } from "@/lib/types"
+import type { Course } from "@/lib/types"
 
 interface CourseDetailClientProps {
   course: Course
@@ -51,489 +42,42 @@ const getDifficultyColor = (level: string) => {
 
 // Helper function to calculate total lectures
 const getTotalLectures = (curriculum: Course["curriculum"]) => {
-  return curriculum.reduce((total, module) => total + module.lessons.length, 0)
+  if (!curriculum || !Array.isArray(curriculum)) return 0
+  return curriculum.reduce((total, module) => total + (module.lessons?.length || 0), 0)
 }
 
 export function CourseDetailClient({ course }: CourseDetailClientProps) {
-  const router = useRouter()
-  const { user, isAuthenticated } = useAuthStore()
   const [showFullDescription, setShowFullDescription] = useState(false)
-  const [activeTab, setActiveTab] = useState("content") // Par défaut, afficher l'onglet "Contenu" pour voir les modules/leçons
-  const [dynamicCurriculum, setDynamicCurriculum] = useState<Module[] | null>(null)
-  const [isEnrolled, setIsEnrolled] = useState(false)
-  const [showExpectationsModal, setShowExpectationsModal] = useState(false)
-  const queryClient = useQueryClient()
-  const isMountedRef = useRef(true)
-  const prevIsEnrolledRef = useRef<boolean | null>(null)
-  const prevModulesLengthRef = useRef<number | null>(null)
-  const prevErrorRef = useRef<string | null>(null)
-  
-  // S'assurer que le composant est monté avant de mettre à jour l'état
-  useEffect(() => {
-    isMountedRef.current = true
-    return () => {
-      isMountedRef.current = false
-    }
-  }, [])
+  const [activeTab, setActiveTab] = useState("content")
 
-  // Fonction pour nettoyer récursivement les modules et leçons
-  // Utiliser useCallback pour éviter les re-créations à chaque rendu
-  // DOIT être défini AVANT les useEffect et useMemo qui l'utilisent
-  const cleanModule = useCallback((module: any): Module | null => {
-    if (!module || !module.id) return null
-    
-    try {
-      return {
-        id: String(module.id),
-        title: String(module.title || ""),
-        duration: String(module.duration || "0h 0m"),
-        lessons: Array.isArray(module.lessons) 
-          ? module.lessons
-              .filter((lesson: any) => lesson && lesson.id)
-              .map((lesson: any) => ({
-                id: String(lesson.id),
-                title: String(lesson.title || ""),
-                type: String(lesson.type || "video"),
-                contentUrl: lesson.contentUrl ? String(lesson.contentUrl) : undefined,
-                duration: String(lesson.duration || "0m"),
-                completed: Boolean(lesson.completed),
-                locked: Boolean(lesson.locked),
-              }))
-          : [],
-      }
-    } catch (error) {
-      console.error("Erreur lors du nettoyage du module:", error)
-      return null
-    }
-  }, [])
-
-  // Convertir course.id en nombre de manière sécurisée
-  // Utiliser une valeur stable pour éviter les re-renders infinis
-  const courseIdNum = useMemo(() => {
-    if (!course || course.id === undefined || course.id === null) {
-      return null
-    }
-    
-    // Essayer de convertir en nombre
-    let numId: number | null = null
-    
-    // Si c'est déjà un nombre
-    if (typeof course.id === 'number') {
-      numId = Number.isNaN(course.id) ? null : course.id
-    }
-    // Si c'est une string
-    else if (typeof course.id === 'string') {
-      const parsed = parseInt(course.id, 10)
-      numId = Number.isNaN(parsed) ? null : parsed
-    }
-    // Si c'est un objet, essayer d'extraire la valeur
-    else if (typeof course.id === 'object' && course.id !== null) {
-      const idObj = course.id as any
-      // Essayer différentes propriétés possibles
-      const idValue = idObj.id || idObj.value || idObj.toString?.() || JSON.stringify(idObj)
-      const parsed = parseInt(String(idValue), 10)
-      numId = Number.isNaN(parsed) ? null : parsed
-    }
-    // Sinon, essayer de convertir en string puis en nombre
-    else {
-      const strId = String(course.id)
-      const parsed = parseInt(strId, 10)
-      numId = Number.isNaN(parsed) ? null : parsed
-    }
-    
-    return numId
-  }, [course?.id]) // Ne dépendre que de course.id, pas de tout l'objet course
-
-  // Vérifier si l'utilisateur a un profil apprenant
-  const hasLearnerProfile = useMemo(() => {
-    if (!user) return false
-    // Vérifier si l'utilisateur a un profil apprenant
-    const learner = (user as any)?.learner
-    return !!learner
-  }, [user])
-
-  // Handler pour l'inscription - ouvre le modal d'attentes
-  const handleEnroll = () => {
-    // Vérifier l'authentification
-    // Si l'utilisateur n'est PAS connecté, rediriger vers le login
-    if (!isAuthenticated || !user) {
-      toast.error("Authentification requise", {
-        description: "Vous devez être connecté pour vous inscrire à un cours.",
-      })
-      router.push("/auth?redirect=/courses/" + course.id)
-      return
-    }
-
-    // Si l'utilisateur est connecté (même sans profil apprenant), ouvrir directement le modal d'attentes
-    // Le backend gérera la vérification du profil apprenant lors de l'inscription
-    setShowExpectationsModal(true)
-  }
-
-  // Handler pour confirmer l'inscription avec les attentes
-  const handleConfirmEnrollment = (expectations: string) => {
-    console.log("🟡 [ENROLLMENT] handleConfirmEnrollment appelé:", { 
-      courseIdNum, 
-      expectationsLength: expectations?.length,
-      isPending: enrollMutation.isPending 
-    })
-    
-    // Vérifier l'authentification et le token
-    if (!isAuthenticated || !user) {
-      console.error("🔴 [ENROLLMENT] Utilisateur non authentifié")
-      toast.error("Authentification requise", { description: "Veuillez vous connecter pour vous inscrire." })
-      router.push("/auth?redirect=/courses/" + course.id)
-      return
-    }
-    
-    // Vérifier que le token existe
-    if (typeof window !== "undefined") {
-      const token = localStorage.getItem("auth_token")
-      console.log("🔑 [ENROLLMENT] Token dans localStorage:", token ? `présent (${token.length} caractères)` : "absent")
-      if (!token) {
-        console.error("🔴 [ENROLLMENT] Aucun token trouvé dans localStorage")
-        toast.error("Session expirée", { description: "Veuillez vous reconnecter." })
-        router.push("/auth?redirect=/courses/" + course.id)
-        return
-      }
-    }
-    
-    // Vérifier que courseIdNum est valide
-    if (!courseIdNum) {
-      console.error("🔴 [ENROLLMENT] courseIdNum est null ou undefined", {
-        courseId: course.id,
-        courseIdType: typeof course.id,
-        courseIdNum,
-        course: course
-      })
-      // Essayer de récupérer l'ID depuis l'URL si disponible
-      const urlPath = window.location.pathname
-      const urlMatch = urlPath.match(/\/courses\/(\d+)/)
-      if (urlMatch && urlMatch[1]) {
-        const urlCourseId = parseInt(urlMatch[1], 10)
-        console.log("🟢 [ENROLLMENT] ID récupéré depuis l'URL:", urlCourseId)
-        if (!Number.isNaN(urlCourseId)) {
-          enrollMutation.mutate({ courseId: urlCourseId, expectations })
-          return
-        }
-      }
-      toast.error("Erreur", { description: "ID du cours invalide. Veuillez rafraîchir la page." })
-      return
-    }
-    
-    // Empêcher les appels multiples
-    if (enrollMutation.isPending) {
-      console.warn("🟡 [ENROLLMENT] Mutation déjà en cours, ignore la nouvelle demande")
-      return
-    }
-    
-    console.log("🟢 [ENROLLMENT] Appel de enrollMutation.mutate avec:", { courseId: courseIdNum, expectations })
-    enrollMutation.mutate({ courseId: courseIdNum, expectations })
-  }
-
-  // Mutation pour s'inscrire au cours avec attentes
-  const enrollMutation = useMutation({
-    mutationFn: async ({ courseId, expectations }: { courseId: number; expectations: string }) => {
-      console.log("🔵 [ENROLLMENT] Début de l'inscription:", { courseId, expectationsLength: expectations?.length })
-      
-      // Vérifier que les attentes sont bien fournies
-      if (!expectations || expectations.trim().length < 10) {
-        throw new Error("Les attentes doivent contenir au moins 10 caractères")
-      }
-      
-      try {
-        // Ajouter un timeout pour éviter un blocage infini
-        const timeoutPromise = new Promise((_, reject) => {
-          setTimeout(() => reject(new Error("Timeout: La requête a pris trop de temps")), 30000) // 30 secondes
-        })
-        
-        const enrollmentPromise = courseService.enrollInCourse(courseId, expectations.trim())
-        
-        const response = await Promise.race([enrollmentPromise, timeoutPromise]) as any
-        console.log("🟢 [ENROLLMENT] Réponse de l'API:", { 
-          ok: response.ok, 
-          message: response.message,
-          hasData: !!response.data 
-        })
-        
-        // Si la réponse indique une erreur (ok: false), lancer une erreur pour déclencher onError
-        if (!response.ok) {
-          const errorMessage = response.message || "Erreur lors de l'inscription"
-          console.error("🔴 [ENROLLMENT] Erreur de l'API:", errorMessage)
-          throw new Error(errorMessage)
-        }
-        
-        console.log("✅ [ENROLLMENT] Inscription réussie, données:", response.data)
-        return response
-      } catch (error: any) {
-        console.error("🔴 [ENROLLMENT] Erreur lors de l'inscription:", error)
-        // S'assurer que l'erreur est bien propagée
-        throw error instanceof Error ? error : new Error(String(error))
-      }
-    },
-    onSuccess: (response: any) => {
-      console.log("enrollMutation.onSuccess appelé avec:", response)
-      
-      // Fermer le modal immédiatement
-      setShowExpectationsModal(false)
-      
-      // Afficher le message de succès
-      toast.success("Inscription réussie !", {
-        description: "Vous êtes maintenant inscrit au cours. Redirection vers le contenu...",
-      })
-      
-      // Mettre à jour l'état local
-      setIsEnrolled(true)
-      
-      // Invalider les caches pour recharger les données
-      queryClient.invalidateQueries({ queryKey: ["modules", courseIdNum] })
-      queryClient.invalidateQueries({ queryKey: ["course", courseIdNum] })
-      
-      // Rediriger immédiatement vers la page d'apprentissage du cours (modules/leçons)
-      if (courseIdNum) {
-        router.push(`/learn/${courseIdNum}`)
-      }
-    },
-    onError: (error: any) => {
-      console.log("enrollMutation.onError appelé avec:", error)
-      setShowExpectationsModal(false)
-      const errorMessage = error?.message || error?.response?.data?.message || "Erreur lors de l'inscription"
-      console.log("errorMessage:", errorMessage)
-      
-      // Si l'erreur indique que l'utilisateur est déjà inscrit, on considère qu'il est inscrit
-      if (errorMessage.includes("déjà inscrit") || errorMessage.includes("déjà inscrit")) {
-        setIsEnrolled(true)
-        toast.info("Vous êtes déjà inscrit à ce cours", {
-          description: "Vous pouvez accéder aux modules et leçons.",
-        })
-        queryClient.invalidateQueries({ queryKey: ["modules", courseIdNum] })
-        // Rediriger vers la page d'apprentissage du cours
-        if (courseIdNum) {
-          setTimeout(() => {
-            router.push(`/learn/${courseIdNum}`)
-          }, 500)
-        }
-      } else if (errorMessage.includes("non authentifié") || errorMessage.includes("401") || errorMessage.includes("403")) {
-        // Erreur d'authentification, rediriger vers la page d'authentification
-        toast.error("Authentification requise", {
-          description: "Vous devez être connecté pour vous inscrire à un cours.",
-        })
-        router.push("/auth?redirect=/courses/" + course.id)
-      } else {
-        toast.error("Erreur d'inscription", {
-          description: errorMessage,
-        })
-      }
-    },
-  })
-
-  // Vérifier l'inscription en essayant de charger les modules (même si on pense ne pas être inscrit)
-  // Cela permet de détecter si l'utilisateur est déjà inscrit au chargement de la page
-  const { data: modulesFromApi, isLoading: isLoadingModules, error: modulesError } = useQuery({
-    queryKey: ["modules", courseIdNum],
-    queryFn: () => moduleService.getModulesByCourse(courseIdNum!),
-    enabled: courseIdNum !== null && !Number.isNaN(courseIdNum!),
-    staleTime: 5 * 60 * 1000, // Cache pendant 5 minutes
-    retry: 1, // Réessayer 1 fois en cas d'erreur
-  })
-
-  // Gérer les erreurs de chargement des modules
-  useEffect(() => {
-    if (!modulesError) return
-    
-    const errorMessage = String(modulesError?.message || "")
-    const errorKey = errorMessage || "unknown"
-    
-    // Éviter les mises à jour répétées pour la même erreur
-    if (prevErrorRef.current === errorKey) return
-    prevErrorRef.current = errorKey
-    
-    const timeoutId = setTimeout(() => {
-      if (!isMountedRef.current) return
-      
-      startTransition(() => {
-        console.error("Erreur lors du chargement des modules:", modulesError)
-        // Toujours mettre à false en cas d'erreur
-        if (prevIsEnrolledRef.current !== false) {
-          setIsEnrolled(false)
-          prevIsEnrolledRef.current = false
-        }
-      })
-    }, 0)
-    
-    return () => clearTimeout(timeoutId)
-  }, [modulesError])
-
-  // Gérer le succès du chargement des modules
-  useEffect(() => {
-    if (modulesFromApi === undefined) return
-    
-    const modulesLength = Array.isArray(modulesFromApi) ? modulesFromApi.length : 0
-    const shouldBeEnrolled = modulesLength > 0
-    
-    // Éviter les mises à jour répétées pour la même valeur
-    if (prevModulesLengthRef.current === modulesLength && prevIsEnrolledRef.current === shouldBeEnrolled) return
-    prevModulesLengthRef.current = modulesLength
-    
-    const timeoutId = setTimeout(() => {
-      if (!isMountedRef.current) return
-      
-      startTransition(() => {
-        if (shouldBeEnrolled) {
-          if (prevIsEnrolledRef.current !== true) {
-            setIsEnrolled(true)
-            prevIsEnrolledRef.current = true
-            console.log("✅ [ENROLLMENT] Modules chargés avec succès (contenu présent), utilisateur inscrit")
-          }
-        } else {
-          if (prevIsEnrolledRef.current !== false) {
-            setIsEnrolled(false)
-            prevIsEnrolledRef.current = false
-            console.log("⚠️ [ENROLLMENT] Modules chargés mais tableau vide, isEnrolled = false (BOUTON VISIBLE)")
-          }
-        }
-      })
-    }, 0)
-    
-    return () => clearTimeout(timeoutId)
-  }, [modulesFromApi])
-
-  // IMPORTANT: Ne PAS rediriger automatiquement depuis course-detail-client
-  // La redirection ne doit se faire que:
-  // 1. Après une inscription réussie (dans enrollMutation.onSuccess)
-  // 2. Quand l'utilisateur clique sur un cours depuis la liste ET qu'il est déjà inscrit (dans CourseCard)
-  //
-  // WORKFLOW CORRECT:
-  // - Utilisateur non inscrit clique sur cours → /courses/id (reste ici pour s'inscrire)
-  // - Utilisateur inscrit clique sur cours → /learn/id (via CourseCard)
-  // - Après inscription réussie → /learn/id (via enrollMutation.onSuccess)
-  
-  // IMPORTANT: Les deux useEffect ci-dessus gèrent déjà toutes les mises à jour de isEnrolled
-  // On ne doit PAS avoir un troisième useEffect qui modifie isEnrolled pour éviter les boucles infinies
-
-  // Adapter les modules de l'API si nécessaire
-  // Utiliser une valeur primitive pour éviter les boucles infinies
-  const modulesLength = useMemo(() => {
-    return Array.isArray(modulesFromApi) ? modulesFromApi.length : -1
-  }, [modulesFromApi])
-  
-  const modulesKey = useMemo(() => {
-    if (!Array.isArray(modulesFromApi)) return "none"
-    // Créer une clé basée sur les IDs des modules pour détecter les changements réels
-    return modulesFromApi.map((m: any) => m?.id || "").join(",")
-  }, [modulesFromApi])
-  
-  const prevModulesKeyRef = useRef<string | null>(null)
-  const prevDynamicCurriculumRef = useRef<Module[] | null>(null)
-  const modulesFromApiRef = useRef<typeof modulesFromApi>(modulesFromApi)
-  
-  // Mettre à jour le ref à chaque changement de modulesFromApi
-  useEffect(() => {
-    modulesFromApiRef.current = modulesFromApi
-  }, [modulesFromApi])
-  
-  useEffect(() => {
-    // Éviter les mises à jour répétées pour les mêmes données
-    if (prevModulesKeyRef.current === modulesKey) return
-    
-    // Marquer immédiatement pour éviter les appels répétés
-    prevModulesKeyRef.current = modulesKey
-    
-    // Utiliser setTimeout pour s'assurer que la mise à jour d'état se fait après le rendu
-    const timeoutId = setTimeout(() => {
-      if (!isMountedRef.current) return
-      
-      startTransition(() => {
-        // Utiliser modulesFromApi depuis le ref pour éviter les dépendances circulaires
-        const currentModules = modulesFromApiRef.current
-        
-        if (currentModules && Array.isArray(currentModules)) {
-          if (currentModules.length > 0) {
-            try {
-              const adaptedModules = currentModules.map(adaptModule)
-              // Nettoyer et sérialiser les modules adaptés pour éviter les erreurs React #185
-              const cleanedModules = adaptedModules
-                .map(cleanModule)
-                .filter((m): m is Module => m !== null)
-              const serializedModules = serializeData(cleanedModules) as Module[]
-              
-              // Comparer avec la valeur précédente pour éviter les mises à jour inutiles
-              const prevKey = prevDynamicCurriculumRef.current?.map(m => m.id).join(",")
-              const newKey = serializedModules.map(m => m.id).join(",")
-              
-              if (prevKey !== newKey) {
-                setDynamicCurriculum(serializedModules)
-                prevDynamicCurriculumRef.current = serializedModules
-              }
-            } catch (error) {
-              console.error("Erreur lors de l'adaptation des modules:", error)
-              if (prevDynamicCurriculumRef.current?.length !== 0) {
-                setDynamicCurriculum([])
-                prevDynamicCurriculumRef.current = []
-              }
-            }
-          } else {
-            // Si l'API retourne un tableau vide, réinitialiser seulement si nécessaire
-            if (prevDynamicCurriculumRef.current?.length !== 0) {
-              setDynamicCurriculum([])
-              prevDynamicCurriculumRef.current = []
-            }
-          }
-        } else if (currentModules === null || currentModules === undefined) {
-          // Si la requête n'a pas encore été exécutée ou a échoué, ne pas réinitialiser
-          // On garde dynamicCurriculum tel quel
-        }
-      })
-    }, 0)
-    
-    return () => clearTimeout(timeoutId)
-  }, [modulesKey, cleanModule]) // Retirer modulesFromApi des dépendances pour éviter les boucles infinies
-
-  // Utiliser le curriculum du cours s'il existe et n'est pas vide, sinon utiliser les modules chargés dynamiquement
-  // Priorité : modules chargés dynamiquement > curriculum du cours (pour avoir les données les plus récentes)
+  // Utiliser le curriculum du cours de manière statique
   const curriculum = useMemo(() => {
-    let result: Module[] = []
-    
-    // Priorité 1 : Utiliser les modules chargés dynamiquement depuis l'API (données les plus récentes)
-    if (dynamicCurriculum && Array.isArray(dynamicCurriculum) && dynamicCurriculum.length > 0) {
-      result = dynamicCurriculum
-    }
-    // Priorité 2 : Utiliser le curriculum du cours s'il existe
-    else if (course.curriculum && Array.isArray(course.curriculum) && course.curriculum.length > 0) {
-      result = course.curriculum
-    }
-    
-    // Nettoyer et sérialiser le résultat pour éviter les erreurs React #185
-    try {
-      const cleaned = result
-        .map(cleanModule)
-        .filter((m): m is Module => m !== null)
-      return serializeData(cleaned) as Module[]
-    } catch (error) {
-      console.error("Erreur lors de la sérialisation du curriculum:", error)
-      return []
-    }
-  }, [course.curriculum, dynamicCurriculum, cleanModule])
+    if (!course.curriculum || !Array.isArray(course.curriculum)) return []
+    return course.curriculum.filter(module => module && module.id)
+  }, [course.curriculum])
+
   const totalLectures = getTotalLectures(curriculum)
 
   const totalRealDuration = useMemo(() => {
+    if (!curriculum || curriculum.length === 0) return 0
     return curriculum.reduce((totalMinutes, module) => {
-      const moduleMinutes = module.lessons?.reduce((acc, lesson) => {
+      const moduleMinutes = (module.lessons || []).reduce((acc, lesson) => {
         const duration = lesson.duration || "0m"
         const minutes = parseInt(duration.replace(/[^0-9]/g, "")) || 0
         return acc + minutes
-      }, 0) || 0
+      }, 0)
       return totalMinutes + moduleMinutes
-    }, 0);
-  }, [curriculum]);
+    }, 0)
+  }, [curriculum])
 
   const formattedTotalRealDuration = useMemo(() => {
-    if (totalRealDuration === 0) return "0m";
-    const hours = Math.floor(totalRealDuration / 60);
-    const minutes = totalRealDuration % 60;
-    if (hours > 0 && minutes > 0) return `${hours}h ${minutes}m`;
-    if (hours > 0) return `${hours}h`;
-    return `${minutes}m`;
-  }, [totalRealDuration]);
+    if (totalRealDuration === 0) return "0m"
+    const hours = Math.floor(totalRealDuration / 60)
+    const minutes = totalRealDuration % 60
+    if (hours > 0 && minutes > 0) return `${hours}h ${minutes}m`
+    if (hours > 0) return `${hours}h`
+    return `${minutes}m`
+  }, [totalRealDuration])
 
   // Scroll spy for tabs
   const sectionIds = ["overview", "content", "instructor", "reviews", "faq"]
@@ -551,10 +95,9 @@ export function CourseDetailClient({ course }: CourseDetailClientProps) {
     setActiveTab(value)
     const element = document.getElementById(value)
     if (element) {
-      const offset = 120 // Account for sticky header
+      const offset = 120
       const elementPosition = element.getBoundingClientRect().top
       const offsetPosition = elementPosition + window.pageYOffset - offset
-
       window.scrollTo({
         top: offsetPosition,
         behavior: "smooth",
@@ -564,15 +107,6 @@ export function CourseDetailClient({ course }: CourseDetailClientProps) {
 
   // Extended description
   const fullDescription = `${course.description}\n\nCe cours vous guidera à travers tous les concepts essentiels et avancés. Vous travaillerez sur des projets réels et obtiendrez les compétences nécessaires pour exceller dans votre domaine. Notre approche pratique vous permettra de mettre immédiatement en application ce que vous apprenez.`
-
-  const { data: reviews = [] } = useQuery({
-    queryKey: ["reviews", courseIdNum],
-    queryFn: () => reviewService.getReviewsByCourse(courseIdNum!),
-    enabled: !!courseIdNum && !Number.isNaN(courseIdNum!),
-    staleTime: 5 * 60 * 1000, // 5 minutes
-  });
-
-
 
   return (
     <div className="min-h-screen bg-background">
@@ -592,20 +126,10 @@ export function CourseDetailClient({ course }: CourseDetailClientProps) {
           </nav>
         </FadeInView>
 
-        {/* Main Content - Two Column Layout avec Sidebar */}
+        {/* Main Content */}
         <div className="flex flex-col lg:flex-row gap-6 lg:gap-8">
-          {/* Left Column - Main Content (70%) */}
+          {/* Left Column - Main Content */}
           <div className="flex-1 min-w-0 space-y-6">
-            {/* Sidebar pour les modules/leçons - Style Udemy */}
-            {isEnrolled && curriculum.length > 0 && (
-              <div className="lg:hidden mb-6">
-                <CourseSidebar 
-                  modules={curriculum} 
-                  courseId={course.id}
-                  isLoading={isLoadingModules}
-                />
-              </div>
-            )}
             {/* Header Section */}
             <FadeInView>
               <div className="space-y-4">
@@ -665,13 +189,18 @@ export function CourseDetailClient({ course }: CourseDetailClientProps) {
                     variant="ghost"
                     size="icon"
                     className="text-foreground/80 hover:bg-primary/10 hover:text-primary transition-all"
-                    aria-label="Favoris"
+                    aria-label="Enregistrer"
                   >
                     <Bookmark className="h-5 w-5" />
                   </Button>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="icon" className="text-foreground/80 hover:bg-primary/10" aria-label="Plus d'options">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="text-foreground/80 hover:bg-primary/10 hover:text-primary transition-all"
+                        aria-label="Plus d'options"
+                      >
                         <MoreVertical className="h-5 w-5" />
                       </Button>
                     </DropdownMenuTrigger>
@@ -684,77 +213,53 @@ export function CourseDetailClient({ course }: CourseDetailClientProps) {
               </div>
             </FadeInView>
 
-            {/* Video Preview */}
-            <FadeInView delay={0.1}>
-              <Card className="border-2 hover:border-primary/20 transition-all duration-300 overflow-hidden">
-                <VideoPlayer
-                  thumbnail={course.imageUrl}
-                  title={course.title}
-                  className="w-full"
-                />
-              </Card>
-            </FadeInView>
-
-            {/* Tabs Section */}
-            <FadeInView delay={0.2}>
+            {/* Tabs Navigation */}
+            <FadeInView>
               <Tabs value={activeTab} onValueChange={handleTabClick} className="w-full">
-                <div className="course-detail-tabs sticky top-0 md:top-16 z-30 bg-white border-b border-gray-200 shadow-sm">
-                  <TabsList className="bg-transparent border-0 h-auto p-0 w-full justify-start gap-0 overflow-x-auto">
-                    <TabsTrigger 
-                      value="overview" 
-                      className="px-6 py-4 text-sm font-medium text-gray-600 hover:text-black transition-all duration-200 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:text-primary data-[state=active]:font-semibold data-[state=active]:bg-transparent min-w-fit whitespace-nowrap"
-                    >
+                <TabsList className="grid w-full grid-cols-5 h-auto p-1 bg-muted/50">
+                  <TabsTrigger value="overview" className="text-xs sm:text-sm">
                     Aperçu
                   </TabsTrigger>
-                    <TabsTrigger 
-                      value="content" 
-                      className="px-6 py-4 text-sm font-medium text-gray-600 hover:text-black transition-all duration-200 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:text-primary data-[state=active]:font-semibold data-[state=active]:bg-transparent min-w-fit whitespace-nowrap"
-                    >
+                  <TabsTrigger value="content" className="text-xs sm:text-sm">
                     Contenu
                   </TabsTrigger>
-                    <TabsTrigger 
-                      value="instructor" 
-                      className="px-6 py-4 text-sm font-medium text-gray-600 hover:text-black transition-all duration-200 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:text-primary data-[state=active]:font-semibold data-[state=active]:bg-transparent min-w-fit whitespace-nowrap"
-                    >
-                    Formateur
+                  <TabsTrigger value="instructor" className="text-xs sm:text-sm">
+                    Instructeur
                   </TabsTrigger>
-                    <TabsTrigger 
-                      value="reviews" 
-                      className="px-6 py-4 text-sm font-medium text-gray-600 hover:text-black transition-all duration-200 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:text-primary data-[state=active]:font-semibold data-[state=active]:bg-transparent min-w-fit whitespace-nowrap"
-                    >
-                      <span className="flex items-center gap-2">
-                        Avis
-                        <span className="text-xs font-normal text-gray-500 data-[state=active]:text-primary/70">
-                          ({course.reviewCount.toLocaleString()})
-                        </span>
-                      </span>
+                  <TabsTrigger value="reviews" className="text-xs sm:text-sm">
+                    Avis
                   </TabsTrigger>
-
+                  <TabsTrigger value="faq" className="text-xs sm:text-sm">
+                    FAQ
+                  </TabsTrigger>
                 </TabsList>
-                </div>
 
                 {/* Overview Tab */}
-                <TabsContent value="overview" className="space-y-6 mt-6">
-                  <div id="overview" className="scroll-mt-24">
-                  {/* Description */}
+                <TabsContent value="overview" id="overview" className="mt-6 space-y-6">
+                  {/* Course Description */}
                   <div>
-                    <h3 className="text-xl font-bold mb-4 text-foreground">À propos de ce cours</h3>
-                    <div className="text-muted-foreground leading-relaxed space-y-4">
-                      {showFullDescription ? (
-                        <div className="whitespace-pre-line">{fullDescription}</div>
-                      ) : (
-                        <p>{course.description}</p>
+                    <h2 className="text-2xl font-bold mb-4 text-foreground">À propos de ce cours</h2>
+                    <div className="prose prose-sm max-w-none text-muted-foreground">
+                      <p className="whitespace-pre-line">
+                        {showFullDescription ? fullDescription : course.description}
+                      </p>
+                      {!showFullDescription && (
+                        <button
+                          onClick={() => setShowFullDescription(true)}
+                          className="text-primary hover:underline mt-2 font-medium"
+                        >
+                          Afficher plus
+                        </button>
+                      )}
+                      {showFullDescription && (
+                        <button
+                          onClick={() => setShowFullDescription(false)}
+                          className="text-primary hover:underline mt-2 font-medium"
+                        >
+                          Afficher moins
+                        </button>
                       )}
                     </div>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="mt-4 text-primary hover:text-primary/80 hover:bg-primary/10"
-                      onClick={() => setShowFullDescription(!showFullDescription)}
-                    >
-                      <Plus className={`h-4 w-4 mr-1 transition-transform duration-200 ${showFullDescription ? "rotate-45" : ""}`} />
-                      {showFullDescription ? "Voir moins" : "Voir plus"}
-                    </Button>
                   </div>
 
                   {/* Objectives */}
@@ -762,30 +267,24 @@ export function CourseDetailClient({ course }: CourseDetailClientProps) {
                     <div>
                       <h3 className="text-xl font-bold mb-4 text-foreground">Ce que vous apprendrez</h3>
                       <div className="grid md:grid-cols-2 gap-3">
-                        {course.objectives && Array.isArray(course.objectives) 
-                          ? course.objectives
+                        {course.objectives
                               .filter((objective) => objective !== null && objective !== undefined)
-                              .map((objective: any, index) => {
-                                // S'assurer que objective est une string primitive
+                          .map((objective: any, index) => {
                                 const objectiveText = typeof objective === 'string' 
                                   ? objective 
                                   : (typeof objective === 'object' && objective !== null
-                                      ? String((objective as any).title || (objective as any).text || (objective as any).name || JSON.stringify(objective))
-                                      : String(objective || ''));
+                                  ? String((objective as any).title || (objective as any).text || (objective as any).name || JSON.stringify(objective))
+                                  : String(objective || ''))
                                 
-                                if (!objectiveText || objectiveText.trim() === '') {
-                                  return null;
-                                }
+                            if (!objectiveText || objectiveText.trim() === '') return null
                                 
                                 return (
                                   <div key={index} className="flex items-start gap-3">
                                     <CheckCircle2 className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
                                     <span className="text-muted-foreground">{objectiveText}</span>
                                   </div>
-                                );
-                              })
-                              .filter((element) => element !== null)
-                          : null}
+                            )
+                          })}
                       </div>
                     </div>
                   )}
@@ -798,90 +297,51 @@ export function CourseDetailClient({ course }: CourseDetailClientProps) {
                         ? course.features
                             .filter((feature) => feature !== null && feature !== undefined)
                             .map((feature: any, index) => {
-                              // S'assurer que feature est une string primitive
                               const featureText = typeof feature === 'string' 
                                 ? feature 
                                 : (typeof feature === 'object' && feature !== null
                                     ? String((feature as any).title || (feature as any).text || (feature as any).name || JSON.stringify(feature))
-                                    : String(feature || ''));
+                                    : String(feature || ''))
                               
-                              if (!featureText || featureText.trim() === '') {
-                                return null;
-                              }
+                              if (!featureText || featureText.trim() === '') return null
                               
                               return (
                                 <div key={index} className="flex items-center gap-3 p-3 border-2 rounded-lg hover:border-primary/40 hover:bg-primary/5 transition-all">
                                   <div className="rounded-lg bg-primary/10 p-2 border border-primary/20">
-                                    <CheckCircle2 className="h-4 w-4 text-primary" />
+                                    <CheckCircle2 className="h-5 w-5 text-primary" />
                                   </div>
-                                  <span className="text-sm font-medium text-foreground">{featureText}</span>
+                                  <span className="text-muted-foreground font-medium">{featureText}</span>
                                 </div>
-                              );
+                              )
                             })
-                            .filter((element) => element !== null)
                         : null}
-                    </div>
                   </div>
                   </div>
                 </TabsContent>
 
                 {/* Content Tab */}
-                <TabsContent value="content" className="mt-6">
-                  <div id="content" className="scroll-mt-24">
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between mb-4">
-                      <h3 className="text-xl font-bold text-foreground">Contenu du cours</h3>
-                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                        <span>{curriculum.length} modules</span>
-                        <span>•</span>
-                        <span>{totalLectures} leçons</span>
-                        <span>•</span>
-                        <span>{formattedTotalRealDuration} de contenu</span>
-                      </div>
-                    </div>
-                    <Accordion type="multiple" className="w-full space-y-3" defaultValue={curriculum.length > 0 && curriculum[0]?.id ? [String(curriculum[0].id)] : []}>
-                      {!isEnrolled ? (
-                        <div className="p-8 text-center text-muted-foreground">
-                          <div className="flex flex-col items-center justify-center gap-3">
-                            <BookOpen className="h-12 w-12 text-primary/50" />
-                            <p className="font-medium text-lg">Inscrivez-vous pour accéder aux modules et leçons</p>
-                            <p className="text-sm">Cliquez sur le bouton "S'inscrire gratuitement" ci-dessus pour commencer</p>
-                          </div>
-                        </div>
-                      ) : isLoadingModules ? (
-                        <div className="p-8 text-center text-muted-foreground">
-                          <div className="flex items-center justify-center gap-3">
-                            <div className="h-5 w-5 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
-                            <span className="font-medium">Chargement des modules et leçons...</span>
-                          </div>
-                        </div>
-                      ) : curriculum.length > 0 ? (
-                        curriculum
-                          .filter(module => {
-                            // Filtrer strictement : seulement les modules valides
-                            if (!module || typeof module !== 'object') return false
-                            const id = module.id
-                            const title = module.title
-                            return id !== null && id !== undefined && 
-                                   title !== null && title !== undefined &&
-                                   String(title).trim() !== ''
-                          })
+                <TabsContent value="content" id="content" className="mt-6">
+                  <div>
+                    <h2 className="text-2xl font-bold mb-4 text-foreground">Contenu du cours</h2>
+                    {curriculum && curriculum.length > 0 ? (
+                      <Accordion type="single" collapsible className="w-full space-y-3">
+                        {curriculum
+                          .filter(module => module && module.id && typeof module.id === 'string')
                           .map((module, moduleIndex) => {
                             try {
-                              // S'assurer que les leçons sont bien un tableau
                               const lessons = Array.isArray(module.lessons) 
                                 ? module.lessons.filter(lesson => lesson && typeof lesson === 'object')
                                 : []
                               const totalLessons = lessons.length
                               const totalDuration = lessons.reduce((acc, lesson) => {
                                 if (!lesson || typeof lesson.duration !== 'string') return acc
-                                const duration = lesson.duration || "0m"
-                                const minutes = parseInt(duration.replace(/[^0-9]/g, "")) || 0
-                                return acc + minutes
+                            const duration = lesson.duration || "0m"
+                            const minutes = parseInt(duration.replace(/[^0-9]/g, "")) || 0
+                            return acc + minutes
                               }, 0)
-                              const formattedDuration = totalDuration > 60 
-                                ? `${Math.floor(totalDuration / 60)}h ${totalDuration % 60}m`
-                                : `${totalDuration}m`
+                          const formattedDuration = totalDuration > 60 
+                            ? `${Math.floor(totalDuration / 60)}h ${totalDuration % 60}m`
+                            : `${totalDuration}m`
                               const moduleId = String(module.id || "")
                               const moduleTitle = String(module.title || "").trim()
 
@@ -889,7 +349,7 @@ export function CourseDetailClient({ course }: CourseDetailClientProps) {
                                 return null
                               }
 
-                              return (
+                          return (
                             <AccordionItem 
                               key={String(module.id)} 
                               value={String(module.id)} 
@@ -903,7 +363,7 @@ export function CourseDetailClient({ course }: CourseDetailClientProps) {
                                     </div>
                                 <div className="flex-1 text-left">
                                       <div className="font-bold text-lg text-foreground mb-1.5">
-                                        {String(module.title || "")}
+                                            {String(module.title || "")}
                                   </div>
                                       <div className="flex items-center gap-4 text-sm text-muted-foreground">
                                         <span className="flex items-center gap-1.5">
@@ -921,163 +381,136 @@ export function CourseDetailClient({ course }: CourseDetailClientProps) {
                             </AccordionTrigger>
                               <AccordionContent className="px-6 pb-5 pt-0">
                                 <div className="space-y-1.5 mt-3 ml-14">
-                                  {lessons.length > 0 ? (
-                                    lessons
-                                      .filter(lesson => {
-                                        // Filtrer strictement : seulement les leçons valides avec ID et titre
-                                        if (!lesson || typeof lesson !== 'object') return false
-                                        const id = lesson.id
-                                        const title = lesson.title
-                                        return id !== null && id !== undefined && 
-                                               title !== null && title !== undefined &&
-                                               String(title).trim() !== ''
-                                      })
-                                      .map((lesson, lessonIndex) => {
-                                      try {
-                                        // S'assurer que toutes les valeurs sont des primitives
-                                        const lessonId = String(lesson.id || "")
-                                        const lessonTitle = String(lesson.title || "").trim()
-                                        const lessonType = String(lesson.type || "video")
-                                        const lessonDuration = lesson.duration ? String(lesson.duration) : undefined
-                                        const lessonNumber = lessonIndex + 1
-                                        const isVideo = lessonType === "video"
-                                        const isQuiz = lessonType === "quiz"
-                                        
-                                        // Vérifier que les valeurs sont valides avant de rendre
-                                        if (!lessonId || lessonId === "" || !lessonTitle || lessonTitle === "") {
-                                          return null
-                                        }
-                                        
-                                        return (
+                                      {lessons.length > 0 ? (
+                                        lessons
+                                          .filter(lesson => {
+                                            if (!lesson || typeof lesson !== 'object') return false
+                                            const id = lesson.id
+                                            const title = lesson.title
+                                            return id !== null && id !== undefined && 
+                                                   title !== null && title !== undefined &&
+                                                   String(title).trim() !== ''
+                                          })
+                                          .map((lesson, lessonIndex) => {
+                                            try {
+                                              const lessonId = String(lesson.id || "")
+                                              const lessonTitle = String(lesson.title || "").trim()
+                                              const lessonType = String(lesson.type || "video")
+                                              const lessonDuration = lesson.duration ? String(lesson.duration) : undefined
+                                      const lessonNumber = lessonIndex + 1
+                                              const isVideo = lessonType === "video"
+                                              const isQuiz = lessonType === "quiz"
+                                              
+                                              if (!lessonId || lessonId === "" || !lessonTitle || lessonTitle === "") {
+                                                return null
+                                              }
+                                      
+                                      return (
                                   <Link
-                                    key={lessonId}
-                                    href={`/learn/${course.id}?lesson=${lessonId}`}
-                                          className="flex items-center justify-between p-4 rounded-lg hover:bg-primary/5 hover:border-l-4 hover:border-primary transition-all duration-200 group border border-transparent hover:border-primary/20 bg-muted/30"
-                                        >
-                                          <div className="flex items-center gap-4 flex-1 min-w-0">
-                                            <div className="flex-shrink-0 w-8 h-8 rounded-full bg-background border-2 border-border flex items-center justify-center group-hover:border-primary group-hover:bg-primary/10 transition-colors">
+                                                  key={lessonId}
+                                                  href={`/learn/${course.id}?lesson=${lessonId}`}
+                                                  className="group flex items-center gap-3 p-3 rounded-lg hover:bg-primary/5 hover:border-primary/20 border-2 border-transparent transition-all"
+                                                >
+                                                  <div className="flex items-center gap-3 flex-1 min-w-0">
+                                                    <div className="flex-shrink-0 w-8 h-8 rounded-full bg-muted flex items-center justify-center border border-border group-hover:bg-primary/10 group-hover:border-primary/30 transition-colors">
                                               {isVideo ? (
-                                                <Play className="h-3.5 w-3.5 text-muted-foreground group-hover:text-primary" />
+                                                        <Play className="h-4 w-4 text-muted-foreground group-hover:text-primary" />
                                               ) : isQuiz ? (
-                                                <FileText className="h-3.5 w-3.5 text-primary" />
+                                                        <FileText className="h-4 w-4 text-muted-foreground group-hover:text-primary" />
                                               ) : (
-                                                <span className="text-xs font-semibold text-muted-foreground group-hover:text-primary">
-                                                  {lessonNumber}
-                                      </span>
+                                                        <Video className="h-4 w-4 text-muted-foreground group-hover:text-primary" />
                                               )}
                                             </div>
-                                            <div className="flex items-center gap-3 flex-1 min-w-0">
-                                              <div className="flex items-center gap-2 flex-1 min-w-0">
-                                                {isVideo && <Video className="h-4 w-4 text-muted-foreground flex-shrink-0" />}
-                                                {isQuiz && <FileText className="h-4 w-4 text-primary flex-shrink-0" />}
-                                                <span className="text-sm font-medium text-foreground/90 group-hover:text-foreground truncate">
-                                          {lessonTitle}
+                                                    <div className="flex-1 min-w-0">
+                                                      <div className="flex items-center gap-2 mb-1">
+                                                        <span className="text-xs font-medium text-muted-foreground">
+                                                          Leçon {lessonNumber}
                                         </span>
-                                      </div>
                                               {isQuiz && (
-                                                <Badge className="bg-primary/10 text-primary text-xs border-primary/20 font-medium flex-shrink-0">
+                                                          <Badge variant="secondary" className="text-xs px-1.5 py-0">
                                           Quiz
                                         </Badge>
                                       )}
                                     </div>
+                                                      <span className="text-sm font-medium text-foreground/90 group-hover:text-foreground truncate">
+                                                        {String(lesson.title)}
+                                                      </span>
                                           </div>
                                           <div className="flex items-center gap-3 flex-shrink-0 ml-4">
-                                            {lessonDuration && (
+                                                      {lessonDuration && (
                                               <span className="text-xs text-muted-foreground font-medium whitespace-nowrap">
-                                                {lessonDuration}
+                                                          {lessonDuration}
                                               </span>
                                             )}
-                                            <div className="w-6 h-6 rounded-full bg-background border border-border flex items-center justify-center group-hover:border-primary group-hover:bg-primary/10 transition-colors">
-                                              <Play className="h-3 w-3 text-muted-foreground/60 group-hover:text-primary transition-colors" />
                                             </div>
                                     </div>
                                   </Link>
-                                        )
-                                      } catch (error) {
-                                        console.error("Erreur lors du rendu d'une leçon:", error, lesson)
-                                        return null
-                                      }
+                                      )
+                                            } catch (error) {
+                                              console.error("Erreur lors du rendu d'une leçon:", error, lesson)
+                                              return null
+                                            }
                                     })
-                                    .filter((item): item is React.ReactElement => item !== null && item !== undefined)
+                                          .filter((item): item is JSX.Element => item !== null && item !== undefined)
                                   ) : (
-                                    <div className="p-4 text-center text-sm text-muted-foreground bg-muted/50 rounded-lg">
+                                        <div className="p-4 text-center text-muted-foreground border-2 border-dashed border-border rounded-lg">
                                       Aucune leçon disponible dans ce module
                                     </div>
                                   )}
                               </div>
                             </AccordionContent>
                           </AccordionItem>
-                            )
+                          )
                             } catch (error) {
                               console.error("Erreur lors du rendu d'un module:", error, module)
                               return null
                             }
-                          })
-                          .filter((item): item is React.ReactElement => item !== null && item !== undefined)
+                        })
+                          .filter((item): item is JSX.Element => item !== null && item !== undefined)}
+                      </Accordion>
                       ) : (
                         <div className="p-8 text-center border-2 border-dashed border-border rounded-xl bg-muted/30">
-                          <BookOpen className="h-12 w-12 text-muted-foreground mx-auto mb-4 opacity-50" />
-                          <p className="text-base font-medium text-foreground mb-2">Aucun module disponible pour ce cours</p>
-                          <p className="text-sm text-muted-foreground">Les modules et leçons seront ajoutés prochainement.</p>
+                        <BookOpen className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                        <p className="text-muted-foreground">Aucun contenu disponible pour ce cours</p>
                         </div>
                       )}
-                    </Accordion>
-                  </div>
                   </div>
                 </TabsContent>
 
                 {/* Instructor Tab */}
-                <TabsContent value="instructor" className="mt-6">
-                  <div id="instructor" className="scroll-mt-24">
-                  {course.instructor ? (
-                    <Card className="border-2 hover:border-primary/20 transition-all">
+                <TabsContent value="instructor" id="instructor" className="mt-6">
+                  <div className="space-y-6">
+                    <h2 className="text-2xl font-bold text-foreground">Votre instructeur</h2>
+                    {course.instructor && (
+                      <Card className="border-2">
                       <CardContent className="p-6">
-                        <div className="flex flex-col md:flex-row gap-6">
-                          <Avatar className="h-24 w-24 border-2 border-primary/30">
-                            <AvatarImage src={course.instructor?.avatar || "/placeholder-user.jpg"} alt={course.instructor?.name || "Instructeur"} />
-                            <AvatarFallback className="bg-primary text-white font-bold text-xl">
-                              {(course.instructor?.name || "I")[0]}
+                          <div className="flex items-start gap-4">
+                            <Avatar className="h-16 w-16 border-2 border-primary/20">
+                              <AvatarImage src={course.instructor.avatar} alt={course.instructor.name} />
+                              <AvatarFallback className="bg-primary/10 text-primary text-lg font-bold">
+                                {course.instructor.name.charAt(0)}
                             </AvatarFallback>
                           </Avatar>
-                          <div className="flex-1 space-y-4">
-                            <div>
-                              <h3 className="text-2xl font-bold mb-2 text-foreground">{course.instructor?.name || "Instructeur"}</h3>
-                              <p className="text-muted-foreground font-medium">{course.instructor?.title || "Formateur"}</p>
+                            <div className="flex-1">
+                              <h3 className="text-xl font-bold mb-2 text-foreground">{course.instructor.name}</h3>
+                              <p className="text-muted-foreground mb-4">{course.instructor.title}</p>
+                              <div className="flex items-center gap-4 text-sm text-muted-foreground mb-4">
+                                <div className="flex items-center gap-1.5">
+                                  <Star className="h-4 w-4 text-yellow-500" />
+                                  <span>{course.instructor.rating.toFixed(1)} Note instructeur</span>
                             </div>
-                            {course.instructor?.bio && (
-                              <p className="text-muted-foreground leading-relaxed">{course.instructor.bio}</p>
-                            )}
-                          <div className="flex flex-wrap items-center gap-6 pt-4 border-t border-border">
-                            <div className="flex items-center gap-2">
-                              <BarChart3 className="h-5 w-5 text-primary" />
-                              <div>
-                                <p className="text-sm font-bold text-foreground">{((course.instructor?.rating || 0)).toFixed(1)}</p>
-                                <p className="text-xs text-muted-foreground">Note moyenne</p>
+                                <div className="flex items-center gap-1.5">
+                                  <Users className="h-4 w-4" />
+                                  <span>{course.instructor.students.toLocaleString()} Étudiants</span>
                               </div>
+                                <div className="flex items-center gap-1.5">
+                                  <Award className="h-4 w-4" />
+                                  <span>{course.instructor.courses} Cours</span>
                             </div>
-                            <div className="flex items-center gap-2">
-                              <Users className="h-5 w-5 text-primary" />
-                              <div>
-                                <p className="text-sm font-bold text-foreground">{((course.instructor?.studentCount || 0)).toLocaleString()}</p>
-                                <p className="text-xs text-muted-foreground">Étudiants</p>
                               </div>
-                            </div>
-                            <div className="flex items-center gap-2">
-                              <BookOpen className="h-5 w-5 text-primary" />
-                              <div>
-                                <p className="text-sm font-bold text-foreground">{course.instructor?.courseCount || 0}</p>
-                                <p className="text-xs text-muted-foreground">Cours</p>
-                              </div>
-                            </div>
-                          </div>
+                              <p className="text-muted-foreground">{course.instructor.bio}</p>
                         </div>
                       </div>
-                    </CardContent>
-                  </Card>
-                  ) : (
-                    <Card className="border-2 hover:border-primary/20 transition-all">
-                      <CardContent className="p-6">
-                        <p className="text-muted-foreground text-center">Informations de l'instructeur non disponibles</p>
                       </CardContent>
                     </Card>
                   )}
@@ -1085,252 +518,97 @@ export function CourseDetailClient({ course }: CourseDetailClientProps) {
                 </TabsContent>
 
                 {/* Reviews Tab */}
-                <TabsContent value="reviews" className="mt-6">
-                  <div id="reviews" className="scroll-mt-24">
+                <TabsContent value="reviews" id="reviews" className="mt-6">
                   <div className="space-y-6">
-                    {/* Review Summary */}
-                    <Card className="border-2">
-                      <CardContent className="p-6">
-                        <div className="flex flex-col md:flex-row items-center gap-6">
-                          <div className="text-center">
-                            <p className="text-5xl font-bold text-foreground mb-2">{course.rating.toFixed(1)}</p>
+                    <div>
+                      <h2 className="text-2xl font-bold mb-4 text-foreground">Avis des étudiants</h2>
+                      <div className="flex items-center gap-4 mb-6">
+                        <div className="text-4xl font-bold text-foreground">{course.rating.toFixed(1)}</div>
+                        <div>
                             <RatingStars rating={course.rating} size="lg" />
-                            <p className="text-sm text-muted-foreground mt-2">
+                          <p className="text-sm text-muted-foreground mt-1">
                               Basé sur {course.reviewCount.toLocaleString()} avis
                             </p>
                           </div>
-                          <Separator orientation="vertical" className="hidden md:block h-20" />
-                          <div className="flex-1 grid grid-cols-5 gap-2">
-                            {[5, 4, 3, 2, 1].map((rating) => (
-                              <div key={rating} className="flex items-center gap-2">
-                                <span className="text-sm text-muted-foreground">{rating}</span>
-                                <Star className="h-4 w-4 fill-primary text-primary" />
-                                <div className="flex-1 h-2 bg-muted rounded-full overflow-hidden">
-                                  <div
-                                    className="h-full bg-primary"
-                                    style={{ width: `${Math.random() * 30 + 50}%` }}
-                                  />
                                 </div>
                               </div>
-                            ))}
+                    <div className="p-8 text-center border-2 border-dashed border-border rounded-xl bg-muted/30">
+                      <Star className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                      <p className="text-muted-foreground">Aucun avis disponible pour le moment</p>
                           </div>
                         </div>
-                      </CardContent>
-                    </Card>
+                </TabsContent>
 
-                    {/* Reviews List */}
-                    <div className="space-y-4">
-                      {reviews && Array.isArray(reviews) && reviews.length > 0 ? reviews
-                        .filter((review) => {
-                          // Filtrer les reviews invalides
-                          if (!review || typeof review !== 'object') return false;
-                          // S'assurer que review n'est pas null/undefined et a au moins un id ou une propriété valide
-                          return review.id !== null && review.id !== undefined;
-                        })
-                        .map((review, index) => {
-                          // S'assurer que toutes les valeurs sont des primitives
-                          const reviewId = review?.id 
-                            ? (typeof review.id === 'number' ? String(review.id) : String(review.id))
-                            : `review-${index}-${Date.now()}`;
-                          
-                          // Extraire les valeurs primitives de user
-                          const userObj = review?.user;
-                          const userName = (userObj && typeof userObj === 'object')
-                            ? (String(userObj.fullName || userObj.email || "Utilisateur inconnu"))
-                            : "Utilisateur inconnu";
-                          const userAvatar = (userObj && typeof userObj === 'object' && typeof userObj.avatar === 'string')
-                            ? userObj.avatar
-                            : "/placeholder-user.jpg";
-                          const userInitial = userName && typeof userName === 'string' && userName.length > 0
-                            ? userName[0].toUpperCase()
-                            : "U";
-                          
-                          // Extraire rating et comment
-                          const rating = (typeof review?.rating === 'number' && !isNaN(review.rating))
-                            ? Math.max(0, Math.min(5, review.rating))
-                            : 0;
-                          const comment = (typeof review?.comment === 'string')
-                            ? review.comment
-                            : "";
-                          
-                          // Gérer createdAt - peut être une string ou un objet Date
-                          let reviewDate = "Date inconnue";
-                          try {
-                            if (review?.createdAt) {
-                              let dateValue: Date;
-                              if (typeof review.createdAt === 'string') {
-                                dateValue = new Date(review.createdAt);
-                              } else if (review.createdAt instanceof Date) {
-                                dateValue = review.createdAt;
-                              } else if (typeof review.createdAt === 'object' && review.createdAt !== null) {
-                                // Si c'est un objet, essayer de le convertir en string puis en Date
-                                dateValue = new Date(String(review.createdAt));
-                              } else {
-                                dateValue = new Date(String(review.createdAt));
-                              }
-                              
-                              if (!isNaN(dateValue.getTime())) {
-                                reviewDate = dateValue.toLocaleDateString("fr-FR", { 
-                                  day: "numeric", 
-                                  month: "short", 
-                                  year: "numeric" 
-                                });
-                              }
-                            }
-                          } catch (e) {
-                            console.warn("Erreur lors du formatage de la date:", e);
-                            reviewDate = "Date inconnue";
-                          }
-
-                          // Vérifier que toutes les valeurs sont des primitives avant le rendu
-                          if (typeof userName !== 'string' || typeof userAvatar !== 'string' || 
-                              typeof userInitial !== 'string' || typeof comment !== 'string' ||
-                              typeof reviewDate !== 'string' || typeof rating !== 'number') {
-                            console.warn("Valeurs non primitives détectées dans review:", {
-                              reviewId,
-                              userName: typeof userName,
-                              userAvatar: typeof userAvatar,
-                              rating: typeof rating,
-                              comment: typeof comment,
-                              reviewDate: typeof reviewDate
-                            });
-                            return null; // Ne pas rendre si les valeurs ne sont pas primitives
-                          }
-
-                          return (
-                            <Card key={reviewId} className="border-2 hover:border-primary/20 transition-all">
-                              <CardContent className="p-6">
-                                <div className="flex items-start gap-4">
-                                  <Avatar className="h-12 w-12 border-2 border-primary/30">
-                                    <AvatarImage src={userAvatar} alt={userName} />
-                                    <AvatarFallback className="bg-primary text-white font-bold">
-                                      {userInitial}
-                                    </AvatarFallback>
-                                  </Avatar>
-                                  <div className="flex-1 space-y-2">
-                                    <div className="flex items-start justify-between gap-4">
-                                      <div>
-                                        <p className="font-bold text-sm text-foreground">{userName}</p>
-                                        <div className="flex items-center gap-2 mt-1">
-                                          <RatingStars rating={rating} size="sm" />
-                                          <span className="text-xs text-muted-foreground">{reviewDate}</span>
-                                        </div>
-                                      </div>
-                                    </div>
-                                    <p className="text-sm text-muted-foreground leading-relaxed">{comment}</p>
-                                  </div>
-                                </div>
-                              </CardContent>
-                            </Card>
-                          );
-                        })
-                        .filter((element) => element !== null) // Filtrer les éléments null
-                      : (
-                        <div className="p-8 text-center text-muted-foreground border-2 border-dashed border-border rounded-xl">
-                          <p>Aucun avis pour le moment. Soyez le premier à en laisser un !</p>
-                        </div>
-                      )}
-                    </div>
+                {/* FAQ Tab */}
+                <TabsContent value="faq" id="faq" className="mt-6">
+                  <div className="space-y-6">
+                    <h2 className="text-2xl font-bold text-foreground">Questions fréquentes</h2>
+                    <div className="p-8 text-center border-2 border-dashed border-border rounded-xl bg-muted/30">
+                      <Globe className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                      <p className="text-muted-foreground">Aucune FAQ disponible pour le moment</p>
                     </div>
                   </div>
                 </TabsContent>
-
-
               </Tabs>
             </FadeInView>
           </div>
 
-          {/* Right Column - Sticky Sidebar (30%) */}
-          <div className="lg:w-80 lg:sticky lg:top-20 lg:self-start space-y-6">
-            {/* Sidebar Modules/Leçons - Style Udemy (Desktop) */}
-            {isEnrolled && curriculum.length > 0 && (
-              <FadeInView delay={0.2}>
-                <CourseSidebar 
-                  modules={curriculum} 
-                  courseId={course.id}
-                  isLoading={isLoadingModules}
-                />
-              </FadeInView>
-            )}
-            
-            {/* Card d'inscription - Afficher uniquement si l'utilisateur n'est pas inscrit */}
-            {!isEnrolled && (
-            <FadeInView delay={0.3}>
-              <Card className="border-2 border-primary/40 bg-gradient-to-br from-primary/5 via-transparent to-transparent shadow-xl">
-                <CardHeader className="pb-4 border-b border-border">
-                  <CardTitle className="text-xl flex items-center gap-2">
-                    <Award className="h-5 w-5 text-primary" />
-                    Accéder au cours
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="p-6 space-y-6">
-                  {/* CTA Button */}
-                  <Button
-                    size="lg"
-                    className="w-full bg-primary text-white hover:bg-primary/90 font-bold text-lg h-14 shadow-lg hover:shadow-xl transition-all duration-300"
-                      onClick={handleEnroll}
-                      disabled={enrollMutation.isPending}
-                    >
-                      {enrollMutation.isPending ? (
-                        <>
-                          <Loader2 className="h-5 w-5 mr-2 animate-spin" />
-                          Inscription en cours...
-                        </>
-                      ) : (
-                        <>
-                      S'inscrire gratuitement
-                      <ArrowLeft className="h-5 w-5 ml-2 rotate-180" />
-                        </>
-                      )}
-                  </Button>
+          {/* Right Sidebar - Course Info Card */}
+          <div className="lg:w-80 flex-shrink-0">
+            <FadeInView>
+              <Card className="sticky top-24 border-2 shadow-lg">
+                <CardContent className="p-6">
+                  {/* Course Preview Image */}
+                  {course.thumbnail && (
+                    <div className="relative w-full aspect-video mb-4 rounded-lg overflow-hidden border-2 border-border">
+                      <img
+                        src={course.thumbnail}
+                        alt={course.title}
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                  )}
 
-                  {/* Course Info */}
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between py-2 border-b border-border">
-                      <span className="text-sm text-muted-foreground">Niveau</span>
-                      <Badge className={getDifficultyColor(course.level)}>
-                        {course.level}
-                      </Badge>
+                  {/* Price */}
+                  <div className="mb-4">
+                    <div className="text-3xl font-bold text-foreground mb-1">
+                      {course.price === 0 ? "Gratuit" : `${course.price.toLocaleString()} FCFA`}
                     </div>
-                    <div className="flex items-center justify-between py-2 border-b border-border">
-                      <span className="text-sm text-muted-foreground">Langue</span>
-                      <div className="flex items-center gap-2">
-                        <Globe className="h-4 w-4 text-muted-foreground" />
-                        <span className="text-sm font-medium text-foreground">{course.language}</span>
+                    {course.originalPrice && course.originalPrice > course.price && (
+                      <div className="text-sm text-muted-foreground line-through">
+                        {course.originalPrice.toLocaleString()} FCFA
                       </div>
-                    </div>
-                    <div className="flex items-center justify-between py-2 border-b border-border">
-                      <span className="text-sm text-muted-foreground">Durée</span>
-                      <span className="text-sm font-medium text-foreground">{course.duration}h</span>
-                    </div>
-                    <div className="flex items-center justify-between py-2 border-b border-border">
-                      <span className="text-sm text-muted-foreground">Leçons</span>
-                      <span className="text-sm font-medium text-foreground">{totalLectures || 398}</span>
-                    </div>
+                    )}
                   </div>
 
-                  {/* Trust Badges */}
-                  <div className="pt-4 border-t border-border">
-                    <h4 className="font-bold text-sm mb-3 text-foreground">Garanties</h4>
-                    <div className="space-y-3">
-                      <div className="flex items-center gap-3 p-3 bg-green-50 border border-green-200 rounded-lg">
-                        <div className="rounded-full bg-green-500 p-1.5">
-                          <CheckCircle2 className="h-4 w-4 text-white" />
-                        </div>
-                        <div className="flex-1">
-                          <p className="text-sm font-semibold text-green-900">100% Gratuit</p>
-                          <p className="text-xs text-green-700">Accès complet sans frais</p>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-3 p-3 bg-orange-50 border border-orange-200 rounded-lg">
-                        <div className="rounded-full bg-orange-500 p-1.5">
-                          <Award className="h-4 w-4 text-white" />
-                        </div>
-                        <div className="flex-1">
-                          <p className="text-sm font-semibold text-orange-900">Certificat inclus</p>
-                        </div>
-                      </div>
+                  {/* CTA Button */}
+                  <Button
+                    className="w-full mb-4 h-12 text-base font-semibold"
+                    size="lg"
+                  >
+                    <Play className="h-5 w-5 mr-2" />
+                    Commencer le cours
+                  </Button>
 
+                  {/* Course Stats */}
+                  <div className="space-y-3 mb-4 pb-4 border-b border-border">
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-muted-foreground">Niveau</span>
+                      <Badge className={getDifficultyColor(course.difficulty)}>
+                        {course.difficulty}
+                      </Badge>
+                    </div>
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-muted-foreground">Durée totale</span>
+                      <span className="font-medium text-foreground">{formattedTotalRealDuration}</span>
+                      </div>
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-muted-foreground">Leçons</span>
+                      <span className="font-medium text-foreground">{totalLectures}</span>
+                    </div>
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-muted-foreground">Langue</span>
+                      <span className="font-medium text-foreground">Français</span>
                     </div>
                   </div>
 
@@ -1343,15 +621,14 @@ export function CourseDetailClient({ course }: CourseDetailClientProps) {
                             .slice(0, 4)
                             .filter((feature) => feature !== null && feature !== undefined)
                             .map((feature: any, index) => {
-                              // S'assurer que feature est une string primitive
                               const featureText = typeof feature === 'string' 
                                 ? feature 
                                 : (typeof feature === 'object' && feature !== null
                                     ? String((feature as any).title || (feature as any).text || (feature as any).name || JSON.stringify(feature))
-                                    : String(feature || ''));
+                                    : String(feature || ''))
                               
                               if (!featureText || featureText.trim() === '') {
-                                return null;
+                                return null
                               }
                               
                               return (
@@ -1359,72 +636,17 @@ export function CourseDetailClient({ course }: CourseDetailClientProps) {
                                   <CheckCircle2 className="h-4 w-4 text-primary flex-shrink-0" />
                                   <span className="text-sm text-muted-foreground">{featureText}</span>
                                 </div>
-                              );
+                              )
                             })
-                            .filter((element) => element !== null)
                         : null}
                     </div>
                   </div>
-
-                  {/* Share Section */}
-                  <div className="pt-4 border-t border-border">
-                    <h4 className="font-bold text-sm mb-3 text-foreground">Partager ce cours</h4>
-                    <div className="flex items-center gap-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="flex-1 border-primary/20 hover:bg-primary/10 hover:text-primary"
-                        onClick={() => {
-                          navigator.clipboard.writeText(window.location.href)
-                          toast.success("Lien copié")
-                        }}
-                      >
-                        <Share2 className="h-4 w-4 mr-2" />
-                        Copier le lien
-                      </Button>
-                    </div>
-                  </div>
-
-                  {/* Instructor Preview */}
-                  {course.instructor && (
-                    <div className="pt-4 border-t border-border">
-                      <h4 className="font-bold text-sm mb-3 text-foreground">Instructeur</h4>
-                      <div className="flex items-center gap-3">
-                        <Avatar className="h-12 w-12 border-2 border-primary/30">
-                          <AvatarImage src={course.instructor?.avatar || "/placeholder-user.jpg"} alt={course.instructor?.name || "Instructeur"} />
-                          <AvatarFallback className="bg-primary text-white font-bold">
-                            {(course.instructor?.name || "I")[0]}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div className="flex-1 min-w-0">
-                          <p className="font-bold text-sm text-foreground truncate">{course.instructor?.name || "Instructeur"}</p>
-                          <p className="text-xs text-muted-foreground truncate">{course.instructor?.title || "Formateur"}</p>
-                        </div>
-                      </div>
-                    </div>
-                  )}
                 </CardContent>
               </Card>
             </FadeInView>
-            )}
           </div>
         </div>
       </div>
-
-      {/* Modal d'attentes d'inscription */}
-      <EnrollmentExpectationsModal
-        open={showExpectationsModal}
-        onOpenChange={(open) => {
-          setShowExpectationsModal(open)
-          // Si le modal se ferme et que la mutation est en cours, annuler la mutation
-          if (!open && enrollMutation.isPending) {
-            enrollMutation.reset()
-          }
-        }}
-        onConfirm={handleConfirmEnrollment}
-        courseTitle={course.title}
-        isLoading={enrollMutation.isPending}
-      />
     </div>
   )
 }
