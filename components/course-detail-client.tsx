@@ -19,7 +19,6 @@ import {
 import { toast } from "sonner"
 import { RatingStars } from "@/components/rating-stars"
 import { FadeInView } from "@/components/fade-in-view"
-import { useScrollSpy } from "@/hooks/use-scroll-spy"
 import type { Course } from "@/lib/types"
 
 interface CourseDetailClientProps {
@@ -49,9 +48,6 @@ const getTotalLectures = (curriculum: Course["curriculum"]) => {
 export function CourseDetailClient({ course }: CourseDetailClientProps) {
   const [showFullDescription, setShowFullDescription] = useState(false)
   const [activeTab, setActiveTab] = useState("content")
-  
-  // Flag pour empêcher la boucle scroll ↔ state
-  const isProgrammaticScroll = useRef(false)
 
   // Utiliser le curriculum du cours de manière statique
   const curriculum = useMemo(() => {
@@ -82,65 +78,23 @@ export function CourseDetailClient({ course }: CourseDetailClientProps) {
     return `${minutes}m`
   }, [totalRealDuration])
 
-  // Scroll spy for tabs
-  const sectionIds = ["overview", "content", "instructor", "reviews", "faq"]
-  const activeSection = useScrollSpy({ sectionIds, offset: 150 })
-  
-  // Timeout pour gérer la fin du scroll programmatique
-  const scrollTimeoutRef = useRef<NodeJS.Timeout | null>(null)
-
-  // Update active tab based on scroll position
-  // PROTECTION: Ne pas mettre à jour pendant un scroll programmatique
-  useEffect(() => {
-    if (!activeSection) return
-    // Ignorer les changements pendant un scroll programmatique
-    if (isProgrammaticScroll.current) return
-    // Éviter les mises à jour inutiles
-    if (activeSection === activeTab) return
-    
-    setActiveTab(activeSection)
-  }, [activeSection, activeTab])
-
-  // Handle tab click with smooth scroll
+  // Handle tab click with simple scroll - pas de scroll spy, pas de logique automatique
   const handleTabClick = (value: string) => {
-    // Annuler le timeout précédent s'il existe
-    if (scrollTimeoutRef.current) {
-      clearTimeout(scrollTimeoutRef.current)
-    }
-    
     setActiveTab(value)
-    
-    // Marquer que le scroll est programmatique
-    isProgrammaticScroll.current = true
     
     const element = document.getElementById(value)
     if (element) {
       const offset = 120
       const elementPosition = element.getBoundingClientRect().top
       const offsetPosition = elementPosition + window.pageYOffset - offset
-      
+
+      // Scroll simple sans aucune logique supplémentaire
       window.scrollTo({
         top: offsetPosition,
         behavior: "smooth",
       })
     }
-    
-    // Libérer le flag après l'animation de scroll
-    // Augmenter à 800ms pour être sûr que le smooth scroll est terminé
-    scrollTimeoutRef.current = setTimeout(() => {
-      isProgrammaticScroll.current = false
-      scrollTimeoutRef.current = null
-    }, 800)
   }
-  
-  // Cleanup du timeout au démontage
-  useEffect(() => {
-    return () => {
-      if (scrollTimeoutRef.current) {
-        clearTimeout(scrollTimeoutRef.current)
-      }
-    }
-  }, [])
 
   // Extended description
   const fullDescription = `${course.description}\n\nCe cours vous guidera à travers tous les concepts essentiels et avancés. Vous travaillerez sur des projets réels et obtiendrez les compétences nécessaires pour exceller dans votre domaine. Notre approche pratique vous permettra de mettre immédiatement en application ce que vous apprenez.`
@@ -539,11 +493,11 @@ export function CourseDetailClient({ course }: CourseDetailClientProps) {
                                 <div className="flex items-center gap-1.5">
                                   <Users className="h-4 w-4" />
                                   <span>{(course.instructor as any).students?.toLocaleString() || "0"} Étudiants</span>
-                                </div>
+                              </div>
                                 <div className="flex items-center gap-1.5">
                                   <Award className="h-4 w-4" />
                                   <span>{(course.instructor as any).courses || "0"} Cours</span>
-                                </div>
+                            </div>
                               </div>
                               <p className="text-muted-foreground">{course.instructor.bio}</p>
                         </div>
