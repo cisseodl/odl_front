@@ -107,28 +107,32 @@ export default function LearnPage({ params }: LearnPageProps) {
   }, [modulesFromApi, isLoadingModules, modulesError, isAuthenticated, user])
 
   // Rediriger IMMÉDIATEMENT vers /courses/[id] si l'utilisateur n'est pas inscrit
+  // IMPORTANT : L'utilisateur DOIT passer par /courses/id pour s'inscrire avant d'accéder à /learn/id
   useEffect(() => {
     // Attendre que le chargement soit terminé
-    if (isLoadingModules || courseLoading) return
+    if (isLoadingModules || courseLoading) {
+      return
+    }
     
-    // Si erreur lors du chargement des modules, vérifier si c'est une erreur d'inscription
+    // Si l'utilisateur n'est pas authentifié, ProtectedRoute devrait déjà le rediriger
+    // Mais on vérifie quand même par sécurité
+    if (!isAuthenticated || !user) {
+      console.log("❌ [ENROLLMENT] Utilisateur non authentifié, redirection vers /courses/id")
+      router.replace(`/courses/${courseIdNum}`)
+      return
+    }
+    
+    // Si erreur lors du chargement des modules, c'est probablement une erreur d'inscription
     if (modulesError) {
       const errorMessage = String(modulesError?.message || "")
-      const isEnrollmentError = errorMessage.includes("inscrire") || 
-                                errorMessage.includes("inscription") || 
-                                errorMessage.includes("inscrit") ||
-                                errorMessage.includes("non inscrit") ||
-                                errorMessage.includes("403") ||
-                                errorMessage.includes("401") ||
-                                errorMessage.includes("Forbidden") ||
-                                errorMessage.includes("Unauthorized") ||
-                                errorMessage.includes("authentifié")
+      console.log("❌ [ENROLLMENT] Erreur détectée lors du chargement des modules:", errorMessage)
       
-      if (isEnrollmentError) {
-        console.log("❌ [ENROLLMENT] Utilisateur non inscrit détecté dans /learn, redirection vers /courses/id")
-        router.replace(`/courses/${courseIdNum}`)
-        return
-      }
+      // TOUTE erreur lors du chargement des modules pour un utilisateur authentifié
+      // est considérée comme une erreur d'inscription
+      // (le backend retourne une erreur si l'utilisateur n'est pas inscrit)
+      console.log("❌ [ENROLLMENT] Utilisateur authentifié mais non inscrit, redirection vers /courses/id")
+      router.replace(`/courses/${courseIdNum}`)
+      return
     }
     
     // Si l'utilisateur n'est pas inscrit (modulesFromApi est undefined/null), rediriger
@@ -137,7 +141,10 @@ export default function LearnPage({ params }: LearnPageProps) {
       router.replace(`/courses/${courseIdNum}`)
       return
     }
-  }, [isEnrolled, modulesError, isLoadingModules, courseLoading, courseIdNum, router])
+    
+    // Si on arrive ici, l'utilisateur est inscrit et peut accéder à /learn/id
+    console.log("✅ [ENROLLMENT] Utilisateur inscrit, accès autorisé à /learn/id")
+  }, [isEnrolled, modulesError, isLoadingModules, courseLoading, courseIdNum, router, isAuthenticated, user])
 
   const [currentLesson, setCurrentLesson] = useState(0)
   const [sidebarOpen, setSidebarOpen] = useState(true)
