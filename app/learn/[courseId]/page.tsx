@@ -412,16 +412,18 @@ export default function LearnPage({ params }: LearnPageProps) {
     )
   }
 
-  // Utiliser les valeurs calculées (ou recalculer si nécessaire)
-  const currentLessonData = currentLessonDataForExam
-  const progress = progressForExam
-  const isCourseCompleted = isCourseCompletedForExam
-
-  // MAINTENANT on peut faire les retours conditionnels
+  // ============================================
+  // VÉRIFICATIONS PRÉCOCES - AVANT TOUT AUTRE CODE
+  // ============================================
+  // IMPORTANT : Ces vérifications doivent être faites AVANT que le reste du code ne s'exécute
+  // pour éviter les erreurs JavaScript qui remontent à l'ErrorBoundary
+  
+  // 1. Vérifier que courseIdNum est valide
   if (Number.isNaN(courseIdNum)) {
     notFound()
   }
 
+  // 2. Vérifier le chargement du cours
   if (courseLoading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
@@ -431,12 +433,12 @@ export default function LearnPage({ params }: LearnPageProps) {
     )
   }
 
+  // 3. Vérifier les erreurs de chargement du cours
   if (courseError || !course) {
     notFound()
   }
 
-  // Si le cours est présent mais incomplet, ne pas boucler sur un "loading" infini
-  // (cela arrive quand le backend/adapter renvoie un objet sans titre)
+  // 4. Vérifier que le cours a un titre (données valides)
   if (!course?.title) {
     return (
       <div className="flex items-center justify-center min-h-[400px] px-4">
@@ -450,10 +452,9 @@ export default function LearnPage({ params }: LearnPageProps) {
     )
   }
 
-  // BLOQUER LE RENDU DU CONTENU tant que la vérification d'inscription n'est pas terminée
-  // OU si l'utilisateur n'est pas inscrit (redirection en cours)
-  // IMPORTANT : Même si le cours a un curriculum, on doit TOUJOURS vérifier l'inscription via les modules
+  // 5. VÉRIFICATION STRICTE D'INSCRIPTION - BLOQUER TOUT LE RESTE
   // IMPORTANT : L'utilisateur DOIT passer par /courses/id pour s'inscrire avant d'accéder à /learn/id
+  // Si l'utilisateur n'est pas inscrit, on bloque TOUT le reste du code pour éviter les erreurs
   if (isLoadingModules || !isEnrolled || modulesError) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
@@ -468,6 +469,14 @@ export default function LearnPage({ params }: LearnPageProps) {
       </div>
     )
   }
+
+  // ============================================
+  // CODE NORMAL - SEULEMENT SI L'UTILISATEUR EST INSCRIT
+  // ============================================
+  // Utiliser les valeurs calculées (ou recalculer si nécessaire)
+  const currentLessonData = currentLessonDataForExam
+  const progress = progressForExam
+  const isCourseCompleted = isCourseCompletedForExam
 
   // MAINTENANT on peut faire les retours conditionnels
   // Si pas de leçons, afficher un message informatif

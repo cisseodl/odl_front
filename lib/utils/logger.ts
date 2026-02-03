@@ -17,9 +17,27 @@ export const logger = {
 
   /**
    * Log d'erreur (toujours affiché)
+   * Formate les objets pour une meilleure lisibilité
    */
   error: (...args: any[]) => {
-    console.error('[ERROR]', ...args)
+    const formattedArgs = args.map(arg => {
+      if (arg instanceof Error) {
+        return {
+          name: arg.name,
+          message: arg.message,
+          stack: arg.stack,
+        }
+      }
+      if (typeof arg === 'object' && arg !== null) {
+        try {
+          return JSON.stringify(arg, null, 2)
+        } catch {
+          return String(arg)
+        }
+      }
+      return arg
+    })
+    console.error('[ERROR]', ...formattedArgs)
   },
 
   /**
