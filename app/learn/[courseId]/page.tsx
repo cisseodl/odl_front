@@ -28,6 +28,7 @@ import { toast } from "sonner"
 import type { Lesson, Module } from "@/lib/types"
 import { CourseActivitiesSection } from "@/components/course-activities-section"
 import { ReviewSuccessDialog } from "@/components/review-success-dialog" // New import
+import { useAuthStore } from "@/lib/store/auth-store"
 
 interface LearnPageProps {
   params: Promise<{ courseId: string }>
