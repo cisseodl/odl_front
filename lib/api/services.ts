@@ -650,27 +650,22 @@ export const moduleService = {
         return serializeData(modules) as ModuleDto[]
       }
       
-      // Si la réponse indique une erreur, vérifier si c'est une erreur d'inscription
-      if (!response.ok && response.message) {
-        const errorMessage = String(response.message)
-        const isEnrollmentError = errorMessage.includes("inscrire") || 
-                                  errorMessage.includes("inscription") || 
-                                  errorMessage.includes("inscrit") ||
-                                  errorMessage.includes("authentifié")
-        
-        console.error(`getModulesByCourse(${courseId}) failed:`, {
-          status: response.ko ? "error" : "ok",
-          message: response.message,
-          isEnrollmentError: isEnrollmentError
+      // VÉRIFICATION STRICTE : Si la réponse indique une erreur (response.ok === false), 
+      // c'est que l'utilisateur n'est PAS inscrit (le backend vérifie l'inscription)
+      // IMPORTANT : Pour un utilisateur authentifié, TOUTE erreur du backend est une erreur d'inscription
+      if (!response.ok) {
+        const errorMessage = String(response.message || "Vous devez vous inscrire à ce cours pour accéder aux modules")
+        console.error(`❌ [SERVICE] getModulesByCourse(${courseId}) failed - Utilisateur non inscrit:`, {
+          ok: response.ok,
+          ko: response.ko,
+          message: errorMessage
         })
         
-        // Si c'est une erreur d'inscription, lancer une erreur pour que React Query la gère
-        if (isEnrollmentError) {
-          throw new Error(response.message || "Vous devez vous inscrire à ce cours pour accéder aux modules")
-        }
+        // Lancer une erreur pour que React Query la gère et que le frontend redirige
+        throw new Error(errorMessage)
       }
       
-      // Si ce n'est pas une erreur d'inscription, retourner un tableau vide
+      // Si la réponse est OK mais sans data, retourner un tableau vide (cours sans modules mais utilisateur inscrit)
       return []
     } catch (error: any) {
       // Si c'est une erreur d'inscription, la re-lancer
