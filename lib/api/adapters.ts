@@ -432,7 +432,7 @@ export function adaptCourse(backendCourse: BackendCourse | any): Course {
     lastUpdated: backendCourse.lastUpdated || "Date inconnue",
     bestseller: backendCourse.bestseller || false,
     objectives: backendCourse.objectives || [],
-    curriculum: backendCourse.curriculum?.map(adaptModule) || [],
+    curriculum: (backendCourse.curriculum?.length ? backendCourse.curriculum : backendCourse.modules)?.map(adaptModule) || [],
     enrolledCount: backendCourse.enrolledCount || 0,
     features: backendCourse.features || [],
   }
