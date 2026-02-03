@@ -37,6 +37,7 @@ export default function LearnPage({ params }: LearnPageProps) {
   const { courseId } = use(params)
   const courseIdNum = Number.parseInt(courseId)
   const router = useRouter()
+  const { isAuthenticated, user } = useAuthStore()
 
   // Charger le cours depuis l'API
   const {
@@ -85,13 +86,25 @@ export default function LearnPage({ params }: LearnPageProps) {
   })
 
   // Vérifier si l'utilisateur est inscrit
-  // L'utilisateur est inscrit UNIQUEMENT si modulesFromApi est défini (même tableau vide) ET qu'il n'y a pas d'erreur
+  // IMPORTANT : L'utilisateur est inscrit UNIQUEMENT si :
+  // 1. L'utilisateur est authentifié (isAuthenticated === true)
+  // 2. Il n'y a pas d'erreur (modulesError === null)
+  // 3. modulesFromApi est défini (même tableau vide [] signifie utilisateur inscrit mais cours sans modules)
+  // 4. Le chargement est terminé (isLoadingModules === false)
   const isEnrolled = useMemo(() => {
-    if (isLoadingModules) return false // En cours de vérification
-    if (modulesError) return false // Erreur = non inscrit
+    // Si l'utilisateur n'est pas authentifié, il ne peut pas être inscrit
+    if (!isAuthenticated || !user) return false
+    
+    // En cours de vérification → considérer comme non inscrit (par sécurité)
+    if (isLoadingModules) return false
+    
+    // Si erreur → utilisateur non inscrit
+    if (modulesError) return false
+    
     // Si modulesFromApi est défini (même []), l'utilisateur est inscrit
+    // Un tableau vide [] signifie que l'utilisateur est inscrit mais le cours n'a pas de modules
     return modulesFromApi !== undefined && modulesFromApi !== null
-  }, [modulesFromApi, isLoadingModules, modulesError])
+  }, [modulesFromApi, isLoadingModules, modulesError, isAuthenticated, user])
 
   // Rediriger IMMÉDIATEMENT vers /courses/[id] si l'utilisateur n'est pas inscrit
   useEffect(() => {
