@@ -103,12 +103,9 @@ export function CourseDetailClient({ course }: CourseDetailClientProps) {
     return modules !== undefined && modules !== null && !enrollmentError
   }, [modules, isLoadingEnrollment, enrollmentError, isAuthenticated, user])
 
-  // Redirection automatique si déjà inscrit
-  useEffect(() => {
-    if (isAuthenticated && user && isEnrolled && !isLoadingEnrollment) {
-      router.push(`/learn/${course.id}`)
-    }
-  }, [isEnrolled, isLoadingEnrollment, isAuthenticated, user, course.id, router])
+  // NE PAS rediriger automatiquement depuis /courses/id
+  // L'utilisateur doit pouvoir voir la page /courses/id même s'il est inscrit
+  // La redirection vers /learn/id se fait uniquement via CourseCard (si l'utilisateur clique sur un cours depuis la liste)
 
   // Mutation pour l'inscription
   const enrollMutation = useMutation({

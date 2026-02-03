@@ -89,19 +89,35 @@ export function CourseCard({ course, showPreview = true }: CourseCardProps) {
     return modules !== undefined && modules !== null && !enrollmentError
   }, [modules, isLoadingEnrollment, enrollmentError])
   
-  // Déterminer l'URL de redirection
-  // RÈGLE STRICTE: 
-  // - Si inscrit → /learn/id
-  // - Si NON inscrit OU en chargement → /courses/id (par sécurité)
+  // Déterminer l'URL de redirection selon les règles strictes :
+  // RÈGLE 1: Utilisateur NON connecté → TOUJOURS /courses/id
+  // RÈGLE 2: Utilisateur connecté mais NON inscrit → /courses/id
+  // RÈGLE 3: Utilisateur connecté ET inscrit → /learn/id
   const courseUrl = useMemo(() => {
-    // Par défaut, toujours rediriger vers /courses/id (page d'inscription)
-    // Seulement si on est CERTAIN que l'utilisateur est inscrit, rediriger vers /learn/id
-    if (isLoadingEnrollment || enrollmentError || !isEnrolled) {
+    // Si l'utilisateur n'est pas connecté, toujours aller vers /courses/id
+    if (!isAuthenticated || !user) {
       return `/courses/${course.id}`
     }
-    // Seulement ici, on est sûr que l'utilisateur est inscrit
-    return `/learn/${course.id}`
-  }, [isEnrolled, isLoadingEnrollment, enrollmentError, course.id])
+    
+    // Si on est en train de vérifier l'inscription, aller vers /courses/id par sécurité
+    // (éviter de rediriger vers /learn/id avant de savoir si l'utilisateur est inscrit)
+    if (isLoadingEnrollment) {
+      return `/courses/${course.id}`
+    }
+    
+    // Si erreur lors de la vérification, l'utilisateur n'est PAS inscrit → /courses/id
+    if (enrollmentError) {
+      return `/courses/${course.id}`
+    }
+    
+    // Si l'utilisateur est inscrit (modules chargés avec succès), aller vers /learn/id
+    if (isEnrolled) {
+      return `/learn/${course.id}`
+    }
+    
+    // Par défaut (non inscrit), aller vers /courses/id
+    return `/courses/${course.id}`
+  }, [isEnrolled, isLoadingEnrollment, enrollmentError, course.id, isAuthenticated, user])
   
   const isFav = isMounted ? isFavorite(course.id) : false
   
