@@ -718,7 +718,7 @@ export function CourseDetailClient({ course }: CourseDetailClientProps) {
                       {enrollMutation.isPending ? (
                         <>
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Inscription...
+                        Inscription au cours...
                         </>
                     ) : isEnrolled ? (
                         <>
@@ -726,7 +726,7 @@ export function CourseDetailClient({ course }: CourseDetailClientProps) {
                         Continuer le cours
                         </>
                     ) : (
-                      "S'inscrire gratuitement"
+                      "S'inscrire au cours"
                       )}
                   </Button>
 
