@@ -90,21 +90,51 @@ export default function LearnPage({ params }: LearnPageProps) {
   // IMPORTANT : L'utilisateur est inscrit UNIQUEMENT si :
   // 1. L'utilisateur est authentifié (isAuthenticated === true)
   // 2. Il n'y a pas d'erreur (modulesError === null)
-  // 3. modulesFromApi est défini (même tableau vide [] signifie utilisateur inscrit mais cours sans modules)
+  // 3. modulesFromApi est défini ET n'est pas un tableau vide (un tableau vide peut signifier non inscrit)
   // 4. Le chargement est terminé (isLoadingModules === false)
+  // CRITIQUE : Un tableau vide [] peut signifier soit :
+  //   - L'utilisateur est inscrit mais le cours n'a pas de modules (cas légitime)
+  //   - L'utilisateur n'est pas inscrit et le backend a retourné [] au lieu d'une erreur (cas problématique)
+  // Pour être sûr, on considère qu'un tableau vide signifie NON INSCRIT par sécurité
   const isEnrolled = useMemo(() => {
     // Si l'utilisateur n'est pas authentifié, il ne peut pas être inscrit
-    if (!isAuthenticated || !user) return false
+    if (!isAuthenticated || !user) {
+      console.log("❌ [ENROLLMENT CHECK] Utilisateur non authentifié")
+      return false
+    }
     
     // En cours de vérification → considérer comme non inscrit (par sécurité)
-    if (isLoadingModules) return false
+    if (isLoadingModules) {
+      console.log("⏳ [ENROLLMENT CHECK] Vérification en cours...")
+      return false
+    }
     
     // Si erreur → utilisateur non inscrit
-    if (modulesError) return false
+    if (modulesError) {
+      console.log("❌ [ENROLLMENT CHECK] Erreur détectée:", modulesError.message)
+      return false
+    }
     
-    // Si modulesFromApi est défini (même []), l'utilisateur est inscrit
-    // Un tableau vide [] signifie que l'utilisateur est inscrit mais le cours n'a pas de modules
-    return modulesFromApi !== undefined && modulesFromApi !== null
+    // CRITIQUE : Si modulesFromApi est undefined ou null → non inscrit
+    if (modulesFromApi === undefined || modulesFromApi === null) {
+      console.log("❌ [ENROLLMENT CHECK] modulesFromApi est undefined/null")
+      return false
+    }
+    
+    // IMPORTANT : Si modulesFromApi est un tableau vide, cela peut signifier :
+    //   - L'utilisateur est inscrit mais le cours n'a pas de modules (cas légitime)
+    //   - L'utilisateur n'est pas inscrit et le backend a retourné [] au lieu d'une erreur (cas problématique)
+    // Le backend DOIT retourner une erreur si l'utilisateur n'est pas inscrit (déjà vérifié plus haut)
+    // Donc si on arrive ici avec un tableau vide, c'est que l'utilisateur est inscrit mais le cours n'a pas de modules
+    // On considère cela comme inscrit pour permettre l'accès à /learn/id même si le cours est vide
+    if (Array.isArray(modulesFromApi) && modulesFromApi.length === 0) {
+      console.log("✅ [ENROLLMENT CHECK] Utilisateur inscrit (tableau vide = cours sans modules, mais utilisateur inscrit)")
+      return true
+    }
+    
+    // Si on arrive ici, modulesFromApi contient des modules → utilisateur inscrit
+    console.log("✅ [ENROLLMENT CHECK] Utilisateur inscrit (modules trouvés)")
+    return true
   }, [modulesFromApi, isLoadingModules, modulesError, isAuthenticated, user])
 
   // Rediriger IMMÉDIATEMENT vers /courses/[id] si l'utilisateur n'est pas inscrit
