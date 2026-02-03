@@ -680,9 +680,10 @@ export const moduleService = {
         throw error
       }
       
-      // Autre erreur, logger et retourner un tableau vide
-      console.error(`Erreur lors de la récupération des modules pour le cours ${courseId}:`, error)
-      return []
+      // Autre erreur, logger et lancer l'erreur pour que React Query la gère
+      // IMPORTANT : Ne pas retourner un tableau vide car cela ferait croire que l'utilisateur est inscrit
+      console.error(`❌ [SERVICE] Erreur lors de la récupération des modules pour le cours ${courseId}:`, error)
+      throw error
     }
   },
 }

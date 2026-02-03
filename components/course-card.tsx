@@ -76,48 +76,75 @@ export function CourseCard({ course, showPreview = true }: CourseCardProps) {
     retry: false, // Ne pas réessayer pour éviter les délais
   })
   
-  // L'utilisateur est inscrit UNIQUEMENT si les modules sont chargés avec succès (même vide)
-  // IMPORTANT: Par défaut, considérer comme NON inscrit
+  // CRITIQUE : L'utilisateur est inscrit UNIQUEMENT si :
+  // 1. Le chargement est terminé (pas en cours)
+  // 2. Il n'y a PAS d'erreur (le backend retourne une erreur si non inscrit)
+  // 3. Les modules sont définis (même tableau vide = inscrit mais cours sans modules)
+  // IMPORTANT : Par défaut, TOUJOURS considérer comme NON inscrit
   const isEnrolled = useMemo(() => {
+    // Si l'utilisateur n'est pas authentifié, il n'est pas inscrit
+    if (!isAuthenticated || !user) {
+      console.log("❌ [COURSE CARD] Utilisateur non authentifié")
+      return false
+    }
+    
     // Si on charge encore, ne pas considérer comme inscrit (éviter redirection prématurée)
-    if (isLoadingEnrollment) return false
+    if (isLoadingEnrollment) {
+      console.log("⏳ [COURSE CARD] Chargement en cours...")
+      return false
+    }
     
-    // Si erreur, l'utilisateur n'est PAS inscrit
-    if (enrollmentError) return false
+    // CRITIQUE : Si erreur, l'utilisateur n'est PAS inscrit
+    // Le backend retourne une erreur si l'utilisateur est authentifié mais non inscrit
+    if (enrollmentError) {
+      console.log("❌ [COURSE CARD] Erreur détectée - utilisateur NON inscrit:", enrollmentError.message)
+      return false
+    }
     
-    // Si modules est défini (même tableau vide) ET qu'il n'y a pas d'erreur, l'utilisateur est inscrit
-    return modules !== undefined && modules !== null && !enrollmentError
-  }, [modules, isLoadingEnrollment, enrollmentError])
+    // Si on arrive ici, il n'y a pas d'erreur et le chargement est terminé
+    // Si modules est défini (même tableau vide), l'utilisateur est inscrit
+    // Un tableau vide signifie que l'utilisateur est inscrit mais le cours n'a pas de modules
+    const enrolled = modules !== undefined && modules !== null
+    console.log("✅ [COURSE CARD] Utilisateur inscrit:", enrolled, "modules:", modules)
+    return enrolled
+  }, [modules, isLoadingEnrollment, enrollmentError, isAuthenticated, user])
   
-  // Déterminer l'URL de redirection selon les règles strictes :
+  // CRITIQUE : Déterminer l'URL de redirection selon les règles STRICTES :
   // RÈGLE 1: Utilisateur NON connecté → TOUJOURS /courses/id
-  // RÈGLE 2: Utilisateur connecté mais NON inscrit → /courses/id
+  // RÈGLE 2: Utilisateur connecté mais NON inscrit → TOUJOURS /courses/id
   // RÈGLE 3: Utilisateur connecté ET inscrit → /learn/id
+  // IMPORTANT : Par défaut, TOUJOURS aller vers /courses/id (sécurité maximale)
   const courseUrl = useMemo(() => {
     // Si l'utilisateur n'est pas connecté, toujours aller vers /courses/id
     if (!isAuthenticated || !user) {
+      console.log("🔵 [COURSE CARD] URL: /courses/id (utilisateur non connecté)")
       return `/courses/${course.id}`
     }
     
     // Si on est en train de vérifier l'inscription, aller vers /courses/id par sécurité
     // (éviter de rediriger vers /learn/id avant de savoir si l'utilisateur est inscrit)
     if (isLoadingEnrollment) {
+      console.log("🔵 [COURSE CARD] URL: /courses/id (vérification en cours)")
       return `/courses/${course.id}`
     }
     
-    // Si erreur lors de la vérification, l'utilisateur n'est PAS inscrit → /courses/id
+    // CRITIQUE : Si erreur lors de la vérification, l'utilisateur n'est PAS inscrit → /courses/id
     if (enrollmentError) {
+      console.log("🔵 [COURSE CARD] URL: /courses/id (erreur = non inscrit)")
       return `/courses/${course.id}`
     }
     
-    // Si l'utilisateur est inscrit (modules chargés avec succès), aller vers /learn/id
-    if (isEnrolled) {
+    // CRITIQUE : Si l'utilisateur est inscrit (modules chargés avec succès SANS erreur), aller vers /learn/id
+    // Mais seulement si isEnrolled est VRAIMENT true (double vérification)
+    if (isEnrolled && modules !== undefined && modules !== null && !enrollmentError) {
+      console.log("🟢 [COURSE CARD] URL: /learn/id (utilisateur inscrit)")
       return `/learn/${course.id}`
     }
     
-    // Par défaut (non inscrit), aller vers /courses/id
+    // Par défaut (non inscrit ou incertain), aller vers /courses/id
+    console.log("🔵 [COURSE CARD] URL: /courses/id (par défaut - non inscrit)")
     return `/courses/${course.id}`
-  }, [isEnrolled, isLoadingEnrollment, enrollmentError, course.id, isAuthenticated, user])
+  }, [isEnrolled, isLoadingEnrollment, enrollmentError, course.id, isAuthenticated, user, modules])
   
   const isFav = isMounted ? isFavorite(course.id) : false
   
