@@ -520,21 +520,29 @@ export const moduleService = {
    */
   async getModulesByCourse(courseId: number): Promise<ModuleDto[]> {
     try {
-      console.log(`🔵 [SERVICE] ===== DÉBUT getModulesByCourse pour courseId: ${courseId} =====`)
+      console.log("🔵 [SERVICE] =========================================")
+      console.log("🔵 [SERVICE] ===== DÉBUT getModulesByCourse =====")
+      console.log("🔵 [SERVICE] Course ID:", courseId)
+      console.log("🔵 [SERVICE] Endpoint:", `${API_ENDPOINTS.modules.getByCourse}/${courseId}`)
+      
+      // Vérifier le token JWT
+      const token = typeof window !== "undefined" ? localStorage.getItem("auth_token") : null
+      console.log("🔵 [SERVICE] Token JWT présent:", token ? `OUI (${token.length} caractères)` : "NON")
       
       const response = await apiClient.get<any>(
         `${API_ENDPOINTS.modules.getByCourse}/${courseId}`
       )
       
-      console.log(`🔵 [SERVICE] Réponse brute du backend:`, {
-        ok: response.ok,
-        ko: response.ko,
-        message: response.message,
-        dataType: typeof response.data,
-        isArray: Array.isArray(response.data),
-        dataKeys: response.data && typeof response.data === 'object' ? Object.keys(response.data) : [],
-        fullResponse: response
-      })
+      console.log("🔵 [SERVICE] ===== RÉPONSE DU BACKEND =====")
+      console.log("🔵 [SERVICE] response.ok:", response.ok)
+      console.log("🔵 [SERVICE] response.ko:", response.ko)
+      console.log("🔵 [SERVICE] response.message:", response.message)
+      console.log("🔵 [SERVICE] response.data type:", typeof response.data)
+      console.log("🔵 [SERVICE] response.data isArray:", Array.isArray(response.data))
+      if (response.data && typeof response.data === 'object') {
+        console.log("🔵 [SERVICE] response.data keys:", Object.keys(response.data))
+      }
+      console.log("🔵 [SERVICE] Réponse complète:", JSON.stringify(response, null, 2))
       
       if (response.ok && response.data) {
         // Le backend retourne CResponse<List<Module>> avec data contenant la liste
@@ -650,20 +658,28 @@ export const moduleService = {
         return serializeData(modules) as ModuleDto[]
       }
       
-      // VÉRIFICATION STRICTE : Si la réponse indique une erreur (response.ok === false), 
+      // ============================================
+      // VÉRIFICATION STRICTE D'INSCRIPTION
+      // ============================================
+      // CRITIQUE : Si la réponse indique une erreur (response.ok === false), 
       // c'est que l'utilisateur n'est PAS inscrit (le backend vérifie l'inscription)
       // IMPORTANT : Pour un utilisateur authentifié, TOUTE erreur du backend est une erreur d'inscription
       if (!response.ok) {
         const errorMessage = String(response.message || "Vous devez vous inscrire à ce cours pour accéder aux modules")
-        console.error(`❌ [SERVICE] getModulesByCourse(${courseId}) failed - Utilisateur non inscrit:`, {
-          ok: response.ok,
-          ko: response.ko,
-          message: errorMessage
-        })
+        console.error("❌ [SERVICE] ===== ERREUR D'INSCRIPTION =====")
+        console.error("❌ [SERVICE] Course ID:", courseId)
+        console.error("❌ [SERVICE] response.ok:", response.ok)
+        console.error("❌ [SERVICE] response.ko:", response.ko)
+        console.error("❌ [SERVICE] Message d'erreur:", errorMessage)
+        console.error("❌ [SERVICE] L'utilisateur est authentifié mais NON INSCRIT à ce cours")
+        console.error("❌ [SERVICE] Le backend a retourné une erreur car l'utilisateur n'est pas inscrit")
+        console.error("❌ [SERVICE] Lancement d'une erreur pour que React Query la gère...")
         
         // Lancer une erreur pour que React Query la gère et que le frontend redirige
         throw new Error(errorMessage)
       }
+      
+      console.log("✅ [SERVICE] Réponse OK - L'utilisateur EST INSCRIT")
       
       // Si la réponse est OK mais sans data, retourner un tableau vide (cours sans modules mais utilisateur inscrit)
       return []
