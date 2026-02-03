@@ -453,12 +453,17 @@ export default function LearnPage({ params }: LearnPageProps) {
   // BLOQUER LE RENDU DU CONTENU tant que la vérification d'inscription n'est pas terminée
   // OU si l'utilisateur n'est pas inscrit (redirection en cours)
   // IMPORTANT : Même si le cours a un curriculum, on doit TOUJOURS vérifier l'inscription via les modules
-  if (isLoadingModules || !isEnrolled) {
+  // IMPORTANT : L'utilisateur DOIT passer par /courses/id pour s'inscrire avant d'accéder à /learn/id
+  if (isLoadingModules || !isEnrolled || modulesError) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
         <span className="ml-2 text-muted-foreground">
-          {isLoadingModules ? "Vérification de l'inscription..." : "Redirection..."}
+          {isLoadingModules 
+            ? "Vérification de l'inscription..." 
+            : modulesError 
+              ? "Redirection vers la page d'inscription..." 
+              : "Redirection..."}
         </span>
       </div>
     )
