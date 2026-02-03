@@ -207,55 +207,76 @@ export default function LearnPage({ params }: LearnPageProps) {
 
 
   // Utiliser le curriculum du cours s'il existe, sinon utiliser les modules chargés dynamiquement
+  // IMPORTANT : Ne calculer que si l'utilisateur est inscrit (modulesFromApi disponible ou pas d'erreur)
   const curriculum = useMemo(() => {
+    // Si l'utilisateur n'est pas inscrit, retourner un tableau vide pour éviter les erreurs
+    if (modulesError || !modulesFromApi) {
+      return []
+    }
     if (course?.curriculum && course.curriculum.length > 0) {
       return course.curriculum
     }
     if (modulesFromApi && modulesFromApi.length > 0) {
-      return modulesFromApi.map(adaptModule)
+      try {
+        return modulesFromApi.map(adaptModule)
+      } catch (error) {
+        console.error("Erreur lors de l'adaptation des modules:", error)
+        return []
+      }
     }
     return []
-  }, [course?.curriculum, modulesFromApi])
+  }, [course?.curriculum, modulesFromApi, modulesError])
 
   // Convertir les modules du cours en leçons pour l'affichage
   // IMPORTANT: Préserver contentUrl depuis les données brutes si l'adapter l'a perdu
+  // IMPORTANT : Ne calculer que si l'utilisateur est inscrit
   const lessons = useMemo(() => {
-    if (!curriculum || curriculum.length === 0) return []
+    // Si l'utilisateur n'est pas inscrit, retourner un tableau vide pour éviter les erreurs
+    if (modulesError || !modulesFromApi || !curriculum || curriculum.length === 0) {
+      return []
+    }
     
-    const allLessons: Array<Lesson & { moduleTitle: string; moduleId: string }> = []
-    
-    // Créer un map des leçons brutes depuis modulesFromApi pour récupérer contentUrl
-    const rawLessonsMap = new Map<string | number, any>()
-    if (modulesFromApi && Array.isArray(modulesFromApi)) {
-      modulesFromApi.forEach((module: any) => {
+    try {
+      const allLessons: Array<Lesson & { moduleTitle: string; moduleId: string }> = []
+      
+      // Créer un map des leçons brutes depuis modulesFromApi pour récupérer contentUrl
+      const rawLessonsMap = new Map<string | number, any>()
+      if (modulesFromApi && Array.isArray(modulesFromApi)) {
+        modulesFromApi.forEach((module: any) => {
+          if (module.lessons && Array.isArray(module.lessons)) {
+            module.lessons.forEach((rawLesson: any) => {
+              if (rawLesson.id) {
+                rawLessonsMap.set(rawLesson.id, rawLesson)
+              }
+            })
+          }
+        })
+      }
+      
+      curriculum.forEach((module) => {
         if (module.lessons && Array.isArray(module.lessons)) {
-          module.lessons.forEach((rawLesson: any) => {
-            if (rawLesson.id) {
-              rawLessonsMap.set(rawLesson.id, rawLesson)
-            }
+          module.lessons.forEach((lesson) => {
+            // Récupérer la leçon brute pour préserver contentUrl
+            const rawLesson = rawLessonsMap.get(Number(lesson.id))
+            const contentUrl = rawLesson?.contentUrl || lesson.contentUrl
+            
+            allLessons.push({
+              ...lesson,
+              // Forcer contentUrl depuis les données brutes si disponible
+              contentUrl: contentUrl,
+              moduleTitle: module.title,
+              moduleId: module.id,
+            })
           })
         }
       })
+      
+      return allLessons
+    } catch (error) {
+      console.error("Erreur lors de la conversion des leçons:", error)
+      return []
     }
-    
-    curriculum.forEach((module) => {
-      module.lessons.forEach((lesson) => {
-        // Récupérer la leçon brute pour préserver contentUrl
-        const rawLesson = rawLessonsMap.get(Number(lesson.id))
-        const contentUrl = rawLesson?.contentUrl || lesson.contentUrl
-        
-        allLessons.push({
-          ...lesson,
-          // Forcer contentUrl depuis les données brutes si disponible
-          contentUrl: contentUrl,
-          moduleTitle: module.title,
-          moduleId: module.id,
-        })
-      })
-    })
-    
-    return allLessons
-  }, [curriculum, modulesFromApi])
+  }, [curriculum, modulesFromApi, modulesError])
 
   // Calculer currentLessonData et progress pour déterminer si le cours est complété
   // (doit être fait avant le useQuery pour courseExam)
