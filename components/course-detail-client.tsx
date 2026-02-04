@@ -104,51 +104,13 @@ export function CourseDetailClient({ course }: CourseDetailClientProps) {
     retry: false,
   })
 
-  // CRITIQUE : L'utilisateur est inscrit UNIQUEMENT si :
-  // 1. Il est authentifié
-  // 2. Le chargement est terminé (pas en cours)
-  // 3. Il n'y a PAS d'erreur (le backend aurait retourné une erreur si non inscrit)
-  // 4. Les modules sont définis ET c'est un tableau (même vide = inscrit mais cours sans modules)
-  // IMPORTANT : Par défaut, TOUJOURS considérer comme NON inscrit (sécurité maximale)
-  // CRITIQUE : Si enrollmentError existe, l'utilisateur n'est PAS inscrit
+  // Inscription = authentifié + requête modules terminée sans erreur + modules est un tableau.
+  // Le backend renvoie une erreur si l'apprenant n'est pas inscrit ; en cas de succès (même avec 0 module), il est inscrit.
   const isEnrolled = useMemo(() => {
-    // Si l'utilisateur n'est pas authentifié, il n'est pas inscrit
-    if (!isAuthenticated || !user) {
-      console.log("❌ [ENROLLMENT CHECK] Utilisateur non authentifié → NON inscrit")
-      return false
-    }
-    
-    // Si le chargement est en cours, on ne peut pas encore déterminer → considérer comme NON inscrit
-    if (isLoadingEnrollment) {
-      console.log("⏳ [ENROLLMENT CHECK] Chargement en cours... → NON inscrit par sécurité")
-      return false
-    }
-    
-    // CRITIQUE : Si il y a une erreur, l'utilisateur n'est PAS inscrit
-    // Le backend retourne une erreur si l'utilisateur est authentifié mais non inscrit
-    if (enrollmentError) {
-      console.log("❌ [ENROLLMENT CHECK] Erreur détectée - utilisateur NON inscrit:", enrollmentError.message)
-      return false
-    }
-    
-    // CRITIQUE : Si modules est undefined ou null, l'utilisateur n'est PAS inscrit
-    if (modules === undefined || modules === null) {
-      console.log("❌ [ENROLLMENT CHECK] modules est undefined/null → utilisateur NON inscrit")
-      return false
-    }
-    
-    // CRITIQUE : Si modules n'est pas un tableau, l'utilisateur n'est PAS inscrit
-    if (!Array.isArray(modules)) {
-      console.log("❌ [ENROLLMENT CHECK] modules n'est pas un tableau → utilisateur NON inscrit")
-      return false
-    }
-    
-    // Si on arrive ici :
-    // - modules est un tableau (même vide)
-    // - Pas d'erreur
-    // - Chargement terminé
-    // → L'utilisateur est inscrit (même si le cours n'a pas de modules)
-    console.log("✅ [ENROLLMENT CHECK] Utilisateur INSCRIT confirmé (modules chargés sans erreur):", modules.length, "modules")
+    if (!isAuthenticated || !user) return false
+    if (isLoadingEnrollment) return false
+    if (enrollmentError) return false
+    if (modules === undefined || modules === null || !Array.isArray(modules)) return false
     return true
   }, [modules, isLoadingEnrollment, enrollmentError, isAuthenticated, user])
 
@@ -584,7 +546,13 @@ export function CourseDetailClient({ course }: CourseDetailClientProps) {
                       ) : (
                         <div className="p-8 text-center border-2 border-dashed border-border rounded-xl bg-muted/30">
                         <BookOpen className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                        <p className="text-muted-foreground">Aucun contenu disponible pour ce cours</p>
+                        <p className="text-muted-foreground">
+                          {!isEnrolled && isAuthenticated
+                            ? "Inscrivez-vous au cours pour accéder au contenu."
+                            : !isAuthenticated
+                              ? "Connectez-vous et inscrivez-vous au cours pour voir le contenu."
+                              : "Aucun contenu disponible pour ce cours."}
+                        </p>
                         </div>
                       )}
                   </div>
