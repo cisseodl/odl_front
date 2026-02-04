@@ -80,7 +80,9 @@ export function CourseDetailClient({ course }: CourseDetailClientProps) {
         const isEnrollmentError = errorMessage.includes("inscrire") || 
                                   errorMessage.includes("inscription") || 
                                   errorMessage.includes("inscrit") ||
+                                  errorMessage.includes("connecter") ||
                                   errorMessage.includes("authentifié") ||
+                                  errorMessage.includes("accéder au contenu") ||
                                   errorMessage.includes("403") ||
                                   errorMessage.includes("401") ||
                                   errorMessage.includes("Forbidden") ||
