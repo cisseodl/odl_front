@@ -38,8 +38,10 @@ class ApiClient {
     if (typeof window !== "undefined") {
       if (token) {
         localStorage.setItem("auth_token", token)
+        console.log("👉 [API CLIENT] Token SET en localStorage:", token.substring(0, 30) + "...")
       } else {
         localStorage.removeItem("auth_token")
+        console.log("👉 [API CLIENT] Token REMOVED de localStorage.")
       }
     }
   }
@@ -87,9 +89,11 @@ class ApiClient {
       if (storedToken) {
         // Synchroniser avec l'instance
         this.token = storedToken
+        console.log("👈 [API CLIENT] Token GET depuis localStorage:", storedToken.substring(0, 30) + "...")
         return storedToken
       }
     }
+    console.log("👈 [API CLIENT] Aucun token GET (retourne null).")
     // Si pas de token dans localStorage, utiliser l'instance (peut être null)
     return this.token
   }
