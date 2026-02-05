@@ -54,6 +54,7 @@ export default function AuthPage() {
     const password = formData.get("password") as string
 
     try {
+      console.log("⚡️ [AUTH PAGE] Appel de la fonction login du store..."); // Nouveau log
       await login(email, password)
       toast.success("Connexion réussie !", {
         description: "Bienvenue sur Orange Digital Learning",
