@@ -122,9 +122,11 @@ export function CourseDetailClient({ course }: CourseDetailClientProps) {
   const enrollMutation = useMutation({
     mutationFn: (expectations: string) => {
       if (!courseIdNum) throw new Error("ID du cours invalide")
+      console.log("📝 [ENROLL MUTATION] Appel à enrollInCourse avec ID:", courseIdNum, "et attentes:", expectations);
       return courseService.enrollInCourse(courseIdNum, expectations)
     },
-    onSuccess: () => {
+    onSuccess: (response) => {
+      console.log("✅ [ENROLL MUTATION] Inscription réussie. Réponse du backend:", response);
       // Invalider les caches pour forcer le rechargement
       queryClient.invalidateQueries({ queryKey: ["modules", courseIdNum] })
       queryClient.invalidateQueries({ queryKey: ["profile"] })
@@ -136,10 +138,12 @@ export function CourseDetailClient({ course }: CourseDetailClientProps) {
       
       setShowEnrollmentModal(false)
       
-      // Rediriger vers la page d'apprentissage
+      console.log("🔄 [ENROLL MUTATION] Tentative de redirection vers /learn/" + course.id);
       router.push(`/learn/${course.id}`)
+      console.log("🔄 [ENROLL MUTATION] Redirection appelée.");
     },
     onError: (error: any) => {
+      console.error("❌ [ENROLL MUTATION] Erreur lors de l'inscription:", error);
       const errorMessage = error?.message || "Une erreur est survenue lors de l'inscription"
         toast.error("Erreur d'inscription", {
           description: errorMessage,

@@ -1,0 +1,24 @@
+627650a85660f99e.js:1 ❌ [SERVICE] Erreur lors de la récupération des modules pour le cours 3: Error: Vous devez vous connecter pour accéder au contenu
+    at Object.getModulesByCourse (627650a85660f99e.js:1:22912)
+    at async queryFn (2ec765afe02abe72.js:1:26847)
+2ec765afe02abe72.js:1 ❌ [LEARN PAGE] ERREUR lors du chargement des modules: Error: Vous devez vous connecter pour accéder au contenu
+    at Object.getModulesByCourse (627650a85660f99e.js:1:22912)
+    at async queryFn (2ec765afe02abe72.js:1:26847)
+2ec765afe02abe72.js:1 ❌ [LEARN PAGE] Message d'erreur: Vous devez vous connecter pour accéder au contenu
+2ec765afe02abe72.js:1 ❌ [LEARN PAGE] L'utilisateur N'EST PAS INSCRIT (backend a retourné une erreur)
+627650a85660f99e.js:1 
+ GET https://api.smart-odc.com/awsodclearning/modules/course/3 403 (Forbidden)
+627650a85660f99e.js:1 ❌ [SERVICE] ===== ERREUR D'INSCRIPTION =====
+627650a85660f99e.js:1 ❌ [SERVICE] Course ID: 3
+627650a85660f99e.js:1 ❌ [SERVICE] response.ok: false
+627650a85660f99e.js:1 ❌ [SERVICE] response.ko: true
+627650a85660f99e.js:1 ❌ [SERVICE] Message d'erreur: Vous devez vous connecter pour accéder au contenu
+627650a85660f99e.js:1 ❌ [SERVICE] L'utilisateur est authentifié mais NON INSCRIT à ce cours
+627650a85660f99e.js:1 ❌ [SERVICE] Le backend a retourné une erreur car l'utilisateur n'est pas inscrit
+627650a85660f99e.js:1 ❌ [SERVICE] Lancement d'une erreur pour que React Query la gère...
+627650a85660f99e.js:1 ❌ [SERVICE] Erreur lors de la récupération des modules pour le cours 3: Error: Vous devez vous connecter pour accéder au contenu
+    at Object.getModulesByCourse (627650a85660f99e.js:1:22912)
+    at async queryFn (ca23fd123e2eea78.js:5:20317)
+
+﻿
+
