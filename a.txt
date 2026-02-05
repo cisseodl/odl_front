@@ -1,125 +1,13 @@
-Ok, là tes logs sont très parlants 👌
-On va les décortiquer calmement et te dire exactement où est le bug et quoi corriger.
+7524687ee1cca3fd.js:1 
+ GET https://api.smart-odc.com/awsodclearning/api/learn/3 403 (Forbidden)
+7524687ee1cca3fd.js:1 
+ GET https://api.smart-odc.com/awsodclearning/modules/course/3 403 (Forbidden)
+7524687ee1cca3fd.js:1 ❌ [SERVICE] Réponse non OK du backend: 
+{courseId: 3, ok: false, ko: true, message: 'Vous devez vous connecter pour accéder au contenu.', data: {…}}
+7524687ee1cca3fd.js:1 ❌ [SERVICE] Erreur inattendue du backend, lance une exception.
+7524687ee1cca3fd.js:1 ❌ [SERVICE] Erreur inattendue lors de la récupération des modules pour le cours 3: 
+{error: Error: Vous devez vous connecter pour accéder au contenu.
+    at Object.getModulesByCourse (https:/…, message: 'Vous devez vous connecter pour accéder au contenu.'}
 
-Ce que disent VRAIMENT ces logs
-1️⃣ Le backend a bien répondu… mais avec une erreur contrôlée
-response.ok: false
-response.ko: true
-Message d'erreur: Vous devez vous connecter pour accéder au contenu
+﻿
 
-
-➡️ Ça veut dire :
-
-La requête HTTP a réussi techniquement
-
-MAIS le backend a volontairement refusé l’accès
-
-2️⃣ Cas métier identifié par ton backend
-L'utilisateur est authentifié mais NON INSCRIT à ce cours
-Le backend a retourné une erreur car l'utilisateur n'est pas inscrit
-
-
-⚠️ Point clé
-👉 L’utilisateur EST connecté
-👉 MAIS il n’est pas inscrit au cours
-
-Donc ce n’est PAS un problème de token, ni de session, ni de cookies.
-
-3️⃣ Problème de cohérence du message d’erreur
-Erreur: Vous devez vous connecter pour accéder au contenu
-
-
-💥 BUG LOGIQUE ICI
-
-Le message est faux.
-
-La vraie raison est :
-
-❌ Utilisateur non inscrit au cours
-
-Mais tu renvoies :
-
-❌ Vous devez vous connecter
-
-➡️ Ça induit React Query (et toi 😄) en erreur.
-
-Pourquoi React Query pète tout
-Lancement d'une erreur pour que React Query la gère...
-
-
-Tu fais sûrement un truc du genre :
-
-if (!response.ok) {
-  throw new Error(data.message)
-}
-
-
-Résultat :
-
-React Query passe la requête en isError
-
-Ton composant croit que c’est une erreur technique
-
-Alors que c’est une erreur métier attendue
-
-Le vrai problème (résumé en une phrase)
-
-👉 Tu traites une erreur métier (user non inscrit) comme une erreur fatale (non authentifié)
-
-Ce que tu dois corriger (IMPORTANT)
-✅ 1️⃣ Côté backend : messages clairs et distincts
-
-Exemple idéal :
-
-// 401
-{
-  "code": "AUTH_REQUIRED",
-  "message": "Vous devez être connecté"
-}
-
-// 403
-{
-  "code": "NOT_ENROLLED",
-  "message": "Vous n'êtes pas inscrit à ce cours"
-}
-
-
-👉 401 ≠ 403
-
-✅ 2️⃣ Côté frontend : ne PAS throw pour un cas métier attendu
-
-Dans ton service :
-
-if (!response.ok) {
-  if (data.code === "NOT_ENROLLED") {
-    return {
-      status: "not_enrolled",
-      message: data.message
-    }
-  }
-
-  throw new Error(data.message)
-}
-
-✅ 3️⃣ Dans ton composant React
-if (data?.status === "not_enrolled") {
-  return <EnrollToCourse courseId={courseId} />
-}
-
-
-🔥 UX propre :
-
-pas d’écran d’erreur
-
-pas de loader infini
-
-pas de crash React Query
-
-Ce que tu as BIEN fait (et c’est important)
-
-✔️ Logs ultra détaillés
-✔️ Séparation SERVICE / UI
-✔️ React Query bien utilisé
-✔️ Le backend applique une règle métier claire
-
-Franchement, ton architecture est saine, c’est juste un mismatch sémantique.
