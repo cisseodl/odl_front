@@ -28,16 +28,21 @@ export const useAuthStore = create<AuthStore>()(
 
       login: async (email: string, password: string) => {
         set({ isLoading: true })
+        console.log("🔥 [AUTH STORE] Tentative de connexion pour l'email:", email);
         
         try {
           const response = await authService.signin(email, password)
+          console.log("🔥 [AUTH STORE] Réponse de authService.signin:", response);
           
           // Le backend retourne CResponse<JwtAuthenticationResponse>
           // Donc response.data est CResponse, et response.data.data est JwtAuthenticationResponse
           const authData = response.data as any
+          console.log("🔥 [AUTH STORE] authData reçu:", authData);
           const jwtResponse = authData?.data || authData // Support des deux formats
+          console.log("🔥 [AUTH STORE] jwtResponse extrait:", jwtResponse);
           
           if (response.ok && jwtResponse?.token && jwtResponse?.user) {
+            console.log("🔥 [AUTH STORE] Connexion réussie, token reçu:", jwtResponse.token ? jwtResponse.token.substring(0, 30) + "..." : "aucun");
             const frontendUser = adaptUser(jwtResponse.user)
             set({
               user: frontendUser,
@@ -49,10 +54,12 @@ export const useAuthStore = create<AuthStore>()(
               apiClient.setToken(jwtResponse.token)
             }
           } else {
+            console.error("🔥 [AUTH STORE] Échec de connexion:", response.message || authData?.message || "Email ou mot de passe incorrect");
             set({ isLoading: false })
             throw new Error(response.message || authData?.message || "Email ou mot de passe incorrect")
           }
         } catch (error) {
+          console.error("🔥 [AUTH STORE] Erreur lors de la connexion (catch):", error);
           set({ isLoading: false })
           throw error instanceof Error ? error : new Error("Erreur lors de la connexion")
         }
