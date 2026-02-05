@@ -1,28 +1,125 @@
-627650a85660f99e.js:1 ❌ [SERVICE] Message d'erreur: Vous devez vous connecter pour accéder au contenu
-627650a85660f99e.js:1 ❌ [SERVICE] L'utilisateur est authentifié mais NON INSCRIT à ce cours
-627650a85660f99e.js:1 ❌ [SERVICE] Le backend a retourné une erreur car l'utilisateur n'est pas inscrit
-627650a85660f99e.js:1 ❌ [SERVICE] Lancement d'une erreur pour que React Query la gère...
-627650a85660f99e.js:1 ❌ [SERVICE] Erreur lors de la récupération des modules pour le cours 2: Error: Vous devez vous connecter pour accéder au contenu
-    at Object.getModulesByCourse (627650a85660f99e.js:1:22912)
-    at async queryFn (2ec765afe02abe72.js:1:26847)
-VM2631 2ec765afe02abe72.js:1 ❌ [LEARN PAGE] ERREUR lors du chargement des modules: Error: Vous devez vous connecter pour accéder au contenu
-    at Object.getModulesByCourse (627650a85660f99e.js:1:22912)
-    at async queryFn (2ec765afe02abe72.js:1:26847)
-VM2631 2ec765afe02abe72.js:1 ❌ [LEARN PAGE] Message d'erreur: Vous devez vous connecter pour accéder au contenu
-VM2631 2ec765afe02abe72.js:1 ❌ [LEARN PAGE] L'utilisateur N'EST PAS INSCRIT (backend a retourné une erreur)
-627650a85660f99e.js:1 
- GET https://api.smart-odc.com/awsodclearning/modules/course/2 403 (Forbidden)
-627650a85660f99e.js:1 ❌ [SERVICE] ===== ERREUR D'INSCRIPTION =====
-627650a85660f99e.js:1 ❌ [SERVICE] Course ID: 2
-627650a85660f99e.js:1 ❌ [SERVICE] response.ok: false
-627650a85660f99e.js:1 ❌ [SERVICE] response.ko: true
-627650a85660f99e.js:1 ❌ [SERVICE] Message d'erreur: Vous devez vous connecter pour accéder au contenu
-627650a85660f99e.js:1 ❌ [SERVICE] L'utilisateur est authentifié mais NON INSCRIT à ce cours
-627650a85660f99e.js:1 ❌ [SERVICE] Le backend a retourné une erreur car l'utilisateur n'est pas inscrit
-627650a85660f99e.js:1 ❌ [SERVICE] Lancement d'une erreur pour que React Query la gère...
-627650a85660f99e.js:1 ❌ [SERVICE] Erreur lors de la récupération des modules pour le cours 2: Error: Vous devez vous connecter pour accéder au contenu
-    at Object.getModulesByCourse (627650a85660f99e.js:1:22912)
-    at async queryFn (7d80ba6d2ecee3c0.js:5:20317)
+Ok, là tes logs sont très parlants 👌
+On va les décortiquer calmement et te dire exactement où est le bug et quoi corriger.
 
-﻿
+Ce que disent VRAIMENT ces logs
+1️⃣ Le backend a bien répondu… mais avec une erreur contrôlée
+response.ok: false
+response.ko: true
+Message d'erreur: Vous devez vous connecter pour accéder au contenu
 
+
+➡️ Ça veut dire :
+
+La requête HTTP a réussi techniquement
+
+MAIS le backend a volontairement refusé l’accès
+
+2️⃣ Cas métier identifié par ton backend
+L'utilisateur est authentifié mais NON INSCRIT à ce cours
+Le backend a retourné une erreur car l'utilisateur n'est pas inscrit
+
+
+⚠️ Point clé
+👉 L’utilisateur EST connecté
+👉 MAIS il n’est pas inscrit au cours
+
+Donc ce n’est PAS un problème de token, ni de session, ni de cookies.
+
+3️⃣ Problème de cohérence du message d’erreur
+Erreur: Vous devez vous connecter pour accéder au contenu
+
+
+💥 BUG LOGIQUE ICI
+
+Le message est faux.
+
+La vraie raison est :
+
+❌ Utilisateur non inscrit au cours
+
+Mais tu renvoies :
+
+❌ Vous devez vous connecter
+
+➡️ Ça induit React Query (et toi 😄) en erreur.
+
+Pourquoi React Query pète tout
+Lancement d'une erreur pour que React Query la gère...
+
+
+Tu fais sûrement un truc du genre :
+
+if (!response.ok) {
+  throw new Error(data.message)
+}
+
+
+Résultat :
+
+React Query passe la requête en isError
+
+Ton composant croit que c’est une erreur technique
+
+Alors que c’est une erreur métier attendue
+
+Le vrai problème (résumé en une phrase)
+
+👉 Tu traites une erreur métier (user non inscrit) comme une erreur fatale (non authentifié)
+
+Ce que tu dois corriger (IMPORTANT)
+✅ 1️⃣ Côté backend : messages clairs et distincts
+
+Exemple idéal :
+
+// 401
+{
+  "code": "AUTH_REQUIRED",
+  "message": "Vous devez être connecté"
+}
+
+// 403
+{
+  "code": "NOT_ENROLLED",
+  "message": "Vous n'êtes pas inscrit à ce cours"
+}
+
+
+👉 401 ≠ 403
+
+✅ 2️⃣ Côté frontend : ne PAS throw pour un cas métier attendu
+
+Dans ton service :
+
+if (!response.ok) {
+  if (data.code === "NOT_ENROLLED") {
+    return {
+      status: "not_enrolled",
+      message: data.message
+    }
+  }
+
+  throw new Error(data.message)
+}
+
+✅ 3️⃣ Dans ton composant React
+if (data?.status === "not_enrolled") {
+  return <EnrollToCourse courseId={courseId} />
+}
+
+
+🔥 UX propre :
+
+pas d’écran d’erreur
+
+pas de loader infini
+
+pas de crash React Query
+
+Ce que tu as BIEN fait (et c’est important)
+
+✔️ Logs ultra détaillés
+✔️ Séparation SERVICE / UI
+✔️ React Query bien utilisé
+✔️ Le backend applique une règle métier claire
+
+Franchement, ton architecture est saine, c’est juste un mismatch sémantique.

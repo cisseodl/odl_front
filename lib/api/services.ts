@@ -659,46 +659,46 @@ export const moduleService = {
       }
       
       // ============================================
-      // VÉRIFICATION STRICTE D'INSCRIPTION
+      // GESTION DES ERREURS DE REPONSE DU BACKEND
       // ============================================
-      // CRITIQUE : Si la réponse indique une erreur (response.ok === false), 
-      // c'est que l'utilisateur n'est PAS inscrit (le backend vérifie l'inscription)
-      // IMPORTANT : Pour un utilisateur authentifié, TOUTE erreur du backend est une erreur d'inscription
       if (!response.ok) {
-        const errorMessage = String(response.message || "Vous devez vous inscrire à ce cours pour accéder aux modules")
-        console.error("❌ [SERVICE] ===== ERREUR D'INSCRIPTION =====")
-        console.error("❌ [SERVICE] Course ID:", courseId)
-        console.error("❌ [SERVICE] response.ok:", response.ok)
-        console.error("❌ [SERVICE] response.ko:", response.ko)
-        console.error("❌ [SERVICE] Message d'erreur:", errorMessage)
-        console.error("❌ [SERVICE] L'utilisateur est authentifié mais NON INSCRIT à ce cours")
-        console.error("❌ [SERVICE] Le backend a retourné une erreur car l'utilisateur n'est pas inscrit")
-        console.error("❌ [SERVICE] Lancement d'une erreur pour que React Query la gère...")
+        const errorMessage = String(response.message || "Une erreur inconnue est survenue")
+        console.error("❌ [SERVICE] Réponse non OK du backend:", {
+          courseId,
+          ok: response.ok,
+          ko: response.ko,
+          message: errorMessage,
+          data: response.data
+        })
         
-        // Lancer une erreur pour que React Query la gère et que le frontend redirige
+        // Cas spécifique : Utilisateur authentifié mais non inscrit (erreur métier)
+        if (errorMessage.includes("vous devez vous inscrire")) {
+          console.log("⚠️ [SERVICE] Utilisateur authentifié mais non inscrit. Retourne ApiResponse ok:false.");
+          return { // Retourne un ApiResponse avec ok: false sans lancer d'erreur
+            data: null,
+            ok: false,
+            ko: true,
+            message: errorMessage,
+          }
+        }
+        
+        // Pour toutes les autres erreurs, on lance une exception pour React Query
+        console.error("❌ [SERVICE] Erreur inattendue du backend, lance une exception.");
         throw new Error(errorMessage)
       }
       
-      console.log("✅ [SERVICE] Réponse OK - L'utilisateur EST INSCRIT")
+      console.log("✅ [SERVICE] Réponse OK du backend - L'utilisateur EST INSCRIT")
       
       // Si la réponse est OK mais sans data, retourner un tableau vide (cours sans modules mais utilisateur inscrit)
       return []
     } catch (error: any) {
-      // Si c'est une erreur d'inscription, la re-lancer
-      const errorMessage = String(error?.message || "")
-      const isEnrollmentError = errorMessage.includes("inscrire") || 
-                                errorMessage.includes("inscription") || 
-                                errorMessage.includes("inscrit") ||
-                                errorMessage.includes("authentifié")
+      // Si c'est une erreur déjà gérée (ex: non inscrit), elle aura été retournée ci-dessus
+      // Ici, on gère les erreurs inattendues de type réseau ou autre
+      const errorMessage = String(error?.message || "Erreur inconnue lors de la récupération des modules")
       
-      if (isEnrollmentError) {
-        console.error(`getModulesByCourse(${courseId}): Erreur d'inscription détectée`)
-        throw error
-      }
+      console.error(`❌ [SERVICE] Erreur inattendue lors de la récupération des modules pour le cours ${courseId}:`, { error: error, message: errorMessage })
       
-      // Autre erreur, logger et lancer l'erreur pour que React Query la gère
-      // IMPORTANT : Ne pas retourner un tableau vide car cela ferait croire que l'utilisateur est inscrit
-      console.error(`❌ [SERVICE] Erreur lors de la récupération des modules pour le cours ${courseId}:`, error)
+      // Lancer une erreur pour que React Query la gère (pour les erreurs vraiment inattendues)
       throw error
     }
   },
