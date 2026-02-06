@@ -419,24 +419,39 @@ export function adaptCourse(backendCourse: BackendCourse | any): Course {
     console.log("📊 [ADAPTER] Catégorie finale pour cours", backendCourse.id, ":", category)
   }
   
+  // Curriculum : accepter curriculum ou modules, ignorer les entrées invalides pour éviter de casser l'affichage
+  const rawCurriculum = (backendCourse.curriculum?.length ? backendCourse.curriculum : backendCourse.modules) ?? [];
+  const curriculum = Array.isArray(rawCurriculum)
+    ? rawCurriculum
+        .filter((m: any) => m && (m.id != null || m.id !== undefined))
+        .map((m: any) => {
+          try {
+            return adaptModule(m);
+          } catch {
+            return null;
+          }
+        })
+        .filter((m): m is Module => m != null)
+    : [];
+
   return {
     id: courseId,
     title: backendCourse.title,
     subtitle: backendCourse.subtitle || backendCourse.description?.substring(0, 100) || "",
     description: backendCourse.description || "",
     imageUrl: backendCourse.imageUrl || "/placeholder.jpg",
-    instructor: adaptInstructor(backendCourse.instructor),
+    instructor: adaptInstructor(backendCourse?.instructor),
     category: category,
     level: levelMapping[backendCourse.level] || "Intermédiaire",
-    rating: backendCourse.rating || 0,
-    reviewCount: backendCourse.reviewCount || 0,
+    rating: backendCourse.rating ?? 0,
+    reviewCount: backendCourse.reviewCount ?? 0,
     duration: parseDuration(backendCourse.duration),
     language: backendCourse.language || "Français",
     lastUpdated: backendCourse.lastUpdated || "Date inconnue",
     bestseller: backendCourse.bestseller || false,
     objectives: backendCourse.objectives || [],
-    curriculum: (backendCourse.curriculum?.length ? backendCourse.curriculum : backendCourse.modules)?.map(adaptModule) || [],
-    enrolledCount: backendCourse.enrolledCount || 0,
+    curriculum,
+    enrolledCount: backendCourse.enrolledCount ?? 0,
     features: backendCourse.features || [],
   }
 }
