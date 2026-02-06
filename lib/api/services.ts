@@ -677,14 +677,10 @@ export const moduleService = {
         })
         
         // Cas spécifique : Utilisateur authentifié mais non inscrit (erreur métier)
-        if (errorMessage.includes("vous devez vous inscrire")) {
-          console.log("⚠️ [SERVICE] Utilisateur authentifié mais non inscrit. Retourne ApiResponse ok:false.");
-          return { // Retourne un ApiResponse avec ok: false sans lancer d'erreur
-            data: null,
-            ok: false,
-            ko: true,
-            message: errorMessage,
-          }
+        // Comparaison insensible à la casse (backend envoie "Vous", front peut tester "vous")
+        if (errorMessage.toLowerCase().includes("vous devez vous inscrire")) {
+          console.log("⚠️ [SERVICE] Utilisateur authentifié mais non inscrit. Lance une erreur pour la page learn.");
+          throw new Error(errorMessage)
         }
         
         // Pour toutes les autres erreurs, on lance une exception pour React Query

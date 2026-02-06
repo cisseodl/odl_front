@@ -130,12 +130,15 @@ export function CourseDetailClient({ course }: CourseDetailClientProps) {
       }
       return response
     },
-    onSuccess: (response) => {
+    onSuccess: async (response) => {
       console.log("✅ [ENROLL MUTATION] Inscription réussie. Réponse du backend:", response);
       // Invalider les caches pour forcer le rechargement
       queryClient.invalidateQueries({ queryKey: ["modules", courseIdNum] })
       queryClient.invalidateQueries({ queryKey: ["profile"] })
       queryClient.invalidateQueries({ queryKey: ["courses"] })
+      // Attendre que les modules soient rechargés avant la redirection pour éviter
+      // que la page /learn fasse un GET modules alors que l'inscription n'est pas encore visible
+      await queryClient.refetchQueries({ queryKey: ["modules", courseIdNum] })
       
       toast.success("Inscription réussie", {
         description: "Vous êtes maintenant inscrit à ce cours",
@@ -143,9 +146,8 @@ export function CourseDetailClient({ course }: CourseDetailClientProps) {
       
       setShowEnrollmentModal(false)
       
-      console.log("🔄 [ENROLL MUTATION] Tentative de redirection vers /learn/" + course.id);
+      console.log("🔄 [ENROLL MUTATION] Redirection vers /learn/" + course.id);
       router.push(`/learn/${course.id}`)
-      console.log("🔄 [ENROLL MUTATION] Redirection appelée.");
     },
     onError: (error: any) => {
       console.error("❌ [ENROLL MUTATION] Erreur lors de l'inscription:", error);
