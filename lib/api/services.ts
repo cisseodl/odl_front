@@ -313,10 +313,15 @@ export const reviewService = {
       const response = await apiClient.get<any>(`${API_ENDPOINTS.reviews.getByCourse}/${courseId}`);
 
       if (response.ok && response.data) {
-        // Assume backend returns a list of reviews or a CResponse containing a list
-        let reviews = Array.isArray(response.data)
-          ? response.data
-          : (response.data.data && Array.isArray(response.data.data) ? response.data.data : []);
+        // Backend peut renvoyer la liste directement (response.data) ou dans .data / .content
+        const raw = response.data as any
+        let reviews = Array.isArray(raw)
+          ? raw
+          : Array.isArray(raw?.data)
+            ? raw.data
+            : Array.isArray(raw?.content)
+              ? raw.content
+              : [];
         
         // Normaliser les données pour éviter les erreurs de rendu
         reviews = reviews

@@ -460,7 +460,7 @@ export function CourseDetailClient({ course }: CourseDetailClientProps) {
                     {curriculum && curriculum.length > 0 ? (
                   <div className="space-y-4">
                         {curriculum
-                          .filter(module => module && module.id && typeof module.id === 'string')
+                          .filter(module => module && (module.id != null && module.id !== ''))
                           .map((module, moduleIndex) => {
                             try {
                               const lessons = Array.isArray(module.lessons) 
@@ -587,7 +587,7 @@ export function CourseDetailClient({ course }: CourseDetailClientProps) {
                               <div className="flex items-center gap-4 text-sm text-muted-foreground mb-4">
                                 <div className="flex items-center gap-1.5">
                                   <Star className="h-4 w-4 text-yellow-500" />
-                                  <span>{course.instructor.rating.toFixed(1)} Note instructeur</span>
+                                  <span>{(course.instructor?.rating ?? 0).toFixed(1)} Note instructeur</span>
                             </div>
                                 <div className="flex items-center gap-1.5">
                                   <Users className="h-4 w-4" />
