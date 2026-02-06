@@ -7,6 +7,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { reviewService, courseService, moduleService } from "@/lib/api/services"
 import { useAuthStore } from "@/lib/store/auth-store"
 import { EnrollmentExpectationsModal } from "@/components/enrollment-expectations-modal"
+import { MaxCoursesModal } from "@/components/max-courses-modal"
 import { Share2, Bookmark, MoreVertical, Play, Star, Clock, Users, Award, CheckCircle2, FileText, Video, BookOpen, ArrowLeft, Globe, BarChart3, Infinity, Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -57,6 +58,7 @@ export function CourseDetailClient({ course }: CourseDetailClientProps) {
   const [showFullDescription, setShowFullDescription] = useState(false)
   const [activeTab, setActiveTab] = useState("content")
   const [showEnrollmentModal, setShowEnrollmentModal] = useState(false)
+  const [showMaxCoursesModal, setShowMaxCoursesModal] = useState(false)
 
   const courseIdNum = useMemo(() => {
     if (!course?.id) return null
@@ -151,10 +153,18 @@ export function CourseDetailClient({ course }: CourseDetailClientProps) {
     },
     onError: (error: any) => {
       console.error("❌ [ENROLL MUTATION] Erreur lors de l'inscription:", error);
-      const errorMessage = error?.message || "Une erreur est survenue lors de l'inscription"
+      const errorMessage = String(error?.message || "Une erreur est survenue lors de l'inscription")
+      const isMaxCoursesReached =
+        errorMessage.toLowerCase().includes("terminer") &&
+        (errorMessage.toLowerCase().includes("3 cours") || errorMessage.toLowerCase().includes("cours en cours"))
+      if (isMaxCoursesReached) {
+        setShowEnrollmentModal(false)
+        setShowMaxCoursesModal(true)
+      } else {
         toast.error("Erreur d'inscription", {
           description: errorMessage,
         })
+      }
     },
   })
 
@@ -780,6 +790,12 @@ export function CourseDetailClient({ course }: CourseDetailClientProps) {
         onConfirm={handleConfirmEnrollment}
         courseTitle={course.title}
         isLoading={enrollMutation.isPending}
+      />
+
+      {/* Modal limite 3 cours : affiché quand l'apprenant tente un 4e cours */}
+      <MaxCoursesModal
+        open={showMaxCoursesModal}
+        onOpenChange={setShowMaxCoursesModal}
       />
     </div>
   )
