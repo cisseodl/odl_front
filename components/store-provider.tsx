@@ -24,6 +24,15 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     checkAuth()
   }, [checkAuth])
 
+  // Quand l'API renvoie 401, le client supprime le token et dispatch cet événement → on déconnecte le store
+  useEffect(() => {
+    const handleUnauthorized = () => {
+      useAuthStore.getState().logout()
+    }
+    window.addEventListener("auth:unauthorized", handleUnauthorized)
+    return () => window.removeEventListener("auth:unauthorized", handleUnauthorized)
+  }, [])
+
   // Stores will hydrate automatically with the storage configuration
   return <>{children}</>
 }

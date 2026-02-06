@@ -120,10 +120,15 @@ export function CourseDetailClient({ course }: CourseDetailClientProps) {
 
   // Mutation pour l'inscription
   const enrollMutation = useMutation({
-    mutationFn: (expectations: string) => {
+    mutationFn: async (expectations: string) => {
       if (!courseIdNum) throw new Error("ID du cours invalide")
-      console.log("📝 [ENROLL MUTATION] Appel à enrollInCourse avec ID:", courseIdNum, "et attentes:", expectations);
-      return courseService.enrollInCourse(courseIdNum, expectations)
+      const response = await courseService.enrollInCourse(courseIdNum, expectations)
+      // Traiter la réponse CResponse : si ok: false, lever une erreur pour afficher le message
+      if (!response.ok) {
+        const msg = response.message || "Erreur lors de l'inscription au cours"
+        throw new Error(msg)
+      }
+      return response
     },
     onSuccess: (response) => {
       console.log("✅ [ENROLL MUTATION] Inscription réussie. Réponse du backend:", response);

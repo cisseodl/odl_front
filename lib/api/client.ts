@@ -180,12 +180,14 @@ class ApiClient {
           }
         }
 
-        // Gérer les erreurs 403 (Forbidden) - Token invalide ou expiré
-        if (response.status === 403) {
-          // Nettoyer le token invalide
+        // Nettoyer le token uniquement sur 401 (Unauthorized), pas sur 403 (Forbidden).
+        // Un 403 peut signifier "action interdite" sans invalider la session ; supprimer le token
+        // à chaque 403 provoquait une déconnexion en ouvrant une fiche cours.
+        if (response.status === 401) {
           if (typeof window !== "undefined") {
             localStorage.removeItem("auth_token")
             this.token = null
+            window.dispatchEvent(new CustomEvent("auth:unauthorized"))
           }
         }
 
