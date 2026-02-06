@@ -97,13 +97,19 @@ export function EnrollmentExpectationsModal({
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
           <DialogTitle>Vos attentes concernant ce cours</DialogTitle>
-          <DialogDescription>
-            {courseTitle && (
-              <span className="font-semibold text-foreground">{courseTitle}</span>
-            )}
-            <br />
-            Avant de vous inscrire, veuillez nous indiquer vos attentes concernant ce cours.
-            Cette information est obligatoire.
+          <DialogDescription asChild>
+            <div className="space-y-2">
+              {courseTitle && (
+                <span className="font-semibold text-foreground">{courseTitle}</span>
+              )}
+              <p>
+                Avant de vous inscrire, veuillez nous indiquer vos attentes concernant ce cours.
+                Cette information est obligatoire.
+              </p>
+              <p className="text-xs text-muted-foreground">
+                Vous pouvez être inscrit à 3 cours au maximum. Pour vous inscrire à un nouveau cours, terminez-en un parmi ceux en cours.
+              </p>
+            </div>
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-4 py-4">

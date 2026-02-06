@@ -4,6 +4,8 @@ import { use, useMemo } from "react"
 import { useQuery } from "@tanstack/react-query"
 import { courseService } from "@/lib/api/services"
 import { CourseDetailClient } from "@/components/course-detail-client"
+import { CourseAuthGate } from "@/components/course-auth-gate"
+import { useAuthStore } from "@/lib/store/auth-store"
 import { Loader2 } from "lucide-react"
 import { notFound } from "next/navigation"
 
@@ -14,8 +16,8 @@ interface CoursePageProps {
 export default function CoursePage({ params }: CoursePageProps) {
   const { id } = use(params)
   const courseId = Number.parseInt(id)
+  const { isAuthenticated } = useAuthStore()
 
-  // Charger uniquement le cours - version simplifiée sans modules
   const {
     data: course,
     isLoading,
@@ -26,14 +28,13 @@ export default function CoursePage({ params }: CoursePageProps) {
       const courseData = await courseService.getCourseById(courseId)
       return courseData || null
     },
-    enabled: !Number.isNaN(courseId),
+    enabled: isAuthenticated && !Number.isNaN(courseId),
     staleTime: 10 * 60 * 1000,
     gcTime: 30 * 60 * 1000,
     refetchOnWindowFocus: false,
     retry: 1,
   })
 
-  // Mémoriser le cours pour éviter les re-renders
   const memoizedCourse = useMemo(() => {
     if (!course) return null
     return course
@@ -41,6 +42,11 @@ export default function CoursePage({ params }: CoursePageProps) {
 
   if (Number.isNaN(courseId)) {
     notFound()
+  }
+
+  // Non connecté : gate "Avez-vous un compte ODL ?"
+  if (!isAuthenticated) {
+    return <CourseAuthGate courseId={id} />
   }
 
   if (isLoading) {

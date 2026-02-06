@@ -1,7 +1,7 @@
 "use client"
 
-import { useState } from "react"
-import { useRouter } from "next/navigation"
+import { useState, useEffect } from "react"
+import { useRouter, useSearchParams } from "next/navigation"
 import Link from "next/link"
 import { Mail, Lock, User, Eye, EyeOff, Phone, GraduationCap, Briefcase, Users } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -21,11 +21,20 @@ import { RegistrationResultDialog } from "@/components/registration-result-dialo
 
 export default function AuthPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const redirectTo = searchParams.get("redirect") || "/"
+  const mode = searchParams.get("mode") // "login" | "signup" pour ouvrir l'onglet
+  const [authTab, setAuthTab] = useState<"login" | "register">(mode === "signup" ? "register" : "login")
   const [isLoading, setIsLoading] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [apprenantType, setApprenantType] = useState<"new" | "existing">("new") // Type d'apprenant : nouveau ou ancien
   const { login, register } = useAuthStore()
+
+  useEffect(() => {
+    if (mode === "signup") setAuthTab("register")
+    else if (mode === "login") setAuthTab("login")
+  }, [mode])
   
   // État pour le dialogue de résultat d'inscription
   const [showResultDialog, setShowResultDialog] = useState(false)
@@ -59,7 +68,7 @@ export default function AuthPage() {
       toast.success("Connexion réussie !", {
         description: "Bienvenue sur Orange Digital Learning",
       })
-      router.push("/")
+      router.push(redirectTo)
       router.refresh()
     } catch (error) {
       // Afficher le dialog d'erreur au lieu du toast
@@ -261,7 +270,7 @@ export default function AuthPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <Tabs defaultValue="login" className="w-full">
+          <Tabs value={authTab} onValueChange={(v) => setAuthTab(v as "login" | "register")} className="w-full">
             <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="login">Connexion</TabsTrigger>
               <TabsTrigger value="register">Inscription</TabsTrigger>
@@ -763,7 +772,7 @@ export default function AuthPage() {
         onContinue={() => {
           setShowResultDialog(false)
           if (resultDialogType === "success") {
-            router.push("/dashboard")
+            router.push(redirectTo)
             router.refresh()
           }
         }}
