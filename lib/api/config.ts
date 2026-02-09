@@ -46,16 +46,16 @@ export const API_ENDPOINTS = {
     getByCategory: "/courses/read/by-category",
     getByPage: "/courses/page",
     enroll: "/courses/enroll",
-    addReview: "/api/courses", // Endpoint pour ajouter un avis
-    getReviewsByCourse: "/reviews/course", // Endpoint pour récupérer les avis d'un cours
+    addReview: "/api/reviews/add", // Endpoint pour ajouter un avis
+    getReviewsByCourse: "/api/reviews/course", // Endpoint pour récupérer les avis d'un cours
     save: "/courses/save",
     update: "/courses/update",
     delete: "/courses/delete",
   },
   // Review
   reviews: {
-    getByCourse: "/reviews/course",
-    add: "/reviews/add",
+    getByCourse: "/api/reviews/course",
+    add: "/api/reviews/add",
   },
   categories: {
     getAll: "/api/categories/read",
