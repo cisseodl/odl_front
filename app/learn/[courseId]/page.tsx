@@ -1055,7 +1055,7 @@ export default function LearnPage({ params }: LearnPageProps) {
                     Activités associées à cette leçon
                   </h3>
                   <p className="text-sm text-muted-foreground">
-                    Labs, travaux dirigés et quiz liés à cette leçon (selon ce que le formateur a configuré).
+                    Labs, travaux dirigés et quiz liés à cette leçon.
                   </p>
                   {!hasAny ? (
                     <p className="text-sm text-muted-foreground italic py-4">

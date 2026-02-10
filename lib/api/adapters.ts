@@ -539,9 +539,24 @@ export function adaptQuestion(questionDTO: QuestionDTO): QuizQuestion & { option
 /**
  * Convertir un lab backend en lab frontend
  */
+function parseJsonArray(val: unknown): string[] | null {
+  if (Array.isArray(val)) return val.filter((x) => typeof x === "string")
+  if (typeof val === "string") {
+    try {
+      const parsed = JSON.parse(val)
+      return Array.isArray(parsed) ? parsed.filter((x: unknown) => typeof x === "string") : null
+    } catch {
+      return val.trim() ? [val] : null
+    }
+  }
+  return null
+}
+
 export function adaptLab(labDefinition: LabDefinition & { lesson?: { id?: number }; lessonId?: number }, courseId?: string): Lab {
   const raw = labDefinition as any
   const lessonId = raw.lesson?.id ?? raw.lessonId ?? undefined
+  const uploadedFiles = parseJsonArray(raw.uploadedFiles ?? raw.uploaded_files) ?? undefined
+  const resourceLinks = parseJsonArray(raw.resourceLinks ?? raw.resource_links) ?? undefined
   return {
     id: String(labDefinition.id),
     courseId: courseId || "",
@@ -556,6 +571,8 @@ export function adaptLab(labDefinition: LabDefinition & { lesson?: { id?: number
       ? `${labDefinition.estimatedDurationMinutes} min`
       : "Non spécifié",
     lessonId: lessonId != null ? lessonId : undefined,
+    uploadedFiles: uploadedFiles?.length ? uploadedFiles : undefined,
+    resourceLinks: resourceLinks?.length ? resourceLinks : undefined,
   }
 }
 

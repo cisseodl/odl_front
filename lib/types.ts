@@ -80,8 +80,11 @@ export interface Lab {
   objectives: string[]
   difficulty: "easy" | "medium" | "hard"
   estimatedTime: string
-  /** ID de la leçon associée (rempli depuis le backend) */
   lessonId?: number | null
+  /** URLs de fichiers (ex. PDF) — backend peut renvoyer JSON string ou tableau */
+  uploadedFiles?: string[] | null
+  /** Liens ressources */
+  resourceLinks?: string[] | null
 }
 
 export interface Quiz {

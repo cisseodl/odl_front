@@ -767,13 +767,22 @@ export const labService = {
     const response = await apiClient.get<any>(API_ENDPOINTS.labs.getAll)
     
     if (response.ok && response.data) {
-      // Le backend retourne CResponse<List<LabDefinition>> avec data contenant la liste
       const labs = Array.isArray(response.data) ? response.data : []
-      
       return labs.map((lab) => adaptLab(lab as LabDefinition))
     }
-    
     return []
+  },
+
+  /**
+   * Obtenir un lab par ID (GET /api/labs/{id})
+   */
+  async getLabById(labId: number | string): Promise<Lab | null> {
+    const id = typeof labId === "string" ? String(labId).replace(/^\/+|\/+$/g, "") : String(labId)
+    const response = await apiClient.get<any>(`${API_ENDPOINTS.labs.getAll}${id}`)
+    if (!response.ok || !response.data) return null
+    const raw = (response.data as any).data ?? response.data
+    if (!raw || Array.isArray(raw) || raw.id == null) return null
+    return adaptLab(raw as LabDefinition)
   },
 
   /**
@@ -919,15 +928,15 @@ export const evaluationService = {
       const response = await apiClient.get<any>(API_ENDPOINTS.evaluations.getAll)
       
       if (response.ok && response.data) {
-        const evaluations = Array.isArray(response.data) ? response.data : []
-        // Filtrer les évaluations du cours
-        return evaluations.filter((evaluation: any) => 
-          evaluation.course?.id === courseId || 
-          evaluation.courseId === courseId ||
-          (evaluation.course && String(evaluation.course.id) === String(courseId))
-        )
+        const payload = response.data
+        const evaluations = Array.isArray(payload)
+          ? payload
+          : (payload?.data && Array.isArray(payload.data) ? payload.data : [])
+        return evaluations.filter((evaluation: any) => {
+          const cid = evaluation.course?.id ?? evaluation.courseId
+          return cid != null && (Number(cid) === Number(courseId) || String(cid) === String(courseId))
+        })
       }
-      
       return []
     } catch (error) {
       logger.error(`Erreur lors de la récupération des évaluations pour le cours ${courseId}:`, error)
