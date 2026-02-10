@@ -253,10 +253,10 @@ export default function LearnPage({ params }: LearnPageProps) {
     console.log("🔄 [REDIRECTION] ===== FIN VÉRIFICATION REDIRECTION =====")
   }, [isEnrolled, modulesError, isLoadingModules, courseLoading, courseIdNum, router, isAuthenticated, user, modulesFromApi])
 
-  const [currentLesson, setCurrentLesson] = useState(0)
+  const [currentLesson, setCurrentLesson] = useState<string | number>(0)
   const [sidebarOpen, setSidebarOpen] = useState(true)
   const [notes, setNotes] = useState("")
-  const [completedLessons, setCompletedLessons] = useState<number[]>([])
+  const [completedLessons, setCompletedLessons] = useState<(string | number)[]>([])
   const [searchQuery, setSearchQuery] = useState("")
   const [showMiniPlayer, setShowMiniPlayer] = useState(true)
   const [newReview, setNewReview] = useState({ rating: 0, comment: "" }) // Ajout de l'état pour l'avis
@@ -477,6 +477,25 @@ export default function LearnPage({ params }: LearnPageProps) {
     }))
   }, [curriculum, searchQuery])
 
+  // Synchroniser la progression depuis le backend (au chargement et après refetch)
+  useEffect(() => {
+    if (!courseProgress?.lessons || !Array.isArray(courseProgress.lessons)) return
+    const completed = (courseProgress.lessons as { lessonId: number; completed: boolean }[])
+      .filter((l) => l.completed)
+      .map((l) => l.lessonId)
+    setCompletedLessons(completed)
+  }, [courseProgress])
+
+  // Initialiser currentLesson avec la première leçon si invalide (0 ou id absent de la liste)
+  useEffect(() => {
+    if (lessons.length === 0) return
+    const currentId = String(currentLesson)
+    const exists = lessons.some((l) => String(l.id) === currentId)
+    if (!exists || currentLesson === 0) {
+      setCurrentLesson(lessons[0].id)
+    }
+  }, [lessons])
+
   // Helper functions (doivent être définies avant SidebarContent qui les utilise)
   const getLessonIcon = (type: string) => {
     switch (type) {
@@ -493,10 +512,32 @@ export default function LearnPage({ params }: LearnPageProps) {
     }
   }
 
+  const completeLessonMutation = useMutation({
+    mutationFn: () => {
+      const lessonIdNum = typeof currentLesson === "string" ? parseInt(currentLesson, 10) : Number(currentLesson)
+      if (!courseIdNum || Number.isNaN(lessonIdNum)) throw new Error("ID cours ou leçon invalide")
+      return learnerService.completeLesson(courseIdNum, lessonIdNum)
+    },
+    onSuccess: (response) => {
+      if (response?.ok !== false) {
+        const id = currentLesson
+        if (!completedLessons.some((x) => String(x) === String(id))) {
+          setCompletedLessons((prev) => [...prev, id])
+        }
+        queryClient.invalidateQueries({ queryKey: ["courseProgress", courseIdNum] })
+        toast.success("Leçon marquée comme terminée")
+      } else {
+        toast.error(response?.message || "Erreur lors de l'enregistrement")
+      }
+    },
+    onError: (err: Error) => {
+      toast.error(err?.message || "Impossible d'enregistrer la progression")
+    },
+  })
+
   const handleMarkComplete = () => {
-    if (!completedLessons.includes(currentLesson)) {
-      setCompletedLessons([...completedLessons, currentLesson])
-    }
+    if (completedLessons.some((id) => String(id) === String(currentLesson))) return
+    completeLessonMutation.mutate()
   }
 
   // Helper function to render video content
@@ -535,8 +576,8 @@ export default function LearnPage({ params }: LearnPageProps) {
         </div>
         <div className="flex items-center justify-between mt-4">
           <h2 className="text-xl md:text-2xl font-bold">{lessonData.title || "Leçon"}</h2>
-          <Button onClick={handleMarkComplete} disabled={completedLessons.includes(currentLesson)}>
-            {completedLessons.includes(currentLesson) ? (
+          <Button onClick={handleMarkComplete} disabled={completedLessons.some((id) => String(id) === String(currentLesson))}>
+            {completedLessons.some((id) => String(id) === String(currentLesson)) ? (
               <>
                 <CheckCircle2 className="h-4 w-4 mr-2" />
                 Terminé
@@ -695,14 +736,14 @@ export default function LearnPage({ params }: LearnPageProps) {
                   <div
                     className={cn(
                       "flex-shrink-0",
-                      completedLessons.includes(lesson.id)
+                      completedLessons.some((id) => String(id) === String(lesson.id))
                         ? "text-success"
                         : currentLesson === lesson.id
                           ? "text-primary"
                           : "text-muted-foreground",
                     )}
                   >
-                    {completedLessons.includes(lesson.id) ? (
+                    {completedLessons.some((id) => String(id) === String(lesson.id)) ? (
                       <CheckCircle2 className="h-5 w-5 fill-success" />
                     ) : (
                       getLessonIcon(lesson.type)
@@ -765,27 +806,36 @@ export default function LearnPage({ params }: LearnPageProps) {
           </div>
 
           <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              disabled={currentLesson === 0}
-              onClick={() => setCurrentLesson(currentLesson - 1)}
-            >
-              <ChevronLeft className="h-4 w-4" />
-              <span className="hidden sm:inline ml-1">Précédent</span>
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              disabled={currentLesson === lessons.length - 1}
-              onClick={() => {
-                handleMarkComplete()
-                setCurrentLesson(currentLesson + 1)
-              }}
-            >
-              <span className="hidden sm:inline mr-1">Suivant</span>
-              <ChevronRight className="h-4 w-4" />
-            </Button>
+            {(() => {
+              const currentIndex = lessons.findIndex((l) => String(l.id) === String(currentLesson))
+              const hasPrev = currentIndex > 0
+              const hasNext = currentIndex >= 0 && currentIndex < lessons.length - 1
+              return (
+                <>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={!hasPrev}
+                    onClick={() => setCurrentLesson(lessons[currentIndex - 1].id)}
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                    <span className="hidden sm:inline ml-1">Précédent</span>
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={!hasNext}
+                    onClick={() => {
+                      handleMarkComplete()
+                      if (hasNext) setCurrentLesson(lessons[currentIndex + 1].id)
+                    }}
+                  >
+                    <span className="hidden sm:inline mr-1">Suivant</span>
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                </>
+              )
+            })()}
           </div>
         </div>
 
@@ -1016,8 +1066,8 @@ export default function LearnPage({ params }: LearnPageProps) {
               </Card>
             </div>
 
-            {/* Activités associées à cette leçon (Lab, TD, Quiz) — affichées une fois la leçon terminée */}
-            {completedLessons.some((id) => String(id) === String(currentLesson)) && (() => {
+            {/* Activités associées à cette leçon (Lab, TD, Quiz) — toujours visibles pour la leçon courante */}
+            {(() => {
               const currentLessonIdNum = typeof currentLessonData?.id === "string"
                 ? parseInt(currentLessonData.id, 10)
                 : currentLessonData?.id
