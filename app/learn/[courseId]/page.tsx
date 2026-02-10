@@ -1040,12 +1040,13 @@ export default function LearnPage({ params }: LearnPageProps) {
                 const lid = tp.lessonId ?? tp.lesson_id ?? tp.lesson?.id ?? tp.lesson
                 return matchLesson(lid)
               })
-              const lessonQuizzes = (courseQuizzes || []).filter((q: any) => {
+              const lessonQuizzesFiltered = (courseQuizzes || []).filter((q: any) => {
                 const lid = q.lessonId ?? (q as any).lesson_id ?? (q as any).lesson?.id ?? (q as any).lessonId
                 if (lid == null) return false
                 const num = typeof lid === "string" ? parseInt(lid, 10) : Number(lid)
                 return !Number.isNaN(num) && normalizeId(lid) === currentLessonIdNum
               })
+              const lessonQuizzes = lessonQuizzesFiltered.length > 0 ? lessonQuizzesFiltered : (courseQuizzes || [])
 
               const hasAny = lessonLabs.length > 0 || lessonTPs.length > 0 || lessonQuizzes.length > 0
 

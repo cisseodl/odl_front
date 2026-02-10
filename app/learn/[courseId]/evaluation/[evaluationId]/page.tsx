@@ -84,15 +84,29 @@ export default function EvaluationPage({ params }: EvaluationPageProps) {
                 <p className="text-sm text-muted-foreground mt-1">{td.description}</p>
               )}
             </CardHeader>
-            <CardContent>
+            <CardContent className="space-y-6">
               {td.tpInstructions ? (
-                <ScrollArea className="h-[60vh] pr-4">
+                <ScrollArea className="h-[40vh] pr-4">
                   <div className="prose prose-sm dark:prose-invert max-w-none whitespace-pre-wrap">
                     {td.tpInstructions}
                   </div>
                 </ScrollArea>
-              ) : (
-                <p className="text-muted-foreground">Aucune instruction pour ce TD.</p>
+              ) : null}
+              {td.tpFileUrl && (
+                <div className="space-y-2">
+                  <h3 className="font-semibold">Document du TD</h3>
+                  <div className="border rounded-lg overflow-hidden bg-muted/30">
+                    <iframe
+                      src={`${td.tpFileUrl.startsWith("http") ? td.tpFileUrl : `${process.env.NEXT_PUBLIC_API_FRONT || "https://api.smart-odc.com"}/awsodclearning${td.tpFileUrl.startsWith("/") ? td.tpFileUrl : `/${td.tpFileUrl}`}`}#toolbar=0`}
+                      title="Document TD"
+                      className="w-full h-[70vh] min-h-[500px] border-0"
+                      referrerPolicy="no-referrer"
+                    />
+                  </div>
+                </div>
+              )}
+              {!td.tpInstructions && !td.tpFileUrl && (
+                <p className="text-muted-foreground">Aucun contenu pour ce TD.</p>
               )}
             </CardContent>
           </Card>

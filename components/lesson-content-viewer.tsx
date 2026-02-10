@@ -146,15 +146,9 @@ export function LessonContentViewer({ contentUrl, title, type, className }: Less
               </p>
             </div>
           </div>
-          <div className="flex items-center gap-2">
-            <Button onClick={handleOpenInNewTab} variant="outline" size="sm">
-              <ExternalLink className="h-4 w-4 mr-2" />
-              Ouvrir
-            </Button>
-          </div>
         </div>
 
-        {/* Content Viewer */}
+        {/* Content Viewer - consultation sur la plateforme uniquement */}
         <div className="border rounded-lg overflow-hidden bg-muted/30">
           {isVideo ? (
             <video
@@ -183,7 +177,7 @@ export function LessonContentViewer({ contentUrl, title, type, className }: Less
             />
           ) : isPDF ? (
             <iframe
-              src={fullUrl} // Directement l'URL du PDF
+              src={`${fullUrl}#toolbar=0`}
               title={title}
               className="w-full h-[600px] md:h-[800px] border-0"
               onLoad={() => setIsLoading(false)}
