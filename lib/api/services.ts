@@ -714,16 +714,11 @@ export const quizService = {
     const response = await apiClient.get<any>(
       `${API_ENDPOINTS.quiz.getByCourse}/${courseId}`
     )
-    
-    if (response.ok && response.data) {
-      // Le backend retourne CResponse<List<QuizDTO>>
-      const data = (response.data as any).data || response.data
-      const quizzes = Array.isArray(data) ? data : []
-      
-      return quizzes.map(adaptQuiz)
-    }
-    
-    return []
+    if (!response.ok || !response.data) return []
+    const payload = response.data as any
+    const data = Array.isArray(payload) ? payload : payload?.data
+    const quizzes = Array.isArray(data) ? data : []
+    return quizzes.map(adaptQuiz)
   },
 
   /**

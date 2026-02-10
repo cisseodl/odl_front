@@ -1041,8 +1041,10 @@ export default function LearnPage({ params }: LearnPageProps) {
                 return matchLesson(lid)
               })
               const lessonQuizzes = (courseQuizzes || []).filter((q: any) => {
-                const lid = q.lessonId ?? (q as any).lesson_id ?? (q as any).lesson?.id
-                return matchLesson(lid)
+                const lid = q.lessonId ?? (q as any).lesson_id ?? (q as any).lesson?.id ?? (q as any).lessonId
+                if (lid == null) return false
+                const num = typeof lid === "string" ? parseInt(lid, 10) : Number(lid)
+                return !Number.isNaN(num) && normalizeId(lid) === currentLessonIdNum
               })
 
               const hasAny = lessonLabs.length > 0 || lessonTPs.length > 0 || lessonQuizzes.length > 0
@@ -1129,17 +1131,9 @@ export default function LearnPage({ params }: LearnPageProps) {
                                   )}
                                 </div>
                               </div>
-                              <div className="flex items-center gap-2">
-                                {tp.tpFileUrl && (
-                                  <Button size="sm" variant="outline" onClick={() => window.open(tp.tpFileUrl, "_blank")}>
-                                    <ExternalLink className="h-4 w-4 mr-2" />
-                                    Télécharger
-                                  </Button>
-                                )}
-                                <Link href={`/learn/${courseId}/evaluation/${tp.id}`}>
-                                  <Button size="sm">Commencer</Button>
-                                </Link>
-                              </div>
+                              <Link href={`/learn/${courseId}/evaluation/${tp.id}`}>
+                                <Button size="sm">Commencer</Button>
+                              </Link>
                             </div>
                           ))}
                         </div>

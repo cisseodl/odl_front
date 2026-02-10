@@ -115,29 +115,9 @@ export function CourseActivitiesSection({ labs, tps, courseId }: CourseActivitie
                               {tp.description}
                             </p>
                           )}
-                          {tp.tpFileUrl && (
-                            <div className="flex items-center gap-2 mt-2">
-                              <Badge variant="outline" className="text-xs">
-                                Fichier disponible
-                              </Badge>
-                            </div>
-                          )}
                         </div>
                       </div>
-                      <div className="flex items-center gap-2">
-                        {tp.tpFileUrl && (
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => {
-                              window.open(tp.tpFileUrl, "_blank")
-                            }}
-                          >
-                            <ExternalLink className="h-4 w-4 mr-2" />
-                            Télécharger
-                          </Button>
-                        )}
-                        <Link href={`/learn/${courseId}/evaluation/${tp.id}`}>
+                      <Link href={`/learn/${courseId}/evaluation/${tp.id}`}>
                           <Button size="sm">
                             <BookOpen className="h-4 w-4 mr-2" />
                             Commencer

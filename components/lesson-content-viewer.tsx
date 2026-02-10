@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { FileText, Download, Loader2, AlertCircle, ExternalLink, Play } from "lucide-react"
+import { FileText, Loader2, AlertCircle, ExternalLink, Play } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Alert, AlertDescription } from "@/components/ui/alert"
@@ -49,15 +49,6 @@ export function LessonContentViewer({ contentUrl, title, type, className }: Less
 
     setIsLoading(false)
   }, [contentUrl])
-
-  const handleDownload = () => {
-    if (contentUrl) {
-      const fullUrl = contentUrl.startsWith("http") 
-        ? contentUrl 
-        : `${process.env.NEXT_PUBLIC_API_URL || "https://api.smart-odc.com"}/awsodclearning${contentUrl.startsWith("/") ? contentUrl : `/${contentUrl}`}`
-      window.open(fullUrl, "_blank")
-    }
-  }
 
   const handleOpenInNewTab = () => {
     if (contentUrl) {
@@ -160,10 +151,6 @@ export function LessonContentViewer({ contentUrl, title, type, className }: Less
               <ExternalLink className="h-4 w-4 mr-2" />
               Ouvrir
             </Button>
-            <Button onClick={handleDownload} variant="outline" size="sm">
-              <Download className="h-4 w-4 mr-2" />
-              Télécharger
-            </Button>
           </div>
         </div>
 
@@ -213,19 +200,12 @@ export function LessonContentViewer({ contentUrl, title, type, className }: Less
               <FileText className="h-16 w-16 text-muted-foreground mb-4" />
               <h3 className="text-lg font-semibold mb-2">Fichier Word détecté</h3>
               <p className="text-sm text-muted-foreground text-center mb-6 max-w-md">
-                Les fichiers Word (.doc, .docx) ne peuvent pas être affichés directement dans le navigateur.
-                Veuillez utiliser l'un des boutons ci-dessus pour ouvrir ou télécharger le fichier.
+                Les fichiers Word ne peuvent pas être affichés dans la plateforme. Ouvrez le document dans un nouvel onglet pour le consulter.
               </p>
-              <div className="flex gap-3">
-                <Button onClick={handleOpenInNewTab} variant="default" size="lg">
-                  <ExternalLink className="h-4 w-4 mr-2" />
-                  Ouvrir dans un nouvel onglet
-                </Button>
-                <Button onClick={handleDownload} variant="outline" size="lg">
-                  <Download className="h-4 w-4 mr-2" />
-                  Télécharger le fichier
-                </Button>
-              </div>
+              <Button onClick={handleOpenInNewTab} variant="default" size="lg">
+                <ExternalLink className="h-4 w-4 mr-2" />
+                Ouvrir dans un nouvel onglet
+              </Button>
             </div>
           ) : (
             <iframe

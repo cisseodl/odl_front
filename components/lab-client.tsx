@@ -5,7 +5,7 @@ import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { CheckCircle2, Code2, PlayCircle, Trophy, ArrowLeft, FileText, ExternalLink, Loader2 } from "lucide-react"
+import { CheckCircle2, Code2, PlayCircle, Trophy, ArrowLeft, Loader2 } from "lucide-react"
 import { Textarea } from "@/components/ui/textarea"
 import { toast } from "sonner"
 import { ScrollArea } from "@/components/ui/scroll-area"
@@ -87,9 +87,6 @@ export function LabClient({ courseId, labId }: LabClientProps) {
     setChecklist(next)
   }
 
-  const fileUrls = lab.uploadedFiles?.length ? lab.uploadedFiles : []
-  const links = lab.resourceLinks?.length ? lab.resourceLinks : []
-
   return (
     <div className="min-h-screen bg-background">
       <div className="border-b bg-card">
@@ -120,43 +117,6 @@ export function LabClient({ courseId, labId }: LabClientProps) {
 
       <div className="container grid gap-6 py-6 lg:grid-cols-2">
         <div className="space-y-6">
-          {(fileUrls.length > 0 || links.length > 0) && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <FileText className="h-5 w-5" />
-                  Ressources
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-2">
-                {fileUrls.map((url, i) => (
-                  <a
-                    key={i}
-                    href={url.startsWith("http") ? url : url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-2 text-primary hover:underline"
-                  >
-                    <FileText className="h-4 w-4" />
-                    Document {fileUrls.length > 1 ? i + 1 : ""} (PDF / fichier)
-                  </a>
-                ))}
-                {links.map((url, i) => (
-                  <a
-                    key={i}
-                    href={url.startsWith("http") ? url : `https://${url}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-2 text-primary hover:underline"
-                  >
-                    <ExternalLink className="h-4 w-4" />
-                    Lien ressource {links.length > 1 ? i + 1 : ""}
-                  </a>
-                ))}
-              </CardContent>
-            </Card>
-          )}
-
           <Card className="p-6">
             <h2 className="mb-4 text-lg font-semibold">Instructions</h2>
             <ScrollArea className="h-[400px] pr-4">
