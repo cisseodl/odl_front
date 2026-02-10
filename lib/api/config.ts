@@ -85,6 +85,7 @@ export const API_ENDPOINTS = {
     start: "/api/labs/start",
     stop: "/api/labs/stop",
     submit: "/api/labs/submit",
+    submitReport: "/api/labs/submit-report",
   },
   // Learner
   learner: {

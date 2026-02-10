@@ -5,13 +5,13 @@ import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { CheckCircle2, Code2, PlayCircle, Trophy, ArrowLeft, Loader2 } from "lucide-react"
+import { CheckCircle2, Code2, FileUp, PlayCircle, Send, Trophy, ArrowLeft, Loader2, Type } from "lucide-react"
 import { Textarea } from "@/components/ui/textarea"
 import { toast } from "sonner"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import ReactMarkdown from "react-markdown"
-import { useQuery } from "@tanstack/react-query"
-import { labService } from "@/lib/api/services"
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
+import { labService, uploadFile } from "@/lib/api/services"
 
 interface LabClientProps {
   courseId: string
@@ -28,6 +28,51 @@ export function LabClient({ courseId, labId }: LabClientProps) {
 
   const [code, setCode] = useState("")
   const [checklist, setChecklist] = useState<boolean[]>([])
+  const [reportMode, setReportMode] = useState<"file" | "text">("file")
+  const [reportFile, setReportFile] = useState<File | null>(null)
+  const [reportText, setReportText] = useState("")
+  const queryClient = useQueryClient()
+
+  const submitReportMutation = useMutation({
+    mutationFn: async () => {
+      let reportUrl: string
+      if (reportMode === "file" && reportFile) {
+        const url = await uploadFile(reportFile, "lab-reports")
+        if (!url) throw new Error("Échec de l'upload du fichier")
+        reportUrl = url
+      } else if (reportMode === "text" && reportText.trim()) {
+        const blob = new Blob([reportText.trim()], { type: "text/plain;charset=utf-8" })
+        const file = new File([blob], "rapport-lab.txt", { type: "text/plain" })
+        const url = await uploadFile(file, "lab-reports")
+        if (!url) throw new Error("Échec de l'upload du rapport")
+        reportUrl = url
+      } else {
+        throw new Error("Choisissez un fichier ou saisissez votre rapport")
+      }
+      const res = await labService.submitLabReport(labIdNum, reportUrl)
+      if (!res.ok) throw new Error(res.message || "Erreur lors de la soumission")
+    },
+    onSuccess: () => {
+      toast.success("Votre rapport de lab a été soumis avec succès.")
+      setReportFile(null)
+      setReportText("")
+      queryClient.invalidateQueries({ queryKey: ["lab", labIdNum] })
+    },
+    onError: (err: Error) => {
+      toast.error(err.message || "Erreur lors de la soumission")
+    },
+  })
+
+  const canSubmitReport =
+    (reportMode === "file" && reportFile) || (reportMode === "text" && reportText.trim().length > 0)
+
+  const handleSubmitReport = () => {
+    if (!canSubmitReport) {
+      toast.error("Déposez un fichier ou rédigez votre rapport.")
+      return
+    }
+    submitReportMutation.mutate()
+  }
 
   useEffect(() => {
     if (lab?.objectives?.length) setChecklist(lab.objectives.map(() => false))
@@ -184,6 +229,74 @@ export function LabClient({ courseId, labId }: LabClientProps) {
                 </ScrollArea>
               </TabsContent>
             </Tabs>
+          </Card>
+
+          {/* Carte Ma réalisation : fichier ou texte selon les instructions de l'instructeur */}
+          <Card className="p-6">
+            <CardHeader className="pb-2">
+              <CardTitle className="flex items-center gap-2 text-lg">
+                <Send className="h-5 w-5" />
+                Ma réalisation
+              </CardTitle>
+              <p className="text-sm text-muted-foreground">
+                Déposez un fichier (document, image) ou rédigez votre rapport en texte, selon les consignes de l'instructeur.
+              </p>
+            </CardHeader>
+            <CardContent>
+              <Tabs value={reportMode} onValueChange={(v) => setReportMode(v as "file" | "text")}>
+                <TabsList className="grid w-full grid-cols-2">
+                  <TabsTrigger value="file" className="flex items-center gap-2">
+                    <FileUp className="h-4 w-4" />
+                    Fichier / Document / Image
+                  </TabsTrigger>
+                  <TabsTrigger value="text" className="flex items-center gap-2">
+                    <Type className="h-4 w-4" />
+                    Texte
+                  </TabsTrigger>
+                </TabsList>
+                <TabsContent value="file" className="mt-4 space-y-4">
+                  <label className="block text-sm font-medium">Déposer votre rapport</label>
+                  <input
+                    type="file"
+                    accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.gif,.webp,.txt"
+                    className="block w-full text-sm text-muted-foreground file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:bg-primary file:text-primary-foreground"
+                    onChange={(e) => setReportFile(e.target.files?.[0] ?? null)}
+                  />
+                  {reportFile && (
+                    <p className="text-sm text-muted-foreground">
+                      Fichier sélectionné : {reportFile.name}
+                    </p>
+                  )}
+                </TabsContent>
+                <TabsContent value="text" className="mt-4 space-y-4">
+                  <label className="block text-sm font-medium">Votre rapport (texte)</label>
+                  <Textarea
+                    placeholder="Saisissez votre rapport ici..."
+                    value={reportText}
+                    onChange={(e) => setReportText(e.target.value)}
+                    rows={8}
+                    className="resize-y"
+                  />
+                </TabsContent>
+              </Tabs>
+              <Button
+                className="mt-4 w-full"
+                disabled={!canSubmitReport || submitReportMutation.isPending}
+                onClick={handleSubmitReport}
+              >
+                {submitReportMutation.isPending ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Envoi en cours...
+                  </>
+                ) : (
+                  <>
+                    <Send className="mr-2 h-4 w-4" />
+                    Soumettre mon rapport
+                  </>
+                )}
+              </Button>
+            </CardContent>
           </Card>
         </div>
       </div>

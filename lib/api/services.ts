@@ -848,6 +848,14 @@ export const labService = {
   async submitLab(sessionId: number, request: SubmitLabRequest): Promise<ApiResponse<LabSession>> {
     return apiClient.post(`${API_ENDPOINTS.labs.submit}/${sessionId}`, request)
   },
+
+  /**
+   * Soumettre un rapport de lab sans session RUNNING (fichier ou texte selon instructions).
+   * POST /api/labs/submit-report/{labId}
+   */
+  async submitLabReport(labId: number, reportUrl: string): Promise<ApiResponse<LabSession>> {
+    return apiClient.post(`${API_ENDPOINTS.labs.submitReport}/${labId}`, { reportUrl })
+  },
 }
 
 // ============ Rubrique Services ============
@@ -1001,6 +1009,40 @@ export const evaluationService = {
   async getExamResults(attemptId: number): Promise<ApiResponse<any>> {
     return apiClient.get(`${API_ENDPOINTS.evaluations.getResults}/${attemptId}/results`)
   },
+
+  /**
+   * Soumettre un TD (travail dirigé) : fichier et/ou texte selon les instructions de l'instructeur.
+   * POST /api/evaluations/submit
+   */
+  async submitTP(
+    evaluationId: number,
+    payload: { submittedFileUrl?: string; submittedText?: string }
+  ): Promise<ApiResponse<any>> {
+    return apiClient.post(API_ENDPOINTS.evaluations.submit, {
+      evaluationId,
+      submittedFileUrl: payload.submittedFileUrl || undefined,
+      submittedText: payload.submittedText || undefined,
+    })
+  },
+}
+
+/**
+ * Upload d'un fichier (TD, Lab, etc.). Retourne l'URL du fichier ou null.
+ */
+export async function uploadFile(
+  file: File,
+  folderName: string = "submissions"
+): Promise<string | null> {
+  const formData = new FormData()
+  formData.append("file", file)
+  formData.append("folderName", folderName)
+  const response = await apiClient.postFormData<{ data?: string; success?: boolean }>(
+    API_ENDPOINTS.files.upload,
+    formData
+  )
+  if (!response.ok || !response.data) return null
+  const url = (response.data as any)?.data ?? response.data
+  return typeof url === "string" ? url : null
 }
 
 export const odcFormationService = {
