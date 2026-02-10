@@ -539,7 +539,9 @@ export function adaptQuestion(questionDTO: QuestionDTO): QuizQuestion & { option
 /**
  * Convertir un lab backend en lab frontend
  */
-export function adaptLab(labDefinition: LabDefinition, courseId?: string): Lab {
+export function adaptLab(labDefinition: LabDefinition & { lesson?: { id?: number }; lessonId?: number }, courseId?: string): Lab {
+  const raw = labDefinition as any
+  const lessonId = raw.lesson?.id ?? raw.lessonId ?? undefined
   return {
     id: String(labDefinition.id),
     courseId: courseId || "",
@@ -553,6 +555,7 @@ export function adaptLab(labDefinition: LabDefinition, courseId?: string): Lab {
     estimatedTime: labDefinition.estimatedDurationMinutes
       ? `${labDefinition.estimatedDurationMinutes} min`
       : "Non spécifié",
+    lessonId: lessonId != null ? lessonId : undefined,
   }
 }
 

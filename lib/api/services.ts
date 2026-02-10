@@ -777,29 +777,30 @@ export const labService = {
   },
 
   /**
-   * Obtenir les labs d'un cours (via les leçons du cours)
+   * Obtenir les labs d'un cours (via les leçons du cours).
+   * Utilise la réponse brute de l'API pour conserver lesson/lessonId avant adaptation.
    */
   async getLabsByCourse(courseId: number, lessons: any[]): Promise<Lab[]> {
     try {
-      const allLabs = await this.getAllLabs()
-      
-      // Extraire les IDs des leçons du cours
+      const response = await apiClient.get<any>(API_ENDPOINTS.labs.getAll)
+      if (!response.ok || !response.data) return []
+
+      const payload = response.data
+      const rawLabs = Array.isArray(payload)
+        ? payload
+        : (payload && Array.isArray((payload as any).data) ? (payload as any).data : [])
       const lessonIds = lessons.map((lesson: any) => {
-        const id = typeof lesson.id === 'string' ? parseInt(lesson.id, 10) : lesson.id
-        return isNaN(id) ? null : id
-      }).filter((id: any) => id !== null)
-      
-      // Filtrer les labs dont la leçon appartient au cours
-      // Les labs bruts ont une propriété lesson avec un id
-      return allLabs.filter((lab: any) => {
-        // Chercher dans les données brutes si le lab a une leçon associée
-        const rawLab = (lab as any).rawData || lab
-        const labLessonId = rawLab.lessonId || 
-                           (rawLab.lesson && (typeof rawLab.lesson.id === 'string' ? parseInt(rawLab.lesson.id, 10) : rawLab.lesson.id)) ||
-                           (rawLab.lesson && rawLab.lesson.id)
-        
-        return labLessonId && lessonIds.includes(labLessonId)
+        const id = typeof lesson.id === "string" ? parseInt(lesson.id, 10) : lesson.id
+        return Number.isNaN(id) ? null : id
+      }).filter((id: any) => id !== null) as number[]
+
+      const filtered = rawLabs.filter((raw: any) => {
+        const lid = raw.lesson?.id ?? raw.lessonId ?? (raw.lesson && typeof raw.lesson === "object" ? raw.lesson.id : null)
+        const num = lid != null ? (typeof lid === "string" ? parseInt(lid, 10) : Number(lid)) : null
+        return num != null && !Number.isNaN(num) && lessonIds.includes(num)
       })
+
+      return filtered.map((lab: any) => adaptLab(lab, String(courseId)))
     } catch (error) {
       logger.error(`Erreur lors de la récupération des labs pour le cours ${courseId}:`, error)
       return []
@@ -935,14 +936,14 @@ export const evaluationService = {
   },
 
   /**
-   * Obtenir les TP (Travaux Pratiques) d'un cours
+   * Obtenir les TD (Travaux Dirigés) d'un cours — associés aux leçons.
+   * Ne pas confondre avec l'examen de fin de cours (getCourseExam), qui est une évaluation type QUIZ sans leçon.
    */
   async getTPsByCourse(courseId: number): Promise<any[]> {
     try {
       const evaluations = await this.getEvaluationsByCourse(courseId)
-      // Filtrer les évaluations de type TP
-      return evaluations.filter((evaluation: any) => 
-        evaluation.type === "TP" || 
+      return evaluations.filter((evaluation: any) =>
+        evaluation.type === "TP" ||
         evaluation.type === "tp" ||
         (evaluation.evaluationType && evaluation.evaluationType === "TP")
       )

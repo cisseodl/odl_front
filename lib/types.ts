@@ -80,6 +80,8 @@ export interface Lab {
   objectives: string[]
   difficulty: "easy" | "medium" | "hard"
   estimatedTime: string
+  /** ID de la leçon associée (rempli depuis le backend) */
+  lessonId?: number | null
 }
 
 export interface Quiz {
