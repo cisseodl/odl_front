@@ -86,6 +86,7 @@ export interface Quiz {
   id: string
   courseId: string
   title: string
+  lessonId?: number | null // Leçon associée (optionnel)
   questions: QuizQuestion[]
   timeLimit?: number
   passingScore: number

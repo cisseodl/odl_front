@@ -210,6 +210,7 @@ export interface QuizDTO {
   title: string // Backend utilise "title" (pas "titre")
   description?: string
   courseId: number
+  lessonId?: number | null // Leçon associée (optionnel)
   durationMinutes?: number // Backend utilise "durationMinutes" (pas "dureeMinutes")
   scoreMinimum?: number
   questions?: QuestionDTO[]

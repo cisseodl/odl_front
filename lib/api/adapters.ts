@@ -494,10 +494,13 @@ export function adaptCategory(backendCategorie: BackendCategorie): string {
  * Convertir un quiz backend en quiz frontend
  */
 export function adaptQuiz(quizDTO: QuizDTO): Quiz {
+  const raw = quizDTO as QuizDTO & { lessonId?: number | null; lesson?: { id?: number } }
+  const lessonId = raw.lessonId ?? raw.lesson?.id ?? null
   return {
     id: String(quizDTO.id),
     courseId: String(quizDTO.courseId),
     title: quizDTO.title, // Backend utilise "title" (pas "titre")
+    lessonId: lessonId ?? undefined,
     questions: quizDTO.questions?.map(adaptQuestion) || [],
     timeLimit: quizDTO.durationMinutes ? quizDTO.durationMinutes * 60 : undefined, // Convertir minutes en secondes
     passingScore: quizDTO.scoreMinimum || 0,

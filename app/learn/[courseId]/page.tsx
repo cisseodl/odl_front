@@ -20,10 +20,10 @@ import { LessonContentViewer } from "@/components/lesson-content-viewer"
 import { cn } from "@/lib/utils"
 import { ProtectedRoute } from "@/components/protected-route"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
-import { courseService, learnerService, moduleService, evaluationService, labService, reviewService } from "@/lib/api/services"
+import { courseService, learnerService, moduleService, evaluationService, labService, reviewService, quizService } from "@/lib/api/services"
 import { adaptModule } from "@/lib/api/adapters"
 import { useRouter } from "next/navigation"
-import { FileCheck, Award, GraduationCap } from "lucide-react"
+import { FileCheck, Award, GraduationCap, HelpCircle, ClipboardList, ExternalLink } from "lucide-react"
 import { toast } from "sonner"
 import type { Lesson, Module } from "@/lib/types"
 import { CourseActivitiesSection } from "@/components/course-activities-section"
@@ -426,7 +426,7 @@ export default function LearnPage({ params }: LearnPageProps) {
     refetchOnWindowFocus: false,
   })
 
-  // Récupérer les TP (Travaux Pratiques) du cours
+  // Récupérer les TP (Travaux Pratiques / TD) du cours
   const {
     data: courseTPs,
     isLoading: isLoadingTPs,
@@ -434,8 +434,18 @@ export default function LearnPage({ params }: LearnPageProps) {
     queryKey: ["courseTPs", courseIdNum],
     queryFn: () => evaluationService.getTPsByCourse(courseIdNum),
     enabled: !Number.isNaN(courseIdNum),
-    staleTime: 10 * 60 * 1000, // 10 minutes
+    staleTime: 10 * 60 * 1000,
     refetchOnWindowFocus: false,
+  })
+
+  // Récupérer les quiz du cours (pour affichage par leçon)
+  const {
+    data: courseQuizzes,
+  } = useQuery({
+    queryKey: ["courseQuizzes", courseIdNum],
+    queryFn: () => quizService.getQuizzesByCourse(courseIdNum),
+    enabled: !Number.isNaN(courseIdNum),
+    staleTime: 10 * 60 * 1000,
   })
 
   // Filter lessons based on search query
@@ -1006,39 +1016,54 @@ export default function LearnPage({ params }: LearnPageProps) {
               </Card>
             </div>
 
-            {/* Labs associés à la leçon actuelle */}
-            {(() => {
-              // Filtrer les labs pour n'afficher que ceux associés à la leçon actuelle
-              const currentLessonId = currentLessonData?.id
-              const currentLessonLabs = courseLabs?.filter((lab: any) => {
-                const rawLab = (lab as any).rawData || lab
-                const labLessonId = rawLab.lessonId || 
-                                 (rawLab.lesson && (typeof rawLab.lesson.id === 'string' ? parseInt(rawLab.lesson.id, 10) : rawLab.lesson.id)) ||
-                                 (rawLab.lesson && rawLab.lesson.id)
-                
-                // Comparer les IDs (gérer les cas où ils sont des strings ou des numbers)
-                const currentId = typeof currentLessonId === 'string' ? parseInt(currentLessonId, 10) : currentLessonId
-                const labId = typeof labLessonId === 'string' ? parseInt(labLessonId, 10) : labLessonId
-                
-                return currentId && labId && currentId === labId
-              }) || []
+            {/* Activités associées à cette leçon (Lab, TD, Quiz) — affichées une fois la leçon terminée */}
+            {completedLessons.some((id) => String(id) === String(currentLesson)) && (() => {
+              const currentLessonIdNum = typeof currentLessonData?.id === "string"
+                ? parseInt(currentLessonData.id, 10)
+                : currentLessonData?.id
+              const normalizeId = (id: unknown) =>
+                id == null ? null : typeof id === "string" ? parseInt(String(id), 10) : Number(id)
+              const matchLesson = (lessonId: unknown) =>
+                currentLessonIdNum != null && lessonId != null && normalizeId(lessonId) === currentLessonIdNum
 
-              if (currentLessonLabs.length === 0) {
-                return null
-              }
+              const lessonLabs = (courseLabs || []).filter((lab: any) => {
+                const raw = lab?.rawData || lab
+                const lid = raw.lessonId ?? raw.lesson?.id ?? raw.lesson
+                return matchLesson(lid)
+              })
+              const lessonTPs = (courseTPs || []).filter((tp: any) => {
+                const lid = tp.lessonId ?? tp.lesson?.id ?? tp.lesson
+                return matchLesson(lid)
+              })
+              const lessonQuizzes = (courseQuizzes || []).filter(
+                (q: any) => matchLesson(q.lessonId ?? (q as any).lesson?.id)
+              )
+
+              const hasAny = lessonLabs.length > 0 || lessonTPs.length > 0 || lessonQuizzes.length > 0
+              if (!hasAny) return null
 
               return (
-                <div className="mt-8 space-y-4">
+                <div className="mt-8 space-y-6">
                   <Separator />
-                  <div>
-                    <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
-                      <FlaskConical className="h-5 w-5 text-orange-500" />
-                      Labs associés à cette leçon
-                    </h3>
+                  <h3 className="text-xl font-bold flex items-center gap-2">
+                    <FileCheck className="h-5 w-5 text-primary" />
+                    Activités associées à cette leçon
+                  </h3>
+                  <p className="text-sm text-muted-foreground">
+                    Labs, travaux dirigés et quiz liés à cette leçon (selon ce que le formateur a configuré).
+                  </p>
+
+                  {lessonLabs.length > 0 && (
                     <Card>
-                      <CardContent className="pt-6">
+                      <CardHeader className="pb-2">
+                        <CardTitle className="text-base flex items-center gap-2">
+                          <FlaskConical className="h-5 w-5 text-orange-500" />
+                          Labs
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent>
                         <div className="space-y-3">
-                          {currentLessonLabs.map((lab: any) => (
+                          {lessonLabs.map((lab: any) => (
                             <div
                               key={lab.id}
                               className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition-colors"
@@ -1050,28 +1075,104 @@ export default function LearnPage({ params }: LearnPageProps) {
                                 <div className="flex-1">
                                   <h4 className="font-semibold">{lab.title}</h4>
                                   {lab.description && (
-                                    <p className="text-sm text-muted-foreground line-clamp-1 mt-1">
-                                      {lab.description}
-                                    </p>
+                                    <p className="text-sm text-muted-foreground line-clamp-1 mt-1">{lab.description}</p>
                                   )}
                                 </div>
                               </div>
-                              <Button
-                                size="sm"
-                                onClick={() => {
-                                  // TODO: Implémenter la navigation vers le lab
-                                  console.log("Démarrer lab:", lab.id)
-                                }}
-                              >
-                                <Play className="h-4 w-4 mr-2" />
-                                Démarrer
-                              </Button>
+                              <Link href={`/learn/${courseId}/lab/${lab.id}`}>
+                                <Button size="sm">
+                                  <Play className="h-4 w-4 mr-2" />
+                                  Démarrer
+                                </Button>
+                              </Link>
                             </div>
                           ))}
                         </div>
                       </CardContent>
                     </Card>
-                  </div>
+                  )}
+
+                  {lessonTPs.length > 0 && (
+                    <Card>
+                      <CardHeader className="pb-2">
+                        <CardTitle className="text-base flex items-center gap-2">
+                          <ClipboardList className="h-5 w-5 text-blue-500" />
+                          Travaux dirigés (TD)
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="space-y-3">
+                          {lessonTPs.map((tp: any) => (
+                            <div
+                              key={tp.id}
+                              className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition-colors"
+                            >
+                              <div className="flex items-center gap-4 flex-1">
+                                <div className="rounded-full bg-blue-100 p-2">
+                                  <ClipboardList className="h-5 w-5 text-blue-600" />
+                                </div>
+                                <div className="flex-1">
+                                  <h4 className="font-semibold">{tp.title || "TD sans titre"}</h4>
+                                  {tp.description && (
+                                    <p className="text-sm text-muted-foreground line-clamp-1 mt-1">{tp.description}</p>
+                                  )}
+                                </div>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                {tp.tpFileUrl && (
+                                  <Button size="sm" variant="outline" onClick={() => window.open(tp.tpFileUrl, "_blank")}>
+                                    <ExternalLink className="h-4 w-4 mr-2" />
+                                    Télécharger
+                                  </Button>
+                                )}
+                                <Link href={`/learn/${courseId}/evaluation/${tp.id}`}>
+                                  <Button size="sm">Commencer</Button>
+                                </Link>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  )}
+
+                  {lessonQuizzes.length > 0 && (
+                    <Card>
+                      <CardHeader className="pb-2">
+                        <CardTitle className="text-base flex items-center gap-2">
+                          <HelpCircle className="h-5 w-5 text-amber-500" />
+                          Quiz
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="space-y-3">
+                          {lessonQuizzes.map((quiz: any) => (
+                            <div
+                              key={quiz.id}
+                              className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition-colors"
+                            >
+                              <div className="flex items-center gap-4 flex-1">
+                                <div className="rounded-full bg-amber-100 p-2">
+                                  <HelpCircle className="h-5 w-5 text-amber-600" />
+                                </div>
+                                <div className="flex-1">
+                                  <h4 className="font-semibold">{quiz.title}</h4>
+                                  {quiz.questions?.length != null && (
+                                    <p className="text-sm text-muted-foreground mt-1">
+                                      {quiz.questions.length} question{quiz.questions.length > 1 ? "s" : ""}
+                                    </p>
+                                  )}
+                                </div>
+                              </div>
+                              <Link href={`/learn/${courseId}/quiz/${quiz.id}`}>
+                                <Button size="sm">Commencer le quiz</Button>
+                              </Link>
+                            </div>
+                          ))}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  )}
                 </div>
               )
             })()}
