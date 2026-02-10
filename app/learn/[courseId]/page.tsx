@@ -807,7 +807,9 @@ export default function LearnPage({ params }: LearnPageProps) {
 
           <div className="flex items-center gap-2">
             {(() => {
-              const currentIndex = lessons.findIndex((l) => String(l.id) === String(currentLesson))
+              let currentIndex = lessons.findIndex((l) => String(l.id) === String(currentLesson))
+              // Si la leçon courante n'est pas dans la liste (ex. initial 0), considérer la première
+              if (currentIndex === -1 && lessons.length > 0) currentIndex = 0
               const hasPrev = currentIndex > 0
               const hasNext = currentIndex >= 0 && currentIndex < lessons.length - 1
               return (
@@ -1090,7 +1092,6 @@ export default function LearnPage({ params }: LearnPageProps) {
               )
 
               const hasAny = lessonLabs.length > 0 || lessonTPs.length > 0 || lessonQuizzes.length > 0
-              if (!hasAny) return null
 
               return (
                 <div className="mt-8 space-y-6">
@@ -1102,7 +1103,12 @@ export default function LearnPage({ params }: LearnPageProps) {
                   <p className="text-sm text-muted-foreground">
                     Labs, travaux dirigés et quiz liés à cette leçon (selon ce que le formateur a configuré).
                   </p>
-
+                  {!hasAny ? (
+                    <p className="text-sm text-muted-foreground italic py-4">
+                      Aucune activité (Lab, TD ou Quiz) n’est associée à cette leçon pour le moment.
+                    </p>
+                  ) : (
+                  <>
                   {lessonLabs.length > 0 && (
                     <Card>
                       <CardHeader className="pb-2">
@@ -1222,6 +1228,8 @@ export default function LearnPage({ params }: LearnPageProps) {
                         </div>
                       </CardContent>
                     </Card>
+                  )}
+                </>
                   )}
                 </div>
               )
