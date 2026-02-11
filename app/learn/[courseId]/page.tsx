@@ -834,10 +834,10 @@ export default function LearnPage({ params }: LearnPageProps) {
           <div className="flex items-center gap-2">
             {(() => {
               let currentIndex = lessons.findIndex((l) => String(l.id) === String(currentLesson))
-              // Si la leçon courante n'est pas dans la liste (ex. initial 0), considérer la première
               if (currentIndex === -1 && lessons.length > 0) currentIndex = 0
               const hasPrev = currentIndex > 0
-              const hasNext = currentIndex >= 0 && currentIndex < lessons.length - 1
+              const hasNextLesson = currentIndex >= 0 && currentIndex < lessons.length - 1
+              const hasCurrentLesson = lessons.length > 0 && currentIndex >= 0
               return (
                 <>
                   <Button
@@ -852,10 +852,10 @@ export default function LearnPage({ params }: LearnPageProps) {
                   <Button
                     variant="outline"
                     size="sm"
-                    disabled={!hasNext}
+                    disabled={!hasCurrentLesson}
                     onClick={() => {
                       handleMarkComplete()
-                      if (hasNext) setCurrentLesson(lessons[currentIndex + 1].id)
+                      if (hasNextLesson) setCurrentLesson(lessons[currentIndex + 1].id)
                     }}
                   >
                     <span className="hidden sm:inline mr-1">Suivant</span>
