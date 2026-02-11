@@ -1052,7 +1052,7 @@ export default function LearnPage({ params }: LearnPageProps) {
             )}
 
             {/* Rappel : terminer la leçon pour voir les activités */}
-            {!completedLessons.some((id) => String(id) => String(currentLesson)) && (
+            {!completedLessons.some((id) => String(id) === String(currentLesson)) && (
               <p className="text-sm text-muted-foreground mt-6 py-2 px-4 bg-muted/50 rounded-lg border border-border">
                 Cliquez sur <strong>Suivant</strong> pour terminer cette leçon et afficher les activités associées (Labs, TD, Quiz — optionnels).
               </p>
