@@ -1,6 +1,6 @@
 "use client"
 
-import { use, useState } from "react"
+import { use, useState, useEffect } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { ChevronLeft, CheckCircle2, XCircle, Award, Download, Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -25,6 +25,18 @@ export default function ExamResultsPage({ params }: ExamResultsPageProps) {
   const searchParams = useSearchParams()
   const attemptIdFromUrl = searchParams?.get("attemptId")
   const attemptId = attemptIdFromUrl ? Number.parseInt(attemptIdFromUrl) : examIdNum
+
+  const [certificateDisplayName, setCertificateDisplayName] = useState<string>("")
+  useEffect(() => {
+    if (typeof window === "undefined" || Number.isNaN(attemptId)) return
+    try {
+      const raw = sessionStorage.getItem(`exam-certificate-${attemptId}`)
+      if (raw) {
+        const { name } = JSON.parse(raw)
+        setCertificateDisplayName(name || "")
+      }
+    } catch (_) {}
+  }, [attemptId])
 
   // Récupérer les résultats de l'examen
   const {
@@ -102,6 +114,35 @@ export default function ExamResultsPage({ params }: ExamResultsPageProps) {
             <h1 className="text-3xl font-bold">Résultats de l'examen</h1>
           </div>
 
+          {/* Message principal : succès (certificat envoyé sous 72h) ou échec */}
+          <Card className="mb-6 border-2 border-primary/20">
+            <CardContent className="pt-6">
+              {isPassed ? (
+                <div className="flex items-start gap-3">
+                  <CheckCircle2 className="h-8 w-8 text-green-600 shrink-0 mt-0.5" />
+                  <div>
+                    <p className="text-lg font-semibold text-green-700">
+                      Félicitations{certificateDisplayName ? ` ${certificateDisplayName}` : ""}, vous avez réussi !
+                    </p>
+                    <p className="text-muted-foreground mt-1">
+                      Votre certificat vous sera envoyé dans les 72h qui suivent via votre email.
+                    </p>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex items-start gap-3">
+                  <XCircle className="h-8 w-8 text-destructive shrink-0 mt-0.5" />
+                  <div>
+                    <p className="text-lg font-semibold text-destructive">Échec</p>
+                    <p className="text-muted-foreground mt-1">
+                      Vous n'avez pas atteint le score minimum de 70% pour réussir. Vous pouvez réessayer l'évaluation.
+                    </p>
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
           {/* Score Card */}
           <Card className="mb-6">
             <CardHeader>
@@ -117,31 +158,14 @@ export default function ExamResultsPage({ params }: ExamResultsPageProps) {
             </CardHeader>
             <CardContent className="space-y-4">
               <Progress value={score} className="h-3" />
-              <div className="flex items-center gap-2">
-                {isPassed ? (
-                  <>
-                    <CheckCircle2 className="h-5 w-5 text-green-600" />
-                    <p className="text-green-600 font-semibold">
-                      Félicitations ! Vous avez réussi l'examen.
-                    </p>
-                  </>
-                ) : (
-                  <>
-                    <XCircle className="h-5 w-5 text-destructive" />
-                    <p className="text-destructive font-semibold">
-                      Vous n'avez pas atteint le score minimum de 70% pour réussir.
-                    </p>
-                  </>
-                )}
-              </div>
               <p className="text-sm text-muted-foreground">
                 Score minimum requis : 70%
               </p>
             </CardContent>
           </Card>
 
-          {/* Certificat Card */}
-          {isPassed && certificate && (
+          {/* Certificat Card (téléchargement si déjà disponible) */}
+          {isPassed && certificate?.certificateUrl && (
             <Card className="mb-6 border-primary/50 bg-primary/5">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
@@ -151,16 +175,10 @@ export default function ExamResultsPage({ params }: ExamResultsPageProps) {
               </CardHeader>
               <CardContent className="space-y-4">
                 <p className="text-muted-foreground">
-                  Félicitations ! Votre certificat de réussite est maintenant disponible.
+                  Votre certificat est également disponible au téléchargement ci-dessous (il vous sera en plus envoyé par email).
                 </p>
                 <Button
-                  onClick={() => {
-                    if (certificate.certificateUrl) {
-                      window.open(certificate.certificateUrl, "_blank")
-                    } else {
-                      toast.error("URL du certificat non disponible")
-                    }
-                  }}
+                  onClick={() => window.open(certificate.certificateUrl, "_blank")}
                   className="w-full sm:w-auto"
                 >
                   <Download className="h-4 w-4 mr-2" />

@@ -17,6 +17,7 @@ import { evaluationService } from "@/lib/api/services"
 import { toast } from "sonner"
 import { SatisfactionModal } from "@/components/satisfaction-modal"
 import { serializeData } from "@/lib/utils/serialize"
+import { Input } from "@/components/ui/input"
 
 interface ExamPageProps {
   params: Promise<{ courseId: string; examId: string }>
@@ -51,6 +52,23 @@ export default function ExamPage({ params }: ExamPageProps) {
   const [markedForReview, setMarkedForReview] = useState<number[]>([])
   const [showSatisfactionModal, setShowSatisfactionModal] = useState(false)
   const [submittedAttemptId, setSubmittedAttemptId] = useState<number | null>(null)
+
+  const [examStep, setExamStep] = useState<"form" | "exam">("form")
+  const [certificateName, setCertificateName] = useState("")
+  const [certificateEmail, setCertificateEmail] = useState("")
+
+  useEffect(() => {
+    const key = `exam-started-${courseId}-${examId}`
+    try {
+      const saved = typeof window !== "undefined" ? sessionStorage.getItem(key) : null
+      if (saved) {
+        const { name, email } = JSON.parse(saved)
+        setCertificateName(name || "")
+        setCertificateEmail(email || "")
+        setExamStep("exam")
+      }
+    } catch (_) {}
+  }, [courseId, examId])
 
   // Utiliser les questions de l'examen chargé depuis l'API
   const questions: any[] = exam?.questions || []
@@ -115,9 +133,15 @@ export default function ExamPage({ params }: ExamPageProps) {
       throw new Error(response.message || "Erreur lors de la soumission")
     },
     onSuccess: (data: any) => {
-      // L'examen est soumis, maintenant afficher le modal de satisfaction
-      // L'ID de la tentative peut être dans data.id, data.data.id, ou data.data
       const attemptId = data?.id || data?.data?.id || (data?.data && typeof data.data === 'object' && data.data.id ? data.data.id : null)
+      if (attemptId && typeof window !== "undefined") {
+        try {
+          sessionStorage.setItem(
+            `exam-certificate-${attemptId}`,
+            JSON.stringify({ name: certificateName || "", email: certificateEmail || "" })
+          )
+        } catch (_) {}
+      }
       if (attemptId) {
         setSubmittedAttemptId(attemptId)
         setShowSatisfactionModal(true)
@@ -211,6 +235,83 @@ export default function ExamPage({ params }: ExamPageProps) {
           Retour au cours
         </Button>
       </div>
+    )
+  }
+
+  if (examStep === "form") {
+    const handleStartExam = () => {
+      const name = certificateName.trim()
+      const email = certificateEmail.trim()
+      if (!name || !email) {
+        toast.error("Veuillez renseigner votre nom complet et votre adresse email.")
+        return
+      }
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        toast.error("Veuillez entrer une adresse email valide.")
+        return
+      }
+      try {
+        sessionStorage.setItem(
+          `exam-started-${courseId}-${examId}`,
+          JSON.stringify({ name, email })
+        )
+      } catch (_) {}
+      setExamStep("exam")
+    }
+
+    return (
+      <ProtectedRoute>
+        <div className="min-h-screen bg-muted/30">
+          <div className="container max-w-lg mx-auto px-4 py-8">
+            <Button
+              variant="ghost"
+              onClick={() => router.push(`/learn/${courseId}`)}
+              className="mb-6"
+            >
+              <ChevronLeft className="h-4 w-4 mr-2" />
+              Retour au cours
+            </Button>
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <GraduationCap className="h-6 w-6 text-primary" />
+                  Avant de commencer l'évaluation
+                </CardTitle>
+                <p className="text-sm text-muted-foreground">
+                  Indiquez le nom qui figurera sur votre certificat et l'adresse email pour l'envoi du certificat.
+                </p>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="certificate-name">Nom complet (pour le certificat)</Label>
+                  <Input
+                    id="certificate-name"
+                    type="text"
+                    placeholder="Prénom et nom"
+                    value={certificateName}
+                    onChange={(e) => setCertificateName(e.target.value)}
+                    className="w-full"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="certificate-email">Adresse email (pour l'envoi du certificat)</Label>
+                  <Input
+                    id="certificate-email"
+                    type="email"
+                    placeholder="votre@email.com"
+                    value={certificateEmail}
+                    onChange={(e) => setCertificateEmail(e.target.value)}
+                    className="w-full"
+                  />
+                </div>
+                <Button onClick={handleStartExam} className="w-full" size="lg">
+                  Commencer l'évaluation
+                </Button>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      </ProtectedRoute>
     )
   }
 

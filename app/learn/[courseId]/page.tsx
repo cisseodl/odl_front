@@ -763,26 +763,26 @@ export default function LearnPage({ params }: LearnPageProps) {
           </div>
         )}
 
-        {/* Certificat — sous la liste des leçons, message encourageant */}
+        {/* Évaluation — sous la liste des leçons */}
         <div className="border-t p-4 space-y-2">
           <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-            Certificat
+            Évaluation
           </p>
           {course?.certificationMode === "BY_LABS" ? (
             <p className="text-xs text-foreground">
-              Validez vos labs pour que l’instructeur puisse vous attribuer votre certificat.
+              L’évaluation se fait via la validation de vos labs par l’instructeur.
             </p>
           ) : (
             <>
               {isCourseCompletedForExam && courseExam?.id ? (
                 <Link href={`/learn/${courseId}/exam/${courseExam.id}`}>
                   <Button size="sm" className="w-full mt-2">
-                    Passer l’évaluation (70 % min.)
+                    Passer l’évaluation
                   </Button>
                 </Link>
               ) : (
                 <p className="text-xs text-foreground">
-                  Passez l’évaluation en fin de parcours pour obtenir votre certificat.
+                  Passez l’évaluation en fin de parcours.
                 </p>
               )}
             </>
