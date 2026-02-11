@@ -128,6 +128,7 @@ export interface BackendCourse {
   curriculum?: ModuleDto[] // List<ModuleDto>
   enrolledCount: number
   status?: "BROUILLON" | "EN_ATTENTE" | "PUBLIE" | "REJETE"
+  certificationMode?: "BY_EXAM" | "BY_LABS"
   rejectionReason?: string
 }
 

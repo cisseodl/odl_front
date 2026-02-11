@@ -453,6 +453,7 @@ export function adaptCourse(backendCourse: BackendCourse | any): Course {
     curriculum,
     enrolledCount: backendCourse.enrolledCount ?? 0,
     features: backendCourse.features || [],
+    certificationMode: backendCourse.certificationMode ?? "BY_EXAM",
   }
 }
 

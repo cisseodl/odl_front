@@ -17,6 +17,8 @@ export interface Course {
   curriculum: Module[]
   enrolledCount: number
   features: string[]
+  /** Mode de certification : BY_EXAM = évaluation 70 %, BY_LABS = validation des labs par l'instructeur */
+  certificationMode?: "BY_EXAM" | "BY_LABS"
 }
 
 export interface Instructor {

@@ -702,7 +702,7 @@ export default function LearnPage({ params }: LearnPageProps) {
         <div className="mt-3">
           <div className="flex items-center justify-between text-xs text-muted-foreground mb-2">
             <span>Progression</span>
-            <span>{Math.round(progress)}%</span>
+            <span>{completedLessons.length}/{lessons.length} leçons · {Math.round(progress)}%</span>
           </div>
           <Progress value={progress} className="h-2" />
         </div>
@@ -762,6 +762,35 @@ export default function LearnPage({ params }: LearnPageProps) {
             Aucun résultat trouvé pour "{searchQuery}"
           </div>
         )}
+
+        {/* Évaluation (certification) — sous la liste des leçons */}
+        <div className="border-t p-4 space-y-2">
+          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+            Évaluation (certificat)
+          </p>
+          <p className="text-xs text-muted-foreground">
+            Labs, TD et Quiz sont optionnels. L’évaluation est obligatoire uniquement si vous souhaitez obtenir le certificat.
+          </p>
+          {course?.certificationMode === "BY_LABS" ? (
+            <p className="text-xs text-foreground">
+              Votre certificat sera attribué après validation de vos labs par l’instructeur.
+            </p>
+          ) : (
+            <>
+              {isCourseCompletedForExam && courseExam?.id ? (
+                <Link href={`/learn/${courseId}/exam/${courseExam.id}`}>
+                  <Button size="sm" className="w-full mt-2">
+                    Passer l’évaluation (70 % min.)
+                  </Button>
+                </Link>
+              ) : (
+                <p className="text-xs text-muted-foreground italic">
+                  Terminez toutes les leçons pour accéder à l’évaluation.
+                </p>
+              )}
+            </>
+          )}
+        </div>
       </div>
     </div>
   )
@@ -1022,8 +1051,14 @@ export default function LearnPage({ params }: LearnPageProps) {
               </Tabs>
             )}
 
-            {/* Activités associées à cette leçon (Lab, TD, Quiz) — toujours visibles pour la leçon courante */}
-            {(() => {
+            {/* Rappel : terminer la leçon pour voir les activités */}
+            {!completedLessons.some((id) => String(id) => String(currentLesson)) && (
+              <p className="text-sm text-muted-foreground mt-6 py-2 px-4 bg-muted/50 rounded-lg border border-border">
+                Cliquez sur <strong>Suivant</strong> pour terminer cette leçon et afficher les activités associées (Labs, TD, Quiz — optionnels).
+              </p>
+            )}
+            {/* Activités associées à cette leçon — visibles après avoir terminé la leçon (bouton Suivant) */}
+            {completedLessons.some((id) => String(id) === String(currentLesson)) && (() => {
               const currentLessonIdNum = typeof currentLessonData?.id === "string"
                 ? parseInt(currentLessonData.id, 10)
                 : currentLessonData?.id
