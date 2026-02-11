@@ -403,14 +403,14 @@ export default function LearnPage({ params }: LearnPageProps) {
     })
   }
 
-  // Vérifier si un examen existe pour ce cours (seulement si le cours est complété)
+  // Charger l'examen du cours (toujours, pour afficher la section Évaluation grisée ou cliquable)
   const {
     data: courseExam,
     isLoading: isLoadingExam,
   } = useQuery({
     queryKey: ["courseExam", courseIdNum],
     queryFn: () => evaluationService.getCourseExam(courseIdNum),
-    enabled: isCourseCompletedForExam && !Number.isNaN(courseIdNum),
+    enabled: !Number.isNaN(courseIdNum),
     retry: false,
   })
 
@@ -763,15 +763,27 @@ export default function LearnPage({ params }: LearnPageProps) {
           </div>
         )}
 
-        {/* Évaluation — sous la liste des leçons */}
-        <div className="border-t p-4 space-y-2">
+        {/* Évaluation — débloquée uniquement quand toutes les leçons sont terminées */}
+        <div
+          className={cn(
+            "border-t p-4 space-y-2",
+            !isCourseCompletedForExam && "opacity-75",
+          )}
+        >
           <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
             Évaluation
           </p>
           {course?.certificationMode === "BY_LABS" ? (
-            <p className="text-xs text-foreground">
-              L’évaluation se fait via la validation de vos labs par l’instructeur.
-            </p>
+            <>
+              <p className="text-xs text-foreground">
+                L’évaluation se fait via la validation de vos labs par l’instructeur.
+              </p>
+              {!isCourseCompletedForExam && (
+                <p className="text-xs text-muted-foreground italic">
+                  Terminez toutes les leçons ({completedLessons.length}/{lessons.length}) pour accéder à l’évaluation.
+                </p>
+              )}
+            </>
           ) : (
             <>
               {isCourseCompletedForExam && courseExam?.id ? (
@@ -781,9 +793,18 @@ export default function LearnPage({ params }: LearnPageProps) {
                   </Button>
                 </Link>
               ) : (
-                <p className="text-xs text-foreground">
-                  Passez l’évaluation en fin de parcours.
-                </p>
+                <>
+                  <p className="text-xs text-foreground">
+                    {lessons.length > 0
+                      ? `Terminez toutes les leçons pour débloquer l’évaluation (${completedLessons.length}/${lessons.length} leçons).`
+                      : "Passez l’évaluation en fin de parcours."}
+                  </p>
+                  {lessons.length > 0 && (
+                    <Button size="sm" className="w-full mt-2" disabled>
+                      Passer l’évaluation
+                    </Button>
+                  )}
+                </>
               )}
             </>
           )}

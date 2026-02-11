@@ -13,7 +13,7 @@ import { Badge } from "@/components/ui/badge"
 import { cn } from "@/lib/utils"
 import { ProtectedRoute } from "@/components/protected-route"
 import { useQuery, useMutation } from "@tanstack/react-query"
-import { evaluationService } from "@/lib/api/services"
+import { evaluationService, learnerService } from "@/lib/api/services"
 import { toast } from "sonner"
 import { SatisfactionModal } from "@/components/satisfaction-modal"
 import { serializeData } from "@/lib/utils/serialize"
@@ -29,6 +29,16 @@ export default function ExamPage({ params }: ExamPageProps) {
   const examIdNum = Number.parseInt(examId)
   const courseIdNum = Number.parseInt(courseId)
 
+  // Vérifier que toutes les leçons sont terminées avant d'autoriser l'évaluation
+  const { data: courseProgress, isLoading: isLoadingProgress } = useQuery({
+    queryKey: ["courseProgress", courseIdNum],
+    queryFn: () => learnerService.getCourseProgress(courseIdNum),
+    enabled: !Number.isNaN(courseIdNum),
+  })
+  const totalLessons = courseProgress?.totalLessons ?? 0
+  const completedLessonsCount = courseProgress?.completedLessons ?? 0
+  const allLessonsCompleted = totalLessons > 0 && completedLessonsCount >= totalLessons
+
   // Charger l'examen depuis l'API
   const {
     data: exam,
@@ -39,7 +49,6 @@ export default function ExamPage({ params }: ExamPageProps) {
     queryFn: async () => {
       const response = await evaluationService.getCourseExam(courseIdNum)
       if (response.ok && response.data) {
-        // Sérialiser les données pour éviter les erreurs React #185
         return serializeData(response.data)
       }
       throw new Error(response.message || "Examen non trouvé")
@@ -213,6 +222,43 @@ export default function ExamPage({ params }: ExamPageProps) {
 
   if (Number.isNaN(examIdNum) || Number.isNaN(courseIdNum)) {
     return <div>Paramètres invalides</div>
+  }
+
+  // Attendre la progression avant d'afficher l'examen ou le blocage
+  if (isLoadingProgress) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <span className="ml-2 text-muted-foreground">Vérification de votre progression...</span>
+      </div>
+    )
+  }
+
+  // Bloquer l'accès si toutes les leçons ne sont pas terminées
+  if (courseProgress && !allLessonsCompleted) {
+    return (
+      <ProtectedRoute>
+        <div className="min-h-screen bg-muted/30 flex items-center justify-center p-4">
+          <Card className="max-w-md w-full">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <GraduationCap className="h-6 w-6 text-primary" />
+                Évaluation non disponible
+              </CardTitle>
+              <p className="text-sm text-muted-foreground">
+                Vous devez terminer toutes les leçons du cours avant de passer l&apos;évaluation ({completedLessonsCount}/{totalLessons} leçons terminées).
+              </p>
+            </CardHeader>
+            <CardContent>
+              <Button onClick={() => router.push(`/learn/${courseId}`)} className="w-full">
+                <ChevronLeft className="h-4 w-4 mr-2" />
+                Retour au cours
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+      </ProtectedRoute>
+    )
   }
 
   if (isLoadingExam) {
