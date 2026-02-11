@@ -405,7 +405,7 @@ export default function LearnPage({ params }: LearnPageProps) {
 
   // Charger l'examen du cours (toujours, pour afficher la section Évaluation grisée ou cliquable)
   const {
-    data: courseExam,
+    data: courseExamResponse,
     isLoading: isLoadingExam,
   } = useQuery({
     queryKey: ["courseExam", courseIdNum],
@@ -413,6 +413,9 @@ export default function LearnPage({ params }: LearnPageProps) {
     enabled: !Number.isNaN(courseIdNum),
     retry: false,
   })
+  // L'API retourne { data: examEntity } ; l'examen peut être dans .data ou à la racine
+  const courseExam = (courseExamResponse as any)?.data ?? courseExamResponse
+  const courseExamId = courseExam?.id
 
   // Récupérer les labs du cours
   const {
@@ -786,8 +789,8 @@ export default function LearnPage({ params }: LearnPageProps) {
             </>
           ) : (
             <>
-              {isCourseCompletedForExam && courseExam?.id ? (
-                <Link href={`/learn/${courseId}/exam/${courseExam.id}`}>
+              {isCourseCompletedForExam && courseExamId ? (
+                <Link href={`/learn/${courseId}/exam/${courseExamId}`}>
                   <Button size="sm" className="w-full mt-2">
                     Passer l’évaluation
                   </Button>
