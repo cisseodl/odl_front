@@ -386,10 +386,14 @@ export default function LearnPage({ params }: LearnPageProps) {
   }, [curriculum, modulesFromApi, modulesError])
 
   // Calculer currentLessonData et progress pour déterminer si le cours est complété
-  // (doit être fait avant le useQuery pour courseExam)
   const currentLessonDataForExam = lessons.find(lesson => String(lesson.id) === String(currentLesson)) || lessons[0]
   const progressForExam = lessons.length > 0 ? (completedLessons.length / lessons.length) * 100 : 0
-  const isCourseCompletedForExam = progressForExam === 100 && lessons.length > 0
+  // Déblocage évaluation : priorité à la progression API (même source que la page examen) pour éviter désync
+  const totalFromApi = courseProgress?.totalLessons ?? 0
+  const completedFromApi = courseProgress?.completedLessons ?? 0
+  const isCourseCompletedForExam = totalFromApi > 0 && completedFromApi >= totalFromApi
+    ? true
+    : progressForExam === 100 && lessons.length > 0
   
   // DEBUG: Log pour comprendre quelle leçon est sélectionnée
   if (currentLessonDataForExam && (currentLessonDataForExam.type === "document" || currentLessonDataForExam.type === "DOCUMENT")) {
@@ -655,9 +659,9 @@ export default function LearnPage({ params }: LearnPageProps) {
   // ============================================
   // CODE NORMAL - SEULEMENT SI L'UTILISATEUR EST INSCRIT
   // ============================================
-  // Utiliser les valeurs calculées (ou recalculer si nécessaire)
+  // Utiliser les valeurs calculées ; priorité API pour cohérence avec le déblocage évaluation
   const currentLessonData = currentLessonDataForExam
-  const progress = progressForExam
+  const progress = totalFromApi > 0 ? (completedFromApi / totalFromApi) * 100 : progressForExam
   const isCourseCompleted = isCourseCompletedForExam
 
   // MAINTENANT on peut faire les retours conditionnels
@@ -705,7 +709,7 @@ export default function LearnPage({ params }: LearnPageProps) {
         <div className="mt-3">
           <div className="flex items-center justify-between text-xs text-muted-foreground mb-2">
             <span>Progression</span>
-            <span>{completedLessons.length}/{lessons.length} leçons · {Math.round(progress)}%</span>
+            <span>{totalFromApi > 0 ? `${completedFromApi}/${totalFromApi}` : `${completedLessons.length}/${lessons.length}`} leçons · {Math.round(totalFromApi > 0 ? (completedFromApi / totalFromApi) * 100 : progress)}%</span>
           </div>
           <Progress value={progress} className="h-2" />
         </div>
@@ -783,7 +787,7 @@ export default function LearnPage({ params }: LearnPageProps) {
               </p>
               {!isCourseCompletedForExam && (
                 <p className="text-xs text-muted-foreground italic">
-                  Terminez toutes les leçons ({completedLessons.length}/{lessons.length}) pour accéder à l’évaluation.
+                  Terminez toutes les leçons ({totalFromApi > 0 ? `${completedFromApi}/${totalFromApi}` : `${completedLessons.length}/${lessons.length}`}) pour accéder à l’évaluation.
                 </p>
               )}
             </>
@@ -797,15 +801,23 @@ export default function LearnPage({ params }: LearnPageProps) {
                 </Link>
               ) : (
                 <>
+                  {isCourseCompletedForExam && !courseExamId ? (
+                    <p className="text-xs text-foreground text-amber-600 dark:text-amber-500">
+                      Aucune évaluation n’est configurée pour ce cours. L’instructeur doit créer une évaluation (quiz de fin de cours) pour que vous puissiez la passer.
+                    </p>
+                  ) : (
+                    <>
                   <p className="text-xs text-foreground">
                     {lessons.length > 0
-                      ? `Terminez toutes les leçons pour débloquer l’évaluation (${completedLessons.length}/${lessons.length} leçons).`
+                      ? `Terminez toutes les leçons pour débloquer l’évaluation (${totalFromApi > 0 ? `${completedFromApi}/${totalFromApi}` : `${completedLessons.length}/${lessons.length}`} leçons).`
                       : "Passez l’évaluation en fin de parcours."}
                   </p>
                   {lessons.length > 0 && (
                     <Button size="sm" className="w-full mt-2" disabled>
                       Passer l’évaluation
                     </Button>
+                  )}
+                    </>
                   )}
                 </>
               )}

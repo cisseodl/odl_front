@@ -51,7 +51,7 @@ export default function ExamPage({ params }: ExamPageProps) {
       if (response.ok && response.data) {
         return serializeData(response.data)
       }
-      throw new Error(response.message || "Examen non trouvé")
+      throw new Error(response.message || "Évaluation non trouvée")
     },
     enabled: !Number.isNaN(examIdNum) && !Number.isNaN(courseIdNum),
   })
@@ -169,7 +169,7 @@ export default function ExamPage({ params }: ExamPageProps) {
     },
     onError: (error: any) => {
       toast.error("Erreur", {
-        description: error?.message || "Erreur lors de la soumission de l'examen",
+        description: error?.message || "Erreur lors de la soumission de l'évaluation",
       })
     },
   })
@@ -265,7 +265,7 @@ export default function ExamPage({ params }: ExamPageProps) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        <span className="ml-2 text-muted-foreground">Chargement de l'examen...</span>
+        <span className="ml-2 text-muted-foreground">Chargement de l'évaluation...</span>
       </div>
     )
   }
@@ -274,8 +274,8 @@ export default function ExamPage({ params }: ExamPageProps) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[400px] space-y-4">
         <XCircle className="h-12 w-12 text-destructive" />
-        <h2 className="text-xl font-semibold">Examen non trouvé</h2>
-        <p className="text-muted-foreground">Cet examen n'est pas disponible.</p>
+        <h2 className="text-xl font-semibold">Évaluation non trouvée</h2>
+        <p className="text-muted-foreground">Cette évaluation n'est pas disponible.</p>
         <Button onClick={() => router.push(`/learn/${courseId}`)}>
           <ChevronLeft className="h-4 w-4 mr-2" />
           Retour au cours
@@ -379,7 +379,7 @@ export default function ExamPage({ params }: ExamPageProps) {
               <div>
                 <h1 className="text-2xl font-bold flex items-center gap-2">
                   <GraduationCap className="h-6 w-6 text-primary" />
-                  {exam.title || "Examen de fin de cours"}
+                  {exam.title || "Évaluation de fin de cours"}
                 </h1>
                 <p className="text-muted-foreground mt-1">{exam.description || ""}</p>
               </div>
@@ -497,7 +497,7 @@ export default function ExamPage({ params }: ExamPageProps) {
                           Soumission...
                         </>
                       ) : (
-                        "Soumettre l'examen"
+                        "Soumettre l'évaluation"
                       )}
                     </Button>
                   ) : (

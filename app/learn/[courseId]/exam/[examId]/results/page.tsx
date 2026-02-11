@@ -111,7 +111,7 @@ export default function ExamResultsPage({ params }: ExamResultsPageProps) {
               <ChevronLeft className="h-4 w-4 mr-2" />
               Retour au cours
             </Button>
-            <h1 className="text-3xl font-bold">Résultats de l'examen</h1>
+            <h1 className="text-3xl font-bold">Résultats de l'évaluation</h1>
           </div>
 
           {/* Message principal : succès (certificat envoyé sous 72h) ou échec */}
@@ -233,7 +233,7 @@ export default function ExamResultsPage({ params }: ExamResultsPageProps) {
                 onClick={() => router.push(`/learn/${courseId}/exam/${examId}`)}
                 className="flex-1"
               >
-                Réessayer l'examen
+                Réessayer l'évaluation
               </Button>
             )}
           </div>
