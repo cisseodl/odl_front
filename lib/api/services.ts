@@ -728,13 +728,12 @@ export const quizService = {
     const response = await apiClient.get<any>(
       `${API_ENDPOINTS.quiz.getById}/${quizId}`
     )
-    
-    if (response.ok && response.data) {
-      const data = (response.data as any).data || response.data
-      return adaptQuiz(data as QuizDTO)
-    }
-    
-    return null
+    if (!response.ok) return null
+    const data = (response.data as any)?.data ?? response.data
+    if (data == null) return null
+    const quiz = adaptQuiz(data as QuizDTO)
+    if (!quiz.questions?.length) return null
+    return quiz
   },
 
   /**

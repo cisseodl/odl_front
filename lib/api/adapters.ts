@@ -512,7 +512,7 @@ export function adaptQuiz(quizDTO: QuizDTO): Quiz {
  * Note: Les options sont les textes des réponses, mais correctAnswers contient les IDs des réponses correctes
  */
 export function adaptQuestion(questionDTO: QuestionDTO): QuizQuestion & { optionToIdMap?: Record<string, number> } {
-  const isQCM = questionDTO.type === "SINGLE_CHOICE" || questionDTO.type === "MULTIPLE_CHOICE"
+  const isQCM = questionDTO.type === "SINGLE_CHOICE" || questionDTO.type === "MULTIPLE_CHOICE" || questionDTO.type === "QCM"
   const reponses = questionDTO.reponses || []
 
   // Créer un mapping option texte -> ID de réponse (utiliser un objet au lieu d'un Map pour éviter l'erreur React #185)
@@ -525,8 +525,8 @@ export function adaptQuestion(questionDTO: QuestionDTO): QuizQuestion & { option
     id: String(questionDTO.id),
     question: questionDTO.content, // Backend utilise "content" (pas "contenu")
     type: questionDTO.type === "MULTIPLE_CHOICE" ? "multiple" : 
-          questionDTO.type === "SINGLE_CHOICE" ? "single" : 
-          questionDTO.type === "TEXT" ? "code" : "boolean",
+          questionDTO.type === "SINGLE_CHOICE" || questionDTO.type === "QCM" ? "single" : 
+          questionDTO.type === "TEXT" || questionDTO.type === "TEXTE" ? "code" : "boolean",
     options: isQCM ? reponses.map((r) => r.text) : undefined, // Backend utilise "text" (pas "texte")
     correctAnswers: reponses.filter((r) => r.isCorrect).map((r) => String(r.id)), // IDs des réponses correctes
     explanation: "",
