@@ -763,17 +763,14 @@ export default function LearnPage({ params }: LearnPageProps) {
           </div>
         )}
 
-        {/* Évaluation (certification) — sous la liste des leçons */}
+        {/* Certificat — sous la liste des leçons, message encourageant */}
         <div className="border-t p-4 space-y-2">
           <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-            Évaluation (certificat)
-          </p>
-          <p className="text-xs text-muted-foreground">
-            Labs, TD et Quiz sont optionnels. L’évaluation est obligatoire uniquement si vous souhaitez obtenir le certificat.
+            Certificat
           </p>
           {course?.certificationMode === "BY_LABS" ? (
             <p className="text-xs text-foreground">
-              Votre certificat sera attribué après validation de vos labs par l’instructeur.
+              Validez vos labs pour que l’instructeur puisse vous attribuer votre certificat.
             </p>
           ) : (
             <>
@@ -784,8 +781,8 @@ export default function LearnPage({ params }: LearnPageProps) {
                   </Button>
                 </Link>
               ) : (
-                <p className="text-xs text-muted-foreground italic">
-                  Terminez toutes les leçons pour accéder à l’évaluation.
+                <p className="text-xs text-foreground">
+                  Passez l’évaluation en fin de parcours pour obtenir votre certificat.
                 </p>
               )}
             </>
@@ -1051,10 +1048,10 @@ export default function LearnPage({ params }: LearnPageProps) {
               </Tabs>
             )}
 
-            {/* Rappel : terminer la leçon pour voir les activités */}
+            {/* Rappel : le bouton Suivant (en haut à droite) termine la leçon et affiche les activités */}
             {!completedLessons.some((id) => String(id) === String(currentLesson)) && (
               <p className="text-sm text-muted-foreground mt-6 py-2 px-4 bg-muted/50 rounded-lg border border-border">
-                Cliquez sur <strong>Suivant</strong> pour terminer cette leçon et afficher les activités associées (Labs, TD, Quiz — optionnels).
+                Cliquez sur le bouton <strong>Suivant</strong> (à côté de Précédent, en haut à droite) pour terminer cette leçon et découvrir les activités associées (Labs, TD, Quiz).
               </p>
             )}
             {/* Activités associées à cette leçon — visibles après avoir terminé la leçon (bouton Suivant) */}
