@@ -419,7 +419,7 @@ export default function LearnPage({ params }: LearnPageProps) {
   })
   // L'API retourne { data: examEntity } ; l'examen peut être dans .data ou à la racine
   const courseExam = (courseExamResponse as any)?.data ?? courseExamResponse
-  const courseExamId = courseExam?.id
+  const courseExamId = courseExam != null && courseExam.id != null ? Number(courseExam.id) : undefined
 
   // Récupérer les labs du cours
   const {
@@ -803,8 +803,8 @@ export default function LearnPage({ params }: LearnPageProps) {
                 <>
                   {isCourseCompletedForExam && !courseExamId ? (
                     <p className="text-xs text-foreground text-amber-600 dark:text-amber-500">
-                      Aucune évaluation n’est configurée pour ce cours. L’instructeur doit créer une évaluation (quiz de fin de cours) pour que vous puissiez la passer.
-                    </p>
+                      Aucune évaluation n’est configurée pour ce cours. L’instructeur doit créer une évaluation (quiz de fin de cours) pour ce cours dans le dashboard ; le bouton « Passer l'évaluation » sera alors cliquable.
+                      </p>
                   ) : (
                     <>
                   <p className="text-xs text-foreground">
