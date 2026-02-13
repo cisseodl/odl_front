@@ -710,14 +710,15 @@ export default function LearnPage({ params }: LearnPageProps) {
     <div className="h-full flex flex-col">
       {/* Course Header */}
       <div className="p-4 border-b">
-        <Button
-          variant="ghost"
-          onClick={() => router.back()}
-          className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors mb-3 px-0"
-        >
-          <ChevronLeft className="h-4 w-4" />
-          Retour
-        </Button>
+        <Link href="/learning">
+          <Button
+            variant="ghost"
+            className="w-full justify-start gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors mb-3 px-0"
+          >
+            <ChevronLeft className="h-4 w-4 shrink-0" />
+            Retour à mes cours
+          </Button>
+        </Link>
         <h2 className="font-bold line-clamp-2 text-sm leading-tight">{course?.title || "Cours"}</h2>
         <div className="mt-3">
           <div className="flex items-center justify-between text-xs text-muted-foreground mb-2">
