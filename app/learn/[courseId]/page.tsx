@@ -407,7 +407,7 @@ export default function LearnPage({ params }: LearnPageProps) {
     })
   }
 
-  // Charger l'examen du cours (toujours, pour afficher la section Évaluation grisée ou cliquable)
+  // Charger l'examen du cours (endpoint dédié)
   const {
     data: courseExamResponse,
     isLoading: isLoadingExam,
@@ -417,9 +417,22 @@ export default function LearnPage({ params }: LearnPageProps) {
     enabled: !Number.isNaN(courseIdNum),
     retry: false,
   })
-  // L'API retourne { data: examEntity } ; l'examen peut être dans .data ou à la racine
   const courseExam = (courseExamResponse as any)?.data ?? courseExamResponse
-  const courseExamId = courseExam != null && courseExam.id != null ? Number(courseExam.id) : undefined
+  const courseExamIdFromApi = courseExam != null && courseExam.id != null ? Number(courseExam.id) : undefined
+
+  // Fallback : si getCourseExam ne renvoie rien, prendre le premier QUIZ parmi les évaluations du cours
+  const { data: evaluationsForCourse } = useQuery({
+    queryKey: ["courseEvaluationsList", courseIdNum],
+    queryFn: () => evaluationService.getEvaluationsByCourse(courseIdNum),
+    enabled: !Number.isNaN(courseIdNum) && !isLoadingExam && courseExamIdFromApi == null,
+  })
+  const firstQuizIdFromList = useMemo(() => {
+    if (!Array.isArray(evaluationsForCourse)) return undefined
+    const quiz = evaluationsForCourse.find((e: any) => (e.type || e.evaluationType) === "QUIZ")
+    return quiz?.id != null ? Number(quiz.id) : undefined
+  }, [evaluationsForCourse])
+
+  const courseExamId = courseExamIdFromApi ?? firstQuizIdFromList
 
   // Récupérer les labs du cours
   const {
