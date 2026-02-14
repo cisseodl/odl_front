@@ -39,7 +39,7 @@ export default function ExamPage({ params }: ExamPageProps) {
   const completedLessonsCount = courseProgress?.completedLessons ?? 0
   const allLessonsCompleted = totalLessons > 0 && completedLessonsCount >= totalLessons
 
-  // Charger l'examen depuis l'API (avec examId pour récupérer le bon quiz, pas seulement le premier du cours)
+  // Charger l'examen depuis l'API (avec examId pour récupérer le bon quiz avec questions)
   const {
     data: exam,
     isLoading: isLoadingExam,
@@ -48,10 +48,10 @@ export default function ExamPage({ params }: ExamPageProps) {
     queryKey: ["exam", courseIdNum, examIdNum],
     queryFn: async () => {
       const response = await evaluationService.getCourseExam(courseIdNum, examIdNum)
-      if (response.ok && response.data) {
-        return serializeData(response.data)
-      }
-      throw new Error(response.message || "Évaluation non trouvée")
+      if (!response.ok) throw new Error(response.message || "Évaluation non trouvée")
+      const examPayload = (response as any).data
+      if (!examPayload || typeof examPayload !== "object") throw new Error("Évaluation non trouvée")
+      return serializeData(examPayload)
     },
     enabled: !Number.isNaN(examIdNum) && !Number.isNaN(courseIdNum),
   })
@@ -79,8 +79,15 @@ export default function ExamPage({ params }: ExamPageProps) {
     } catch (_) {}
   }, [courseId, examId])
 
-  // Utiliser les questions de l'examen chargé depuis l'API (plusieurs formes possibles)
-  const questions: any[] = Array.isArray(exam?.questions) ? exam.questions : (Array.isArray((exam as any)?.questionsList) ? (exam as any).questionsList : [])
+  // Utiliser les questions de l'examen (plusieurs formes possibles selon le backend)
+  const questions: any[] = (() => {
+    const e = exam as any
+    if (!e) return []
+    if (Array.isArray(e?.questions)) return e.questions
+    if (Array.isArray(e?.questionsList)) return e.questionsList
+    if (e?.data && Array.isArray(e.data?.questions)) return e.data.questions
+    return []
+  })()
   
   const question = questions[currentQuestion]
   const progress = questions.length > 0 ? ((currentQuestion + 1) / questions.length) * 100 : 0
