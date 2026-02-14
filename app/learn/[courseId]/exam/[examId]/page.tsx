@@ -39,15 +39,15 @@ export default function ExamPage({ params }: ExamPageProps) {
   const completedLessonsCount = courseProgress?.completedLessons ?? 0
   const allLessonsCompleted = totalLessons > 0 && completedLessonsCount >= totalLessons
 
-  // Charger l'examen depuis l'API
+  // Charger l'examen depuis l'API (avec examId pour récupérer le bon quiz, pas seulement le premier du cours)
   const {
     data: exam,
     isLoading: isLoadingExam,
     error: examError,
   } = useQuery({
-    queryKey: ["exam", examIdNum],
+    queryKey: ["exam", courseIdNum, examIdNum],
     queryFn: async () => {
-      const response = await evaluationService.getCourseExam(courseIdNum)
+      const response = await evaluationService.getCourseExam(courseIdNum, examIdNum)
       if (response.ok && response.data) {
         return serializeData(response.data)
       }

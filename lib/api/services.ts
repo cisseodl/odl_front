@@ -914,11 +914,15 @@ export const rubriqueService = {
 // ============ Evaluation (Exam) Services ============
 export const evaluationService = {
   /**
-   * Obtenir l'examen d'un cours
-   * GET /api/evaluations/course/{courseId}
+   * Obtenir l'examen d'un cours.
+   * GET /api/evaluations/course/{courseId} ou .../course/{courseId}?examId=123
+   * Si examId est fourni, le backend retourne cette évaluation (pour afficher le bon quiz côté apprenant).
    */
-  async getCourseExam(courseId: number): Promise<ApiResponse<any>> {
-    return apiClient.get(`${API_ENDPOINTS.evaluations.getByCourse}/${courseId}`)
+  async getCourseExam(courseId: number, examId?: number): Promise<ApiResponse<any>> {
+    const url = examId != null
+      ? `${API_ENDPOINTS.evaluations.getByCourse}/${courseId}?examId=${examId}`
+      : `${API_ENDPOINTS.evaluations.getByCourse}/${courseId}`
+    return apiClient.get(url)
   },
 
   /**
