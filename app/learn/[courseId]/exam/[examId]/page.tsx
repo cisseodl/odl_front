@@ -79,11 +79,12 @@ export default function ExamPage({ params }: ExamPageProps) {
     } catch (_) {}
   }, [courseId, examId])
 
-  // Utiliser les questions de l'examen chargé depuis l'API
-  const questions: any[] = exam?.questions || []
+  // Utiliser les questions de l'examen chargé depuis l'API (plusieurs formes possibles)
+  const questions: any[] = Array.isArray(exam?.questions) ? exam.questions : (Array.isArray((exam as any)?.questionsList) ? (exam as any).questionsList : [])
   
   const question = questions[currentQuestion]
   const progress = questions.length > 0 ? ((currentQuestion + 1) / questions.length) * 100 : 0
+  const hasNoQuestions = questions.length === 0
 
   const handleAnswer = (value: string | string[]) => {
     setAnswers((prev) => ({
@@ -384,14 +385,29 @@ export default function ExamPage({ params }: ExamPageProps) {
                 <p className="text-muted-foreground mt-1">{exam.description || ""}</p>
               </div>
               <Badge variant="outline" className="text-sm">
-                Question {currentQuestion + 1} / {questions.length}
+                {questions.length > 0 ? `Question ${currentQuestion + 1} / ${questions.length}` : "Aucune question"}
               </Badge>
             </div>
             <Progress value={progress} className="mt-4" />
           </div>
 
+          {/* Aucune question dans cette évaluation */}
+          {hasNoQuestions && (
+            <Card>
+              <CardContent className="py-8 text-center">
+                <p className="text-muted-foreground mb-4">
+                  Cette évaluation ne contient aucune question pour le moment. L'instructeur doit ajouter des questions au quiz.
+                </p>
+                <Button onClick={() => router.push(`/learn/${courseId}`)}>
+                  <ChevronLeft className="h-4 w-4 mr-2" />
+                  Retour au cours
+                </Button>
+              </CardContent>
+            </Card>
+          )}
+
           {/* Question Card */}
-          {question && (
+          {!hasNoQuestions && question && (
             <Card>
               <CardHeader>
                 <div className="flex items-center justify-between">
@@ -509,6 +525,7 @@ export default function ExamPage({ params }: ExamPageProps) {
           )}
 
           {/* Navigation rapide */}
+          {!hasNoQuestions && questions.length > 0 && (
           <Card className="mt-6">
             <CardContent className="p-4">
               <div className="flex flex-wrap gap-2">
@@ -532,6 +549,7 @@ export default function ExamPage({ params }: ExamPageProps) {
               </div>
             </CardContent>
           </Card>
+          )}
         </div>
 
         {/* Modal de satisfaction */}
