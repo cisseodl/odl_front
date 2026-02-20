@@ -533,15 +533,16 @@ export default function LearnPage({ params }: LearnPageProps) {
   }
 
   const completeLessonMutation = useMutation({
-    mutationFn: () => {
-      const lessonIdNum = typeof currentLesson === "string" ? parseInt(currentLesson, 10) : Number(currentLesson)
+    mutationFn: (lessonIdToComplete?: string | number) => {
+      const raw = lessonIdToComplete ?? currentLesson
+      const lessonIdNum = typeof raw === "string" ? parseInt(raw, 10) : Number(raw)
       if (!courseIdNum || Number.isNaN(lessonIdNum)) throw new Error("ID cours ou leçon invalide")
       return learnerService.completeLesson(courseIdNum, lessonIdNum)
     },
-    onSuccess: (response) => {
+    onSuccess: (response, lessonIdCompleted) => {
       if (response?.ok !== false) {
-        const id = currentLesson
-        if (!completedLessons.some((x) => String(x) === String(id))) {
+        const id = lessonIdCompleted ?? currentLesson
+        if (id != null && !completedLessons.some((x) => String(x) === String(id))) {
           setCompletedLessons((prev) => [...prev, id])
         }
         queryClient.invalidateQueries({ queryKey: ["courseProgress", courseIdNum] })
@@ -557,7 +558,25 @@ export default function LearnPage({ params }: LearnPageProps) {
 
   const handleMarkComplete = () => {
     if (completedLessons.some((id) => String(id) === String(currentLesson))) return
-    completeLessonMutation.mutate()
+    completeLessonMutation.mutate(currentLesson)
+  }
+
+  /** Cliquer sur Suivant : marquer la leçon courante comme terminée (attendre l’API), puis passer à la suivante. */
+  const handleNextLesson = async () => {
+    const currentIndex = lessons.findIndex((l) => String(l.id) === String(currentLesson))
+    if (currentIndex === -1 && lessons.length > 0) return
+    const hasNextLesson = currentIndex >= 0 && currentIndex < lessons.length - 1
+    const lessonIdToComplete = lessons[currentIndex]?.id
+    const alreadyCompleted = lessonIdToComplete != null && completedLessons.some((id) => String(id) === String(lessonIdToComplete))
+
+    if (lessonIdToComplete != null && !alreadyCompleted) {
+      try {
+        await completeLessonMutation.mutateAsync(lessonIdToComplete)
+      } catch {
+        return
+      }
+    }
+    if (hasNextLesson) setCurrentLesson(lessons[currentIndex + 1].id)
   }
 
   // Helper function to render video content
@@ -902,14 +921,17 @@ export default function LearnPage({ params }: LearnPageProps) {
                   <Button
                     variant="outline"
                     size="sm"
-                    disabled={!hasCurrentLesson}
-                    onClick={() => {
-                      handleMarkComplete()
-                      if (hasNextLesson) setCurrentLesson(lessons[currentIndex + 1].id)
-                    }}
+                    disabled={!hasCurrentLesson || completeLessonMutation.isPending}
+                    onClick={() => handleNextLesson()}
                   >
-                    <span className="hidden sm:inline mr-1">Suivant</span>
-                    <ChevronRight className="h-4 w-4" />
+                    {completeLessonMutation.isPending ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <>
+                        <span className="hidden sm:inline mr-1">Suivant</span>
+                        <ChevronRight className="h-4 w-4" />
+                      </>
+                    )}
                   </Button>
                 </>
               )
