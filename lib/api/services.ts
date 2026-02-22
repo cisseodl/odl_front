@@ -971,12 +971,15 @@ export const evaluationService = {
   /**
    * Soumettre une tentative d'examen
    * POST /api/evaluations/submit
+   * certificateDisplayName et certificateEmail (saisis avant l'examen) sont utilisés pour le certificat.
    */
-  async submitExam(evaluationId: number, answers: Record<number, number | string>): Promise<ApiResponse<any>> {
-    // Convertir les réponses au format attendu par le backend (Map<Long, Long> et Map<Long, String>)
+  async submitExam(
+    evaluationId: number,
+    answers: Record<number, number | string>,
+    options?: { certificateDisplayName?: string; certificateEmail?: string }
+  ): Promise<ApiResponse<any>> {
     const answersMap: Record<string, number> = {}
     const textAnswersMap: Record<string, string> = {}
-    
     Object.entries(answers).forEach(([questionId, answer]) => {
       const qId = Number.parseInt(questionId)
       if (typeof answer === 'number') {
@@ -985,12 +988,14 @@ export const evaluationService = {
         textAnswersMap[qId.toString()] = answer
       }
     })
-
-    return apiClient.post(API_ENDPOINTS.evaluations.submit, {
+    const body: any = {
       evaluationId,
       answers: answersMap,
       textAnswers: textAnswersMap,
-    })
+    }
+    if (options?.certificateDisplayName?.trim()) body.certificateDisplayName = options.certificateDisplayName.trim()
+    if (options?.certificateEmail?.trim()) body.certificateEmail = options.certificateEmail.trim()
+    return apiClient.post(API_ENDPOINTS.evaluations.submit, body)
   },
 
   /**

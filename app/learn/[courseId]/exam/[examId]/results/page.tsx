@@ -114,7 +114,7 @@ export default function ExamResultsPage({ params }: ExamResultsPageProps) {
             <h1 className="text-3xl font-bold">Résultats de l'évaluation</h1>
           </div>
 
-          {/* Message principal : succès (certificat envoyé sous 72h) ou échec */}
+          {/* Message principal : succès (score, nom, certificat sous 3 jours) ou échec */}
           <Card className="mb-6 border-2 border-primary/20">
             <CardContent className="pt-6">
               {isPassed ? (
@@ -125,7 +125,10 @@ export default function ExamResultsPage({ params }: ExamResultsPageProps) {
                       Félicitations{certificateDisplayName ? ` ${certificateDisplayName}` : ""}, vous avez réussi !
                     </p>
                     <p className="text-muted-foreground mt-1">
-                      Votre certificat vous sera envoyé dans les 72h qui suivent via votre email.
+                      Score obtenu : <strong>{score.toFixed(1)}%</strong>
+                    </p>
+                    <p className="text-muted-foreground mt-1">
+                      Votre certificat vous sera envoyé sous 3 jours à l&apos;adresse email que vous avez renseignée.
                     </p>
                   </div>
                 </div>

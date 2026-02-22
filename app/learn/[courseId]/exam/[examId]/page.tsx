@@ -140,7 +140,10 @@ export default function ExamPage({ params }: ExamPageProps) {
         }
       })
 
-      const response = await evaluationService.submitExam(examIdNum, answersMap)
+      const response = await evaluationService.submitExam(examIdNum, answersMap, {
+        certificateDisplayName: certificateName?.trim() || undefined,
+        certificateEmail: certificateEmail?.trim() || undefined,
+      })
       if (response.ok && response.data) {
         // La réponse backend est dans CResponse, donc response.data contient les données
         // Si response.data est un objet avec une propriété data, extraire celle-ci
