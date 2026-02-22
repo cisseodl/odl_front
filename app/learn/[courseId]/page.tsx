@@ -363,9 +363,9 @@ export default function LearnPage({ params }: LearnPageProps) {
       curriculum.forEach((module) => {
         if (module.lessons && Array.isArray(module.lessons)) {
           module.lessons.forEach((lesson) => {
-            // Récupérer la leçon brute pour préserver contentUrl
+            // Récupérer la leçon brute pour préserver contentUrl (backend peut renvoyer contentUrl ou content_url)
             const rawLesson = rawLessonsMap.get(Number(lesson.id))
-            const contentUrl = rawLesson?.contentUrl || lesson.contentUrl
+            const contentUrl = rawLesson?.contentUrl ?? (rawLesson as any)?.content_url ?? lesson.contentUrl
             
             allLessons.push({
               ...lesson,
@@ -586,24 +586,33 @@ export default function LearnPage({ params }: LearnPageProps) {
       return null
     }
 
-    if (lessonData.contentUrl) {
+    const videoUrl = lessonData.contentUrl?.trim() || ""
+    if (videoUrl) {
       return (
         <LessonContentViewer
-          contentUrl={lessonData.contentUrl}
+          contentUrl={videoUrl}
           title={lessonData.title || "Vidéo"}
           type="video"
         />
       )
     }
 
+    // Pas d'URL vidéo : utiliser VideoPlayer avec src si disponible, sinon message (évite le spinner infini)
     return (
       <div className="relative">
         <VideoPlayer 
           title={lessonData.title || "Vidéo"}
-          src={undefined}
+          src={videoUrl || undefined}
           thumbnail={course?.imageUrl}
           videoRef={videoRef}
         />
+        {!videoUrl && (
+          <div className="absolute inset-0 flex items-center justify-center rounded-lg bg-muted/80">
+            <p className="text-muted-foreground text-center px-4">
+              Cette vidéo n&apos;est pas disponible pour le moment. Rechargez la page ou contactez l&apos;instructeur.
+            </p>
+          </div>
+        )}
         <div className="absolute top-4 right-4 z-10">
           <BookmarkButton
             timestamp={0}
