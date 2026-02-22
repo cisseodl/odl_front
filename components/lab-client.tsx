@@ -5,7 +5,7 @@ import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { CheckCircle2, Code2, FileUp, PlayCircle, Send, Trophy, ArrowLeft, Loader2, Type } from "lucide-react"
+import { CheckCircle2, FileUp, Send, Trophy, ArrowLeft, Loader2, Type, FileText, ExternalLink } from "lucide-react"
 import { Textarea } from "@/components/ui/textarea"
 import { toast } from "sonner"
 import { ScrollArea } from "@/components/ui/scroll-area"
@@ -26,7 +26,6 @@ export function LabClient({ courseId, labId }: LabClientProps) {
     enabled: !Number.isNaN(labIdNum),
   })
 
-  const [code, setCode] = useState("")
   const [checklist, setChecklist] = useState<boolean[]>([])
   const [reportMode, setReportMode] = useState<"file" | "text">("file")
   const [reportFile, setReportFile] = useState<File | null>(null)
@@ -117,14 +116,9 @@ export function LabClient({ courseId, labId }: LabClientProps) {
   const objectives = lab.objectives?.length ? lab.objectives : ["Compléter les instructions du lab"]
   const checklistState = checklist.length === objectives.length ? checklist : objectives.map(() => false)
 
-  const handleCheckSolution = () => {
-    const allCompleted = checklistState.every((item) => item)
-    if (allCompleted) {
-      toast.success("Félicitations ! Vous avez complété le lab")
-    } else {
-      toast.info("Continuez ! Vérifiez tous les objectifs")
-    }
-  }
+  const hasInstructions = lab.instructions?.trim().length > 0
+  const hasFiles = Array.isArray(lab.uploadedFiles) && lab.uploadedFiles.length > 0
+  const hasLinks = Array.isArray(lab.resourceLinks) && lab.resourceLinks.length > 0
 
   const toggleObjective = (index: number) => {
     const next = [...checklistState]
@@ -165,11 +159,57 @@ export function LabClient({ courseId, labId }: LabClientProps) {
           <Card className="p-6">
             <h2 className="mb-4 text-lg font-semibold">Instructions</h2>
             <ScrollArea className="h-[400px] pr-4">
-              {lab.instructions ? (
+              {hasInstructions && (
                 <ReactMarkdown className="prose prose-sm dark:prose-invert max-w-none">
                   {lab.instructions}
                 </ReactMarkdown>
-              ) : (
+              )}
+              {hasFiles && (
+                <div className={hasInstructions ? "mt-4" : ""}>
+                  <p className="text-sm font-medium mb-2 flex items-center gap-2">
+                    <FileText className="h-4 w-4" />
+                    Fichier(s) du lab
+                  </p>
+                  <ul className="list-none space-y-2">
+                    {lab.uploadedFiles!.map((url, i) => (
+                      <li key={i}>
+                        <a
+                          href={url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-primary underline hover:no-underline"
+                        >
+                          Télécharger le fichier {lab.uploadedFiles!.length > 1 ? i + 1 : ""}
+                        </a>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+              {hasLinks && (
+                <div className={(hasInstructions || hasFiles) ? "mt-4" : ""}>
+                  <p className="text-sm font-medium mb-2 flex items-center gap-2">
+                    <ExternalLink className="h-4 w-4" />
+                    Accéder au lab
+                  </p>
+                  <ul className="list-none space-y-2">
+                    {lab.resourceLinks!.map((url, i) => (
+                      <li key={i}>
+                        <a
+                          href={url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-primary underline hover:no-underline inline-flex items-center gap-1"
+                        >
+                          {url}
+                          <ExternalLink className="h-3 w-3" />
+                        </a>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+              {!hasInstructions && !hasFiles && !hasLinks && (
                 <p className="text-muted-foreground">Aucune instruction pour ce lab.</p>
               )}
             </ScrollArea>
@@ -197,40 +237,6 @@ export function LabClient({ courseId, labId }: LabClientProps) {
         </div>
 
         <div className="space-y-6">
-          <Card className="p-6">
-            <Tabs defaultValue="editor" className="w-full">
-              <TabsList className="mb-4">
-                <TabsTrigger value="editor">
-                  <Code2 className="mr-2 h-4 w-4" />
-                  Éditeur
-                </TabsTrigger>
-                <TabsTrigger value="solution">
-                  <PlayCircle className="mr-2 h-4 w-4" />
-                  Solution
-                </TabsTrigger>
-              </TabsList>
-              <TabsContent value="editor" className="space-y-4">
-                <Textarea
-                  value={code}
-                  onChange={(e) => setCode(e.target.value)}
-                  className="min-h-[500px] font-mono text-sm"
-                  placeholder="Écrivez votre code ici..."
-                />
-                <Button onClick={handleCheckSolution} className="w-full">
-                  <CheckCircle2 className="mr-2 h-4 w-4" />
-                  Vérifier ma solution
-                </Button>
-              </TabsContent>
-              <TabsContent value="solution">
-                <ScrollArea className="h-[500px]">
-                  <pre className="rounded-lg bg-muted p-4">
-                    <code className="text-sm">{lab.solution || "Aucune solution fournie."}</code>
-                  </pre>
-                </ScrollArea>
-              </TabsContent>
-            </Tabs>
-          </Card>
-
           {/* Carte Ma réalisation : fichier ou texte selon les instructions de l'instructeur */}
           <Card className="p-6">
             <CardHeader className="pb-2">
