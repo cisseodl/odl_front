@@ -81,8 +81,8 @@ export function Header() {
             {/* Desktop nav */}
             <nav className="hidden lg:flex items-center gap-1">
               {[
-                { href: "/courses", icon: BookOpen, label: t("common.courses") },
                 { href: "/dashboard", icon: LayoutDashboard, label: t("common.dashboard") },
+                { href: "/courses", icon: BookOpen, label: t("common.courses") },
                 { href: "/learning", icon: GraduationCap, label: t("common.myLearning") },
                 { href: "/about", icon: BookOpen, label: t("common.about") }
               ].map(({ href, icon: Icon, label }) => {
@@ -163,8 +163,8 @@ export function Header() {
           <nav className="lg:hidden py-4 bg-card border-t border-border">
             <div className="flex flex-col gap-1">
               {[
-                { href: "/courses", icon: BookOpen, label: t("common.courses") },
                 { href: "/dashboard", icon: LayoutDashboard, label: t("common.dashboard") },
+                { href: "/courses", icon: BookOpen, label: t("common.courses") },
                 { href: "/learning", icon: GraduationCap, label: t("common.myLearning") },
                 { href: "/about", icon: BookOpen, label: t("common.about") }
               ].map(({ href, icon: Icon, label }) => (
