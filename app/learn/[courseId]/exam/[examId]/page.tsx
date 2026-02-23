@@ -82,6 +82,9 @@ export default function ExamPage({ params }: ExamPageProps) {
   const [certificateName, setCertificateName] = useState("")
   const [certificateEmail, setCertificateEmail] = useState("")
 
+  // Ne plus restaurer l'étape "exam" depuis sessionStorage : chaque apprenant doit
+  // toujours voir le formulaire (nom complet + email pour le certificat) avant l'évaluation,
+  // pour éviter d'afficher le nom/email d'un autre utilisateur (ex. ancienne session).
   useEffect(() => {
     const key = `exam-started-${courseId}-${examId}`
     try {
@@ -90,7 +93,7 @@ export default function ExamPage({ params }: ExamPageProps) {
         const { name, email } = JSON.parse(saved)
         setCertificateName(name || "")
         setCertificateEmail(email || "")
-        setExamStep("exam")
+        // On préremplit uniquement ; on ne passe plus automatiquement à "exam"
       }
     } catch (_) {}
   }, [courseId, examId])

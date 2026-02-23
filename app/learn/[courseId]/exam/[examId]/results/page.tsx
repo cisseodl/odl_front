@@ -31,7 +31,13 @@ export default function ExamResultsPage({ params }: ExamResultsPageProps) {
   const attemptId = attemptIdFromUrl ? Number.parseInt(attemptIdFromUrl, 10) : resolvedAttemptId
 
   const [certificateDisplayName, setCertificateDisplayName] = useState<string>("")
+  // Priorité au nom renvoyé par l'API (attempt.certificateDisplayName) pour éviter d'afficher
+  // le nom d'un autre apprenant (sessionStorage partagé ou ancienne session)
   useEffect(() => {
+    if (attempt?.certificateDisplayName) {
+      setCertificateDisplayName(attempt.certificateDisplayName)
+      return
+    }
     if (typeof window === "undefined" || attemptId == null || Number.isNaN(attemptId)) return
     try {
       const raw = sessionStorage.getItem(`exam-certificate-${attemptId}`)
@@ -40,7 +46,7 @@ export default function ExamResultsPage({ params }: ExamResultsPageProps) {
         setCertificateDisplayName(name || "")
       }
     } catch (_) {}
-  }, [attemptId])
+  }, [attemptId, attempt?.certificateDisplayName])
 
   // Sans attemptId dans l'URL : récupérer la dernière tentative pour cet examen
   const {
@@ -97,6 +103,8 @@ export default function ExamResultsPage({ params }: ExamResultsPageProps) {
   const score = attempt?.score ?? 0
   const isPassed = score >= 70
   const certificate = certificates.find((cert: any) => cert.courseId === Number.parseInt(courseId))
+  // Nom pour le message de félicitations : priorité à l'API (évite le mauvais nom d'une autre session)
+  const displayNameForMessage = attempt?.certificateDisplayName ?? certificateDisplayName
 
   const showLoading =
     (!attemptIdFromUrl && isLoadingLatestAttempt) ||
@@ -173,7 +181,7 @@ export default function ExamResultsPage({ params }: ExamResultsPageProps) {
                   <CheckCircle2 className="h-8 w-8 text-green-600 shrink-0 mt-0.5" />
                   <div>
                     <p className="text-lg font-semibold text-green-700">
-                      Félicitations{certificateDisplayName ? ` ${certificateDisplayName}` : ""}, vous avez réussi !
+                      Félicitations{displayNameForMessage ? ` ${displayNameForMessage}` : ""}, vous avez réussi !
                     </p>
                     <p className="text-muted-foreground mt-1">
                       Score obtenu : <strong>{score.toFixed(1)}%</strong>
