@@ -123,20 +123,25 @@ export default function ExamPage({ params }: ExamPageProps) {
   // Mutation pour soumettre l'examen
   const submitExamMutation = useMutation({
     mutationFn: async () => {
-      // Convertir les réponses au format attendu
-      // Le backend attend Map<Long, Long> pour answers et Map<Long, String> pour textAnswers
+      // Envoyer les réponses avec l'ID de la question comme clé (pas l'index) pour que le backend
+      // associe correctement chaque réponse à la question, quel que soit l'ordre.
       const answersMap: Record<number, number | string> = {}
-      Object.entries(answers).forEach(([questionId, answer]) => {
-        const qId = Number.parseInt(questionId)
+      questions.forEach((q: any, index: number) => {
+        const answer = answers[index]
+        if (answer === undefined || answer === null) return
+        const questionId = q?.id ?? q?.questionId ?? index
         if (Array.isArray(answer)) {
-          // Pour les questions à choix multiples, prendre le premier choix
-          answersMap[qId] = answer[0] as number
+          answersMap[questionId] = (answer[0] as number) ?? 0
         } else if (typeof answer === 'string') {
-          // Réponse texte
-          answersMap[qId] = answer
+          // Choix unique (RadioGroup renvoie une string) ou réponse texte
+          if (question.type === "SINGLE_CHOICE" || question.type === "QCM") {
+            const num = Number.parseInt(answer, 10)
+            answersMap[questionId] = Number.isNaN(num) ? 0 : num
+          } else {
+            answersMap[questionId] = answer
+          }
         } else {
-          // Réponse numérique (ID de réponse)
-          answersMap[qId] = answer as number
+          answersMap[questionId] = (answer as number) ?? 0
         }
       })
 
