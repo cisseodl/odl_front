@@ -1413,9 +1413,10 @@ export const certificateService = {
   async getMyCertificates(): Promise<CertificateDto[]> {
     const response = await apiClient.get<any>(API_ENDPOINTS.certificates.myCertificates)
     
-    if (response.ok && response.data) {
-      // Le backend retourne CResponse<List<CertificateDto>> avec data contenant la liste
-      const data = Array.isArray(response.data) ? response.data : []
+if (response.ok && response.data) {
+        // Backend CResponse: response.data peut être la liste ou (response.data as any).data
+        const raw = response.data as any
+        const data = Array.isArray(raw) ? raw : (Array.isArray(raw?.data) ? raw.data : [])
       return data as CertificateDto[]
     }
     
@@ -1612,7 +1613,8 @@ export const detailsCourseService = {
       )
       
       if (response.ok && response.data) {
-        const data = Array.isArray(response.data) ? response.data : []
+        const raw = response.data as any
+        const data = Array.isArray(raw) ? raw : (Array.isArray(raw?.data) ? raw.data : [])
         return data
       }
       

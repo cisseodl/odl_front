@@ -1,5 +1,6 @@
 {
   "common": {
+    "error": "Error",
     "welcome": "Welcome",
     "search": "Search",
     "courses": "Courses",
@@ -41,6 +42,46 @@
     "availableCourses": "Available courses",
     "mostViewed": "Most viewed courses",
     "satisfactionRate": "Satisfaction rate"
+  },
+  "exam": {
+    "alreadyPassed": "You have already passed this exam",
+    "redirecting": "Redirecting to your results...",
+    "seeResults": "View my results",
+    "examNotFound": "Assessment not found",
+    "examNotAvailable": "This assessment is not available.",
+    "backToCourse": "Back to course",
+    "evaluationUnavailable": "Assessment unavailable",
+    "finishLessons": "You must complete all lessons before taking the assessment",
+    "loadingEvaluation": "Loading assessment...",
+    "checkingProgress": "Checking your progress...",
+    "evaluationOfCourse": "End-of-course assessment",
+    "startEvaluation": "Start assessment",
+    "nameAndEmail": "Full name and email address",
+    "fullName": "Full name",
+    "email": "Email address",
+    "submit": "Submit",
+    "seeResultsAfter": "View results after submission",
+    "beforeSeeResults": "Before viewing your exam results, please share your feedback on this course.",
+    "beforeStart": "Before you start the assessment",
+    "pleaseFillNameAndEmail": "Please enter your full name and email address.",
+    "pleaseEnterValidEmail": "Please enter a valid email address.",
+    "certificateIntro": "Enter the name that will appear on your certificate and the email address for sending the certificate.",
+    "noQuestionsInExam": "This assessment has no questions yet. The instructor must add questions to the quiz.",
+    "questionLabel": "Question",
+    "noQuestions": "No questions",
+    "startAssessment": "Start assessment",
+    "couldNotGetAttemptId": "Could not retrieve attempt ID. Please try again.",
+    "submitError": "Error while submitting the assessment",
+    "lessonsCompleted": "lessons completed"
+  },
+  "learn": {
+    "passEvaluation": "Take the assessment",
+    "viewResults": "View your results",
+    "youPassed": "You passed",
+    "finishAllLessons": "Complete all lessons to unlock the assessment",
+    "noEvaluationConfigured": "No assessment is configured for this course.",
+    "evaluationViaLabs": "Assessment is based on instructor validation of your labs.",
+    "finishLessonsToUnlock": "Complete all lessons to access the assessment."
   }
 }
 

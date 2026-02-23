@@ -1,5 +1,6 @@
 {
   "common": {
+    "error": "Erreur",
     "welcome": "Bienvenue",
     "search": "Rechercher",
     "courses": "Cours",
@@ -41,6 +42,46 @@
     "availableCourses": "Cours disponibles",
     "mostViewed": "Les cours les plus consultés",
     "satisfactionRate": "Taux de satisfaction"
+  },
+  "exam": {
+    "alreadyPassed": "Vous avez déjà réussi cet examen",
+    "redirecting": "Redirection vers vos résultats...",
+    "seeResults": "Voir mes résultats",
+    "backToCourse": "Retour au cours",
+    "examNotFound": "Évaluation non trouvée",
+    "examNotAvailable": "Cette évaluation n'est pas disponible.",
+    "loadingEvaluation": "Chargement de l'évaluation...",
+    "evaluationOfCourse": "Évaluation de fin de cours",
+    "startEvaluation": "Démarrer l'évaluation",
+    "fullName": "Nom complet",
+    "email": "Adresse email",
+    "submit": "Envoyer",
+    "finishLessons": "Vous devez terminer toutes les leçons avant de passer l'évaluation",
+    "beforeSeeResults": "Avant de voir vos résultats, merci de partager votre avis sur ce cours.",
+    "seeResultsAfter": "Voir les résultats après envoi",
+    "nameAndEmail": "Nom complet et adresse email",
+    "checkingProgress": "Vérification de votre progression...",
+    "evaluationUnavailable": "Évaluation indisponible",
+    "beforeStart": "Avant de commencer l'évaluation",
+    "pleaseFillNameAndEmail": "Veuillez renseigner votre nom complet et votre adresse email.",
+    "pleaseEnterValidEmail": "Veuillez entrer une adresse email valide.",
+    "certificateIntro": "Indiquez le nom qui figurera sur votre certificat et l'adresse email pour l'envoi du certificat.",
+    "noQuestionsInExam": "Cette évaluation ne contient aucune question pour le moment. L'instructeur doit ajouter des questions au quiz.",
+    "questionLabel": "Question",
+    "noQuestions": "Aucune question",
+    "startAssessment": "Commencer l'évaluation",
+    "couldNotGetAttemptId": "Impossible de récupérer l'ID de la tentative. Veuillez réessayer.",
+    "submitError": "Erreur lors de la soumission de l'évaluation",
+    "lessonsCompleted": "leçons terminées"
+  },
+  "learn": {
+    "passEvaluation": "Passer l'évaluation",
+    "viewResults": "Voir vos résultats",
+    "youPassed": "Vous avez réussi",
+    "finishAllLessons": "Terminez toutes les leçons pour débloquer l'évaluation",
+    "noEvaluationConfigured": "Aucune évaluation n'est configurée pour ce cours.",
+    "evaluationViaLabs": "L'évaluation se fait via la validation de vos labs par l'instructeur.",
+    "finishLessonsToUnlock": "Terminez toutes les leçons pour accéder à l'évaluation."
   }
 }
 

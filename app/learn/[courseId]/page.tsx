@@ -29,6 +29,7 @@ import type { Lesson, Module } from "@/lib/types"
 import { CourseActivitiesSection } from "@/components/course-activities-section"
 import { ReviewSuccessDialog } from "@/components/review-success-dialog" // New import
 import { useAuthStore } from "@/lib/store/auth-store"
+import { useLanguage } from "@/lib/contexts/language-context"
 
 interface LearnPageProps {
   params: Promise<{ courseId: string }>
@@ -38,6 +39,7 @@ export default function LearnPage({ params }: LearnPageProps) {
   const { courseId } = use(params)
   const courseIdNum = Number.parseInt(courseId)
   const router = useRouter()
+  const { t } = useLanguage()
   const { isAuthenticated, user } = useAuthStore()
 
   // Charger le cours depuis l'API
@@ -820,7 +822,7 @@ export default function LearnPage({ params }: LearnPageProps) {
           )}
         >
           <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-            Évaluation
+            {t("exam.evaluationOfCourse")}
           </p>
           {course?.certificationMode === "BY_LABS" ? (
             <>
@@ -845,7 +847,7 @@ export default function LearnPage({ params }: LearnPageProps) {
                 <>
                   {isCourseCompletedForExam && !courseExamId ? (
                     <p className="text-xs text-foreground text-amber-600 dark:text-amber-500">
-                      Aucune évaluation n’est configurée pour ce cours. L’instructeur doit créer une évaluation (quiz de fin de cours) pour ce cours dans le dashboard ; le bouton « Passer l'évaluation » sera alors cliquable.
+                      ’est configurée ’{t("learn.noEvaluationConfigured")}
                       </p>
                   ) : (
                     <>

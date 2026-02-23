@@ -86,11 +86,13 @@ export default function DashboardPage() {
     ).slice(0, 3) // Limiter à 3 pour l'affichage
   }, [profile, allCourses])
 
-  // Calculer les statistiques
+  // Calculer les statistiques (priorité aux données backend dashboard, puis profile/completedCoursesData/certificates)
   const statsData = useMemo(() => {
-    const coursesJoined = dashboardStats?.studentStats?.coursesJoined || enrolledCourses.length || 0
-    const certificatesObtained = dashboardStats?.studentStats?.certificatesObtained || certificates.length || 0
-    const completedCourses = profile?.completedCourses?.length || 0
+    const coursesJoined = dashboardStats?.studentStats?.coursesJoined ?? enrolledCourses.length ?? 0
+    const certificatesObtained = dashboardStats?.studentStats?.certificatesObtained ?? certificates.length ?? 0
+    const completedCourses = (typeof dashboardStats?.studentStats?.completedCourses === "number"
+      ? dashboardStats.studentStats.completedCourses
+      : null) ?? profile?.completedCourses?.length ?? completedCoursesData?.length ?? 0
     
     // Calculer les heures totales (approximation basée sur la durée des cours)
     const totalHours = enrolledCourses.reduce((sum, course) => sum + (course.duration || 0), 0)
@@ -110,7 +112,7 @@ export default function DashboardPage() {
       certificates: certificatesObtained,
       previousStats,
     }
-  }, [dashboardStats, enrolledCourses, profile, certificates])
+  }, [dashboardStats, enrolledCourses, profile, certificates, completedCoursesData])
 
   const isLoading = isLoadingStats || isLoadingProfile || isLoadingCourses || isLoadingCertificates
 
@@ -933,19 +935,19 @@ export default function DashboardPage() {
                 </div>
               </CardHeader>
               <CardContent className="space-y-4">
-                {isLoading ? (
+                {(isLoading || (isLoadingCompletedCourses && !completedCoursesData?.length && !profile?.completedCourses?.length)) ? (
                   <div className="flex items-center justify-center py-8">
                     <Loader2 className="h-6 w-6 animate-spin text-primary" />
                     <span className="ml-2 text-muted-foreground">Chargement...</span>
                   </div>
-                ) : profile?.completedCourses && profile.completedCourses.length > 0 ? (
+                ) : (completedCoursesData?.length > 0 || (profile?.completedCourses && profile.completedCourses.length > 0)) ? (
                   <>
-                    {allCourses
-                      .filter(course => profile.completedCourses.includes(course.title))
-                      .slice(0, 3)
-                      .map((course, index) => (
+                    {(completedCoursesData?.length > 0
+                      ? completedCoursesData.slice(0, 3)
+                      : allCourses.filter(course => profile!.completedCourses!.includes(course.title)).slice(0, 3)
+                    ).map((course: any, index: number) => (
                         <div
-                          key={course.id}
+                          key={course.id ?? index}
                           className="group p-4 border-2 rounded-xl hover:border-primary/40 hover:bg-primary/5 transition-all duration-300"
                         >
                           <div className="flex items-start justify-between gap-3 mb-2">
@@ -970,7 +972,7 @@ export default function DashboardPage() {
                           </div>
                           <div className="flex items-center gap-2 text-xs text-muted-foreground">
                             <Clock className="h-3 w-3" />
-                            <span>{course.duration || 0}h de contenu</span>
+                            <span>{course.duration ?? 0}h de contenu</span>
                             <span>•</span>
                             <span className="text-primary font-semibold">Complété</span>
                           </div>

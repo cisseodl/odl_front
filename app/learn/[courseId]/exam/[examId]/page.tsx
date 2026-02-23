@@ -18,6 +18,7 @@ import { toast } from "sonner"
 import { SatisfactionModal } from "@/components/satisfaction-modal"
 import { serializeData } from "@/lib/utils/serialize"
 import { Input } from "@/components/ui/input"
+import { useLanguage } from "@/lib/contexts/language-context"
 
 interface ExamPageProps {
   params: Promise<{ courseId: string; examId: string }>
@@ -26,6 +27,7 @@ interface ExamPageProps {
 export default function ExamPage({ params }: ExamPageProps) {
   const { courseId, examId } = use(params)
   const router = useRouter()
+  const { t } = useLanguage()
   const examIdNum = Number.parseInt(examId)
   const courseIdNum = Number.parseInt(courseId)
 
@@ -48,13 +50,27 @@ export default function ExamPage({ params }: ExamPageProps) {
     queryKey: ["exam", courseIdNum, examIdNum],
     queryFn: async () => {
       const response = await evaluationService.getCourseExam(courseIdNum, examIdNum)
-      if (!response.ok) throw new Error(response.message || "Évaluation non trouvée")
+      if (!response.ok) throw new Error(response.message || t("exam.examNotFound"))
       const examPayload = (response as any).data
-      if (!examPayload || typeof examPayload !== "object") throw new Error("Évaluation non trouvée")
+      if (!examPayload || typeof examPayload !== "object") throw new Error(t("exam.examNotFound"))
       return serializeData(examPayload)
     },
     enabled: !Number.isNaN(examIdNum) && !Number.isNaN(courseIdNum),
   })
+
+  // Si l'apprenant a déjà réussi cet examen, rediriger vers les résultats (pas de repassage)
+  const { data: latestAttemptResponse } = useQuery({
+    queryKey: ["examLatestAttemptCheck", examIdNum],
+    queryFn: () => evaluationService.getLatestAttemptForExam(examIdNum),
+    enabled: !!exam && !Number.isNaN(examIdNum),
+  })
+  const latestAttempt = (latestAttemptResponse as any)?.data ?? (latestAttemptResponse as any)
+  const alreadyPassed = latestAttempt?.status === "PASSED"
+  const passedAttemptId = latestAttempt?.id
+  useEffect(() => {
+    if (!alreadyPassed || !passedAttemptId) return
+    router.replace(`/learn/${courseId}/exam/${examId}/results?attemptId=${passedAttemptId}`)
+  }, [alreadyPassed, passedAttemptId, courseId, examId, router])
 
   const [currentQuestion, setCurrentQuestion] = useState(0)
   const [answers, setAnswers] = useState<Record<number, number[] | string>>({})
@@ -178,15 +194,15 @@ export default function ExamPage({ params }: ExamPageProps) {
           setSubmittedAttemptId(responseData.id)
           setShowSatisfactionModal(true)
         } else {
-          toast.error("Erreur", {
-            description: "Impossible de récupérer l'ID de la tentative. Veuillez réessayer.",
+          toast.error(t("common.error") || "Error", {
+            description: t("exam.couldNotGetAttemptId"),
           })
         }
       }
     },
     onError: (error: any) => {
-      toast.error("Erreur", {
-        description: error?.message || "Erreur lors de la soumission de l'évaluation",
+      toast.error(t("common.error") || "Error", {
+        description: error?.message || t("exam.submitError"),
       })
     },
   })
@@ -260,16 +276,16 @@ export default function ExamPage({ params }: ExamPageProps) {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <GraduationCap className="h-6 w-6 text-primary" />
-                Évaluation non disponible
+                {t("exam.evaluationUnavailable")}
               </CardTitle>
               <p className="text-sm text-muted-foreground">
-                Vous devez terminer toutes les leçons du cours avant de passer l&apos;évaluation ({completedLessonsCount}/{totalLessons} leçons terminées).
+                {t("exam.finishLessons")} ({completedLessonsCount}/{totalLessons} {t("exam.lessonsCompleted")}).
               </p>
             </CardHeader>
             <CardContent>
               <Button onClick={() => router.push(`/learn/${courseId}`)} className="w-full">
                 <ChevronLeft className="h-4 w-4 mr-2" />
-                Retour au cours
+                {t("exam.backToCourse")}
               </Button>
             </CardContent>
           </Card>
@@ -282,7 +298,7 @@ export default function ExamPage({ params }: ExamPageProps) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        <span className="ml-2 text-muted-foreground">Chargement de l'évaluation...</span>
+        <span className="ml-2 text-muted-foreground">{t("exam.loadingEvaluation")}</span>
       </div>
     )
   }
@@ -291,13 +307,42 @@ export default function ExamPage({ params }: ExamPageProps) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[400px] space-y-4">
         <XCircle className="h-12 w-12 text-destructive" />
-        <h2 className="text-xl font-semibold">Évaluation non trouvée</h2>
-        <p className="text-muted-foreground">Cette évaluation n'est pas disponible.</p>
+        <h2 className="text-xl font-semibold">{t("exam.examNotFound")}</h2>
+        <p className="text-muted-foreground">{t("exam.examNotAvailable")}</p>
         <Button onClick={() => router.push(`/learn/${courseId}`)}>
           <ChevronLeft className="h-4 w-4 mr-2" />
-          Retour au cours
+          {t("exam.backToCourse")}
         </Button>
       </div>
+    )
+  }
+
+  // Déjà réussi : redirection vers les résultats (évite de repasser l'examen)
+  if (alreadyPassed) {
+    return (
+      <ProtectedRoute>
+        <div className="min-h-screen bg-muted/30 flex items-center justify-center p-4">
+          <Card className="max-w-md w-full">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <CheckCircle2 className="h-6 w-6 text-green-600" />
+                {t("exam.alreadyPassed")}
+              </CardTitle>
+              <p className="text-sm text-muted-foreground">
+                {t("exam.redirecting")}
+              </p>
+            </CardHeader>
+            <CardContent>
+              <div className="flex justify-center py-2">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              </div>
+              <Button onClick={() => router.push(`/learn/${courseId}/exam/${examId}/results${passedAttemptId ? `?attemptId=${passedAttemptId}` : ""}`)} className="w-full mt-4">
+                {t("exam.seeResults")}
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+      </ProtectedRoute>
     )
   }
 
@@ -306,11 +351,11 @@ export default function ExamPage({ params }: ExamPageProps) {
       const name = certificateName.trim()
       const email = certificateEmail.trim()
       if (!name || !email) {
-        toast.error("Veuillez renseigner votre nom complet et votre adresse email.")
+        toast.error(t("exam.pleaseFillNameAndEmail"))
         return
       }
       if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-        toast.error("Veuillez entrer une adresse email valide.")
+        toast.error(t("exam.pleaseEnterValidEmail"))
         return
       }
       try {
@@ -332,21 +377,21 @@ export default function ExamPage({ params }: ExamPageProps) {
               className="mb-6"
             >
               <ChevronLeft className="h-4 w-4 mr-2" />
-              Retour au cours
+              {t("exam.backToCourse")}
             </Button>
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <GraduationCap className="h-6 w-6 text-primary" />
-                  Avant de commencer l'évaluation
+                  {t("exam.beforeStart")}
                 </CardTitle>
                 <p className="text-sm text-muted-foreground">
-                  Indiquez le nom qui figurera sur votre certificat et l'adresse email pour l'envoi du certificat.
+                  {t("exam.certificateIntro")}
                 </p>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="certificate-name">Nom complet (pour le certificat)</Label>
+                  <Label htmlFor="certificate-name">{t("exam.fullName")}</Label>
                   <Input
                     id="certificate-name"
                     type="text"
@@ -357,7 +402,7 @@ export default function ExamPage({ params }: ExamPageProps) {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="certificate-email">Adresse email (pour l'envoi du certificat)</Label>
+                  <Label htmlFor="certificate-email">{t("exam.email")}</Label>
                   <Input
                     id="certificate-email"
                     type="email"
@@ -368,7 +413,7 @@ export default function ExamPage({ params }: ExamPageProps) {
                   />
                 </div>
                 <Button onClick={handleStartExam} className="w-full" size="lg">
-                  Commencer l'évaluation
+                  {t("exam.startAssessment")}
                 </Button>
               </CardContent>
             </Card>
@@ -390,18 +435,18 @@ export default function ExamPage({ params }: ExamPageProps) {
               className="mb-4"
             >
               <ChevronLeft className="h-4 w-4 mr-2" />
-              Retour au cours
+              {t("exam.backToCourse")}
             </Button>
             <div className="flex items-center justify-between">
               <div>
                 <h1 className="text-2xl font-bold flex items-center gap-2">
                   <GraduationCap className="h-6 w-6 text-primary" />
-                  {exam.title || "Évaluation de fin de cours"}
+                  {exam.title || t("exam.evaluationOfCourse")}
                 </h1>
                 <p className="text-muted-foreground mt-1">{exam.description || ""}</p>
               </div>
               <Badge variant="outline" className="text-sm">
-                {questions.length > 0 ? `Question ${currentQuestion + 1} / ${questions.length}` : "Aucune question"}
+                {questions.length > 0 ? `${t("exam.questionLabel")} ${currentQuestion + 1} / ${questions.length}` : t("exam.noQuestions")}
               </Badge>
             </div>
             <Progress value={progress} className="mt-4" />
@@ -412,11 +457,11 @@ export default function ExamPage({ params }: ExamPageProps) {
             <Card>
               <CardContent className="py-8 text-center">
                 <p className="text-muted-foreground mb-4">
-                  Cette évaluation ne contient aucune question pour le moment. L'instructeur doit ajouter des questions au quiz.
+                  {t("exam.noQuestionsInExam")}
                 </p>
                 <Button onClick={() => router.push(`/learn/${courseId}`)}>
                   <ChevronLeft className="h-4 w-4 mr-2" />
-                  Retour au cours
+                  {t("exam.backToCourse")}
                 </Button>
               </CardContent>
             </Card>
