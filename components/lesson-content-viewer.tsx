@@ -1,10 +1,12 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { FileText, Loader2, AlertCircle, ExternalLink, Play } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Alert, AlertDescription } from "@/components/ui/alert"
+
+const VIDEO_LOAD_TIMEOUT_MS = 12000
 
 interface LessonContentViewerProps {
   contentUrl: string
@@ -16,39 +18,36 @@ interface LessonContentViewerProps {
 export function LessonContentViewer({ contentUrl, title, type, className }: LessonContentViewerProps) {
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-
-  // DEBUG: Log pour comprendre pourquoi le document ne s'affiche pas
-  useEffect(() => {
-    console.log("📄 [LessonContentViewer] Props reçues:", {
-      contentUrl: contentUrl,
-      title: title,
-      type: type,
-      hasContentUrl: !!contentUrl,
-      contentUrlType: typeof contentUrl,
-      contentUrlLength: contentUrl ? contentUrl.length : 0
-    })
-  }, [contentUrl, title, type])
+  const loadTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   useEffect(() => {
     if (!contentUrl || contentUrl.trim() === "") {
-      console.error("❌ [LessonContentViewer] Aucune URL fournie pour le contenu")
       setError("Aucune URL fournie pour le contenu")
       setIsLoading(false)
       return
     }
-    
-    console.log("✅ [LessonContentViewer] URL valide, chargement du contenu:", contentUrl)
 
     // Construire l'URL complète si nécessaire
     let fullUrl = contentUrl
     if (!contentUrl.startsWith("http://") && !contentUrl.startsWith("https://")) {
-      // Si l'URL est relative, l'ajouter à l'URL de l'API
       const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || "https://api.smart-odc.com"
       fullUrl = `${apiBaseUrl}/awsodclearning${contentUrl.startsWith("/") ? contentUrl : `/${contentUrl}`}`
     }
 
     setIsLoading(false)
   }, [contentUrl])
+
+  // Timeout pour la vidéo : éviter de rester en chargement indéfiniment (ex. 403, CORS, URL lente)
+  useEffect(() => {
+    if (type !== "video" || !contentUrl) return
+    loadTimeoutRef.current = setTimeout(() => {
+      setIsLoading(false)
+      setError((prev) => prev || "La vidéo met trop de temps à charger. Ouvrez le lien ci‑dessous ou réessayez.")
+    }, VIDEO_LOAD_TIMEOUT_MS)
+    return () => {
+      if (loadTimeoutRef.current) clearTimeout(loadTimeoutRef.current)
+    }
+  }, [type, contentUrl])
 
   const handleOpenInNewTab = () => {
     if (contentUrl) {
@@ -155,11 +154,28 @@ export function LessonContentViewer({ contentUrl, title, type, className }: Less
               src={fullUrl}
               controls
               className="w-full h-auto max-h-[75vh] rounded-lg"
-              onLoadStart={() => setIsLoading(true)}
-              onLoadedData={() => setIsLoading(false)}
-              onError={() => {
+              onLoadedData={() => {
+                if (loadTimeoutRef.current) {
+                  clearTimeout(loadTimeoutRef.current)
+                  loadTimeoutRef.current = null
+                }
                 setIsLoading(false)
-                setError("Impossible de charger la vidéo")
+                setError(null)
+              }}
+              onCanPlay={() => {
+                if (loadTimeoutRef.current) {
+                  clearTimeout(loadTimeoutRef.current)
+                  loadTimeoutRef.current = null
+                }
+                setIsLoading(false)
+              }}
+              onError={() => {
+                if (loadTimeoutRef.current) {
+                  clearTimeout(loadTimeoutRef.current)
+                  loadTimeoutRef.current = null
+                }
+                setIsLoading(false)
+                setError("Impossible de charger la vidéo. Vérifiez le lien ou ouvrez dans un nouvel onglet.")
               }}
             >
               Votre navigateur ne supporte pas la lecture de vidéos.
@@ -226,12 +242,20 @@ export function LessonContentViewer({ contentUrl, title, type, className }: Less
           </div>
         )}
 
-        {/* Error overlay */}
+        {/* Error + lien de secours pour la vidéo */}
         {error && (
-          <Alert variant="destructive">
-            <AlertCircle className="h-4 w-4" />
-            <AlertDescription>{error}</AlertDescription>
-          </Alert>
+          <div className="space-y-2">
+            <Alert variant="destructive">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+            {type === "video" && fullUrl && (
+              <Button variant="outline" size="sm" onClick={() => window.open(fullUrl, "_blank")}>
+                <ExternalLink className="h-4 w-4 mr-2" />
+                Ouvrir la vidéo dans un nouvel onglet
+              </Button>
+            )}
+          </div>
         )}
       </div>
     </Card>

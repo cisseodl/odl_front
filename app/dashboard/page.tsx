@@ -22,12 +22,13 @@ export default function DashboardPage() {
   const [selectedPeriod, setSelectedPeriod] = useState<"week" | "month" | "year">("week")
   const { user } = useAuthStore()
 
-  // Récupérer les statistiques du dashboard
+  // Récupérer les statistiques du dashboard (retry désactivé pour ne pas bloquer si l'API échoue)
   const { data: dashboardStats, isLoading: isLoadingStats } = useQuery({
     queryKey: ["dashboardStats", user?.id],
     queryFn: () => dashboardService.getStudentDashboard(),
     enabled: !!user,
     staleTime: 5 * 60 * 1000,
+    retry: false,
   })
 
   // Récupérer le profil pour les cours inscrits
@@ -114,7 +115,9 @@ export default function DashboardPage() {
     }
   }, [dashboardStats, enrolledCourses, profile, certificates, completedCoursesData])
 
+  // Ne pas bloquer tout le dashboard : afficher le contenu dès que profil et cours sont dispo
   const isLoading = isLoadingStats || isLoadingProfile || isLoadingCourses || isLoadingCertificates
+  const isLoadingContinueSection = isLoadingProfile || isLoadingCourses
 
   const stats = [
     {
@@ -439,8 +442,8 @@ export default function DashboardPage() {
                   </div>
                 </CardHeader>
                 <CardContent className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-4">
-                  {isLoading ? (
-                    <div className="flex items-center justify-center py-8 col-span-full"> {/* col-span-full for loader */}
+                  {isLoadingContinueSection ? (
+                    <div className="flex items-center justify-center py-8 col-span-full">
                       <Loader2 className="h-6 w-6 animate-spin text-primary" />
                       <span className="ml-2 text-muted-foreground">Chargement des cours...</span>
                     </div>
@@ -935,7 +938,7 @@ export default function DashboardPage() {
                 </div>
               </CardHeader>
               <CardContent className="space-y-4">
-                {(isLoading || (isLoadingCompletedCourses && !completedCoursesData?.length && !profile?.completedCourses?.length)) ? (
+                {(isLoadingCompletedCourses && !completedCoursesData?.length && !profile?.completedCourses?.length) ? (
                   <div className="flex items-center justify-center py-8">
                     <Loader2 className="h-6 w-6 animate-spin text-primary" />
                     <span className="ml-2 text-muted-foreground">Chargement...</span>
