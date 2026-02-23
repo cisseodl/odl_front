@@ -24,11 +24,15 @@ export default function ExamResultsPage({ params }: ExamResultsPageProps) {
   const examIdNum = Number.parseInt(examId)
   const searchParams = useSearchParams()
   const attemptIdFromUrl = searchParams?.get("attemptId")
-  const attemptId = attemptIdFromUrl ? Number.parseInt(attemptIdFromUrl) : examIdNum
+  // Ne jamais utiliser examId comme attemptId : l'ID de l'examen (7) ≠ l'ID de la tentative (6)
+  const [resolvedAttemptId, setResolvedAttemptId] = useState<number | null>(
+    attemptIdFromUrl ? Number.parseInt(attemptIdFromUrl, 10) : null
+  )
+  const attemptId = attemptIdFromUrl ? Number.parseInt(attemptIdFromUrl, 10) : resolvedAttemptId
 
   const [certificateDisplayName, setCertificateDisplayName] = useState<string>("")
   useEffect(() => {
-    if (typeof window === "undefined" || Number.isNaN(attemptId)) return
+    if (typeof window === "undefined" || attemptId == null || Number.isNaN(attemptId)) return
     try {
       const raw = sessionStorage.getItem(`exam-certificate-${attemptId}`)
       if (raw) {
@@ -38,7 +42,33 @@ export default function ExamResultsPage({ params }: ExamResultsPageProps) {
     } catch (_) {}
   }, [attemptId])
 
-  // Récupérer les résultats de l'examen
+  // Sans attemptId dans l'URL : récupérer la dernière tentative pour cet examen
+  const {
+    data: latestAttempt,
+    isLoading: isLoadingLatestAttempt,
+    isFetched: isLatestFetched,
+  } = useQuery({
+    queryKey: ["examLatestAttempt", examIdNum],
+    queryFn: async () => {
+      const response = await evaluationService.getLatestAttemptForExam(examIdNum)
+      if (response.ok && response.data) {
+        const data = response.data?.data ?? response.data
+        const id = data?.id ?? data?.attemptId
+        if (id != null) setResolvedAttemptId(Number(id))
+        return data
+      }
+      return null
+    },
+    enabled: !attemptIdFromUrl && !Number.isNaN(examIdNum),
+  })
+
+  useEffect(() => {
+    if (!attemptIdFromUrl && latestAttempt?.id != null && resolvedAttemptId === null) {
+      setResolvedAttemptId(Number(latestAttempt.id))
+    }
+  }, [attemptIdFromUrl, latestAttempt, resolvedAttemptId])
+
+  // Récupérer les résultats de l'examen (avec l'ID de la tentative, pas l'ID de l'examen)
   const {
     data: attempt,
     isLoading: isLoadingResults,
@@ -46,14 +76,14 @@ export default function ExamResultsPage({ params }: ExamResultsPageProps) {
   } = useQuery({
     queryKey: ["examResults", attemptId],
     queryFn: async () => {
+      if (attemptId == null || Number.isNaN(attemptId)) throw new Error("ID de tentative manquant")
       const response = await evaluationService.getExamResults(attemptId)
       if (response.ok && response.data) {
-        // Sérialiser les données pour éviter les erreurs React #185
-        return serializeData(response.data)
+        return serializeData(response.data?.data ?? response.data)
       }
       throw new Error(response.message || "Résultats non disponibles")
     },
-    enabled: !Number.isNaN(attemptId),
+    enabled: attemptId != null && !Number.isNaN(attemptId),
   })
 
   // Récupérer les certificats de l'utilisateur
@@ -64,19 +94,40 @@ export default function ExamResultsPage({ params }: ExamResultsPageProps) {
     queryFn: () => certificateService.getMyCertificates(),
   })
 
-  const score = attempt?.score || 0
+  const score = attempt?.score ?? 0
   const isPassed = score >= 70
   const certificate = certificates.find((cert: any) => cert.courseId === Number.parseInt(courseId))
+
+  const showLoading =
+    (!attemptIdFromUrl && isLoadingLatestAttempt) ||
+    (attemptId != null && isLoadingResults)
+  const noAttemptFound = !attemptIdFromUrl && isLatestFetched && resolvedAttemptId === null && !isLoadingLatestAttempt
 
   if (Number.isNaN(examIdNum)) {
     return <div>Paramètres invalides</div>
   }
 
-  if (isLoadingResults) {
+  if (showLoading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
         <span className="ml-2 text-muted-foreground">Chargement des résultats...</span>
+      </div>
+    )
+  }
+
+  if (noAttemptFound) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[400px] space-y-4">
+        <XCircle className="h-12 w-12 text-destructive" />
+        <h2 className="text-xl font-semibold">Aucune tentative trouvée</h2>
+        <p className="text-muted-foreground">
+          Vous n&apos;avez pas encore passé cet examen ou vos tentatives ne sont pas encore disponibles.
+        </p>
+        <Button onClick={() => router.push(`/learn/${courseId}`)}>
+          <ChevronLeft className="h-4 w-4 mr-2" />
+          Retour au cours
+        </Button>
       </div>
     )
   }

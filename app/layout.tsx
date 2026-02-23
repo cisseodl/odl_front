@@ -59,6 +59,8 @@ export default function RootLayout({
   return (
     <html lang="fr" suppressHydrationWarning>
       <head>
+        {/* Preload du logo avec as="image" pour éviter l'avertissement "preloaded but not used" */}
+        <link rel="preload" href="/logo.png" as="image" />
         {/* Viewport meta tag pour compatibilité TV et mobile */}
         <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes" />
         {/* Fallback CSS inline pour les navigateurs TV qui ne supportent pas oklch() */}

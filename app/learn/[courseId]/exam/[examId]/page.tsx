@@ -134,7 +134,8 @@ export default function ExamPage({ params }: ExamPageProps) {
           answersMap[questionId] = (answer[0] as number) ?? 0
         } else if (typeof answer === 'string') {
           // Choix unique (RadioGroup renvoie une string) ou réponse texte
-          if (question.type === "SINGLE_CHOICE" || question.type === "QCM") {
+          const qType = q?.type ?? question?.type
+          if (qType === "SINGLE_CHOICE" || qType === "QCM") {
             const num = Number.parseInt(answer, 10)
             answersMap[questionId] = Number.isNaN(num) ? 0 : num
           } else {

@@ -1011,6 +1011,14 @@ export const evaluationService = {
   },
 
   /**
+   * Récupérer la dernière tentative pour un examen (quand l'URL n'a pas d'attemptId).
+   * GET /api/evaluations/attempts/latest?evaluationId=7
+   */
+  async getLatestAttemptForExam(evaluationId: number): Promise<ApiResponse<any>> {
+    return apiClient.get(`${API_ENDPOINTS.evaluations.getResults}/latest?evaluationId=${evaluationId}`)
+  },
+
+  /**
    * Récupérer les résultats d'un examen
    * GET /api/evaluations/attempts/{attemptId}/results
    */
