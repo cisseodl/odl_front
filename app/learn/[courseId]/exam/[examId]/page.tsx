@@ -60,15 +60,21 @@ export default function ExamPage({ params }: ExamPageProps) {
     enabled: !Number.isNaN(examIdNum) && !Number.isNaN(courseIdNum),
   })
 
-  // Si l'apprenant a déjà réussi cet examen, rediriger vers les résultats (pas de repassage)
-  const { data: latestAttemptResponse } = useQuery({
+  // Si l'apprenant a déjà réussi cet examen, afficher un blocage explicite (pas de repassage)
+  const { data: latestAttempt } = useQuery({
     queryKey: ["examLatestAttemptCheck", examIdNum],
-    queryFn: () => evaluationService.getLatestAttemptForExam(examIdNum),
+    queryFn: async () => {
+      const response = await evaluationService.getLatestAttemptForExam(examIdNum)
+      if (response.ok && response.data) {
+        const data = (response.data as any)?.data ?? response.data
+        return data
+      }
+      return null
+    },
     enabled: !!exam && !Number.isNaN(examIdNum),
   })
-  const latestAttempt = (latestAttemptResponse as any)?.data ?? (latestAttemptResponse as any)
-  const alreadyPassed = latestAttempt?.status === "PASSED"
-  const passedAttemptId = latestAttempt?.id
+  const alreadyPassed = (latestAttempt as any)?.status === "PASSED"
+  const passedAttemptId = (latestAttempt as any)?.id ?? (latestAttempt as any)?.attemptId
 
   const [currentQuestion, setCurrentQuestion] = useState(0)
   const [answers, setAnswers] = useState<Record<number, number[] | string>>({})
