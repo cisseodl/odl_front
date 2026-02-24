@@ -31,22 +31,6 @@ export default function ExamResultsPage({ params }: ExamResultsPageProps) {
   const attemptId = attemptIdFromUrl ? Number.parseInt(attemptIdFromUrl, 10) : resolvedAttemptId
 
   const [certificateDisplayName, setCertificateDisplayName] = useState<string>("")
-  // Priorité au nom renvoyé par l'API (attempt.certificateDisplayName) pour éviter d'afficher
-  // le nom d'un autre apprenant (sessionStorage partagé ou ancienne session)
-  useEffect(() => {
-    if (attempt?.certificateDisplayName) {
-      setCertificateDisplayName(attempt.certificateDisplayName)
-      return
-    }
-    if (typeof window === "undefined" || attemptId == null || Number.isNaN(attemptId)) return
-    try {
-      const raw = sessionStorage.getItem(`exam-certificate-${attemptId}`)
-      if (raw) {
-        const { name } = JSON.parse(raw)
-        setCertificateDisplayName(name || "")
-      }
-    } catch (_) {}
-  }, [attemptId, attempt?.certificateDisplayName])
 
   // Sans attemptId dans l'URL : récupérer la dernière tentative pour cet examen
   const {
@@ -91,6 +75,23 @@ export default function ExamResultsPage({ params }: ExamResultsPageProps) {
     },
     enabled: attemptId != null && !Number.isNaN(attemptId),
   })
+
+  // Priorité au nom renvoyé par l'API (attempt.certificateDisplayName) pour éviter d'afficher
+  // le nom d'un autre apprenant (sessionStorage partagé ou ancienne session). Doit être après la déclaration de attempt.
+  useEffect(() => {
+    if (attempt?.certificateDisplayName) {
+      setCertificateDisplayName(attempt.certificateDisplayName)
+      return
+    }
+    if (typeof window === "undefined" || attemptId == null || Number.isNaN(attemptId)) return
+    try {
+      const raw = sessionStorage.getItem(`exam-certificate-${attemptId}`)
+      if (raw) {
+        const { name } = JSON.parse(raw)
+        setCertificateDisplayName(name || "")
+      }
+    } catch (_) {}
+  }, [attemptId, attempt?.certificateDisplayName])
 
   // Récupérer les certificats de l'utilisateur
   const {
