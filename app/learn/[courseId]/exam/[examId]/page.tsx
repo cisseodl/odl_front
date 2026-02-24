@@ -19,6 +19,7 @@ import { SatisfactionModal } from "@/components/satisfaction-modal"
 import { serializeData } from "@/lib/utils/serialize"
 import { Input } from "@/components/ui/input"
 import { useLanguage } from "@/lib/contexts/language-context"
+import { useAuthStore } from "@/lib/store/auth-store"
 
 interface ExamPageProps {
   params: Promise<{ courseId: string; examId: string }>
@@ -28,6 +29,7 @@ export default function ExamPage({ params }: ExamPageProps) {
   const { courseId, examId } = use(params)
   const router = useRouter()
   const { t } = useLanguage()
+  const user = useAuthStore((s) => s.user)
   const examIdNum = Number.parseInt(examId)
   const courseIdNum = Number.parseInt(courseId)
 
@@ -67,10 +69,6 @@ export default function ExamPage({ params }: ExamPageProps) {
   const latestAttempt = (latestAttemptResponse as any)?.data ?? (latestAttemptResponse as any)
   const alreadyPassed = latestAttempt?.status === "PASSED"
   const passedAttemptId = latestAttempt?.id
-  useEffect(() => {
-    if (!alreadyPassed || !passedAttemptId) return
-    router.replace(`/learn/${courseId}/exam/${examId}/results?attemptId=${passedAttemptId}`)
-  }, [alreadyPassed, passedAttemptId, courseId, examId, router])
 
   const [currentQuestion, setCurrentQuestion] = useState(0)
   const [answers, setAnswers] = useState<Record<number, number[] | string>>({})
@@ -90,13 +88,19 @@ export default function ExamPage({ params }: ExamPageProps) {
     try {
       const saved = typeof window !== "undefined" ? sessionStorage.getItem(key) : null
       if (saved) {
-        const { name, email } = JSON.parse(saved)
+        const { name } = JSON.parse(saved)
         setCertificateName(name || "")
-        setCertificateEmail(email || "")
-        // On préremplit uniquement ; on ne passe plus automatiquement à "exam"
+        // On préremplit uniquement le nom ; l'email est forcé à celui du compte
       }
     } catch (_) {}
   }, [courseId, examId])
+
+  // Forcer l'email de certificat à celui du compte (non modifiable dans le formulaire)
+  useEffect(() => {
+    if (user?.email) {
+      setCertificateEmail(user.email)
+    }
+  }, [user?.email])
 
   // Utiliser les questions de l'examen (plusieurs formes possibles selon le backend)
   const questions: any[] = (() => {
@@ -423,9 +427,13 @@ export default function ExamPage({ params }: ExamPageProps) {
                     type="email"
                     placeholder="votre@email.com"
                     value={certificateEmail}
-                    onChange={(e) => setCertificateEmail(e.target.value)}
+                    readOnly
+                    disabled
                     className="w-full"
                   />
+                  <p className="text-xs text-muted-foreground">
+                    Cette adresse est celle de votre compte et ne peut pas être modifiée ici.
+                  </p>
                 </div>
                 <Button onClick={handleStartExam} className="w-full" size="lg">
                   {t("exam.startAssessment")}
