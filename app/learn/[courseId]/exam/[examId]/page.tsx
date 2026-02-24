@@ -204,9 +204,21 @@ export default function ExamPage({ params }: ExamPageProps) {
       }
     },
     onError: (error: any) => {
-      toast.error(t("common.error") || "Error", {
-        description: error?.message || t("exam.submitError"),
-      })
+      const msg = error?.message || ""
+      const alreadySubmitted = /déjà|already|déjà soumis|already submitted/i.test(msg)
+      if (alreadySubmitted) {
+        toast.info(t("exam.alreadyPassed") || "Vous avez déjà réussi cet examen", {
+          description: t("exam.alreadyPassedCannotRetake") || "Vous ne pouvez pas repasser cette évaluation. Consultez vos résultats.",
+          action: {
+            label: t("exam.seeResults") || "Voir mes résultats",
+            onClick: () => router.push(`/learn/${courseId}/exam/${examId}/results`),
+          },
+        })
+      } else {
+        toast.error(t("common.error") || "Error", {
+          description: msg || t("exam.submitError"),
+        })
+      }
     },
   })
 
@@ -320,26 +332,26 @@ export default function ExamPage({ params }: ExamPageProps) {
     )
   }
 
-  // Déjà réussi : redirection vers les résultats (évite de repasser l'examen)
+  // Déjà réussi : message clair + accès aux résultats (pas de repassage)
   if (alreadyPassed) {
     return (
       <ProtectedRoute>
         <div className="min-h-screen bg-muted/30 flex items-center justify-center p-4">
-          <Card className="max-w-md w-full">
+          <Card className="max-w-md w-full border-2 border-green-200 bg-green-50/50 dark:bg-green-950/20 dark:border-green-800">
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
+              <CardTitle className="flex items-center gap-2 text-green-700 dark:text-green-400">
                 <CheckCircle2 className="h-6 w-6 text-green-600" />
                 {t("exam.alreadyPassed")}
               </CardTitle>
+              <p className="text-sm text-muted-foreground mt-2">
+                {t("exam.alreadyPassedCannotRetake")}
+              </p>
+            </CardHeader>
+            <CardContent className="space-y-4">
               <p className="text-sm text-muted-foreground">
                 {t("exam.redirecting")}
               </p>
-            </CardHeader>
-            <CardContent>
-              <div className="flex justify-center py-2">
-                <Loader2 className="h-8 w-8 animate-spin text-primary" />
-              </div>
-              <Button onClick={() => router.push(`/learn/${courseId}/exam/${examId}/results${passedAttemptId ? `?attemptId=${passedAttemptId}` : ""}`)} className="w-full mt-4">
+              <Button onClick={() => router.push(`/learn/${courseId}/exam/${examId}/results${passedAttemptId ? `?attemptId=${passedAttemptId}` : ""}`)} className="w-full" size="lg">
                 {t("exam.seeResults")}
               </Button>
             </CardContent>

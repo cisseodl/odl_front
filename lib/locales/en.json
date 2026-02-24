@@ -45,6 +45,7 @@
   },
   "exam": {
     "alreadyPassed": "You have already passed this exam",
+    "alreadyPassedCannotRetake": "You cannot retake this assessment. View your results below.",
     "redirecting": "Redirecting to your results...",
     "seeResults": "View my results",
     "examNotFound": "Assessment not found",

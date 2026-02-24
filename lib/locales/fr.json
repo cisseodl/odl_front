@@ -45,6 +45,7 @@
   },
   "exam": {
     "alreadyPassed": "Vous avez déjà réussi cet examen",
+    "alreadyPassedCannotRetake": "Vous ne pouvez pas repasser cette évaluation. Consultez vos résultats ci-dessous.",
     "redirecting": "Redirection vers vos résultats...",
     "seeResults": "Voir mes résultats",
     "backToCourse": "Retour au cours",
