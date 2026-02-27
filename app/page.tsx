@@ -262,7 +262,7 @@ export default function HomePage() {
                         </p>
 
                         {/* CTA Button - Orange Impact Maximum */}
-                        <div className="flex justify-center gap-4 mt-10 md:mt-14">
+                        <div className="flex justify-center gap-4 mt-20 md:mt-24">
                           <Button
                             size="lg"
                             className="bg-primary text-white hover:bg-primary/95 font-bold px-8 py-6 text-lg shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105 rounded-md group/btn"
