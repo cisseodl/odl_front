@@ -150,8 +150,7 @@ npm run dev
 
 4. **Ouvrir dans le navigateur**
 ```
-http://localhost:3000
-```
+https://smart-odc.com/```
 
 ### Configuration
 
