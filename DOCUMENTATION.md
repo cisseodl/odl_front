@@ -1,4 +1,4 @@
-# 📚 Documentation Frontend - Orange Digital Learning (ODL)
+# 📚 Documentation Frontend - Orange Digital Center (ODL)
 
 **Version**: 2.0.0  
 **Dernière mise à jour**: Décembre 2024  
@@ -26,7 +26,7 @@
 
 ## 🎯 Vue d'ensemble
 
-Orange Digital Learning est une plateforme moderne de formation en ligne (LMS) développée pour **Orange Digital Center Mali**. La plateforme permet aux étudiants de suivre des cours en ligne gratuitement, de suivre leur progression, de passer des quiz et de réaliser des labs pratiques.
+Orange Digital Center est une plateforme moderne de formation en ligne (LMS) développée pour **Orange Digital Center Mali**. La plateforme permet aux étudiants de suivre des cours en ligne gratuitement, de suivre leur progression, de passer des quiz et de réaliser des labs pratiques.
 
 ### Objectifs du Projet
 
@@ -160,7 +160,7 @@ Créez un fichier `.env.local` à la racine du projet :
 
 ```env
 # API Configuration (si applicable)
-NEXT_PUBLIC_API_URL=http://localhost:8000/api
+NEXT_PUBLIC_API_URL=https://api.smart-odc.com/
 
 # Analytics (optionnel)
 NEXT_PUBLIC_ANALYTICS_ID=your-analytics-id
@@ -313,7 +313,7 @@ export default function DashboardPage() {
 
 Navigation principale avec :
 - Logo ODL
-- Menu de navigation (Cours, Dashboard, Mon Apprentissage, À propos)
+- Menu de navigation (Dashboard, Cours, Mon Apprentissage, À propos)
 - Barre de recherche
 - Bouton profil (redirige vers `/auth` si non connecté)
 - Menu mobile responsive

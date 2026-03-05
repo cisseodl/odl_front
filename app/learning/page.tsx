@@ -123,7 +123,7 @@ export default function LearningPage() {
             {showShareBanner && (
               <div className="flex items-center gap-2 bg-primary/10 border border-primary/30 rounded-lg px-4 py-2.5 shadow-sm">
                 <Share2 className="h-4 w-4 text-primary flex-shrink-0" />
-                <span className="text-sm font-medium text-primary">Partager Orange Digital Learning avec des amis</span>
+                <span className="text-sm font-medium text-primary">Partager Orange Digital Center avec des amis</span>
                 <Button
                   variant="ghost"
                   size="icon"

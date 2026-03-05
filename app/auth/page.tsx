@@ -66,7 +66,7 @@ export default function AuthPage() {
       console.log("⚡️ [AUTH PAGE] Appel de la fonction login du store..."); // Nouveau log
       await login(email, password)
       toast.success("Connexion réussie !", {
-        description: "Bienvenue sur Orange Digital Learning",
+        description: "Bienvenue sur Orange Digital Center",
       })
       router.push(redirectTo)
       router.refresh()
@@ -169,7 +169,7 @@ export default function AuthPage() {
       // Succès complet
       setResultDialogType("success")
       setResultDialogTitle("Inscription réussie !")
-      setResultDialogDescription("Bienvenue sur Orange Digital Learning ! Votre compte apprenant a été créé avec succès. Un email de bienvenue vous a été envoyé. Vous pouvez maintenant accéder à tous nos cours et commencer votre parcours d'apprentissage.")
+      setResultDialogDescription("Bienvenue sur Orange Digital Center ! Votre compte apprenant a été créé avec succès. Un email de bienvenue vous a été envoyé. Vous pouvez maintenant accéder à tous nos cours et commencer votre parcours d'apprentissage.")
       setShowResultDialog(true)
     } catch (error) {
       // Erreur
@@ -247,7 +247,7 @@ export default function AuthPage() {
       // Succès complet
       setResultDialogType("success")
       setResultDialogTitle("Inscription réussie !")
-      setResultDialogDescription("Bienvenue sur Orange Digital Learning ! Votre compte apprenant a été créé avec succès. Un email de bienvenue vous a été envoyé. Vous pouvez maintenant accéder à tous nos cours et commencer votre parcours d'apprentissage.")
+      setResultDialogDescription("Bienvenue sur Orange Digital Center ! Votre compte apprenant a été créé avec succès. Un email de bienvenue vous a été envoyé. Vous pouvez maintenant accéder à tous nos cours et commencer votre parcours d'apprentissage.")
       setShowResultDialog(true)
     } catch (error) {
       // Erreur
@@ -264,7 +264,7 @@ export default function AuthPage() {
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-white via-white to-muted/30 py-12 px-4">
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1 text-center">
-          <CardTitle className="text-3xl font-bold">Orange Digital Learning</CardTitle>
+          <CardTitle className="text-3xl font-bold">Orange Digital Center</CardTitle>
           <CardDescription>
             Connectez-vous ou créez un compte pour accéder à tous nos cours
           </CardDescription>

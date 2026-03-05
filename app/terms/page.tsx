@@ -12,7 +12,7 @@ export default function TermsPage() {
             <CardContent className="p-6 space-y-4">
               <h2 className="text-2xl font-bold">1. Acceptation des conditions</h2>
               <p className="text-muted-foreground leading-relaxed">
-                En accédant et en utilisant Orange Digital Learning, vous acceptez d'être lié par ces conditions générales
+                En accédant et en utilisant Orange Digital Center, vous acceptez d'être lié par ces conditions générales
                 d'utilisation. Si vous n'acceptez pas ces conditions, veuillez ne pas utiliser notre plateforme.
               </p>
             </CardContent>
@@ -22,7 +22,7 @@ export default function TermsPage() {
             <CardContent className="p-6 space-y-4">
               <h2 className="text-2xl font-bold">2. Utilisation de la plateforme</h2>
               <p className="text-muted-foreground leading-relaxed">
-                Orange Digital Learning vous accorde une licence limitée, non exclusive et non transférable pour accéder et utiliser
+                La plateforme d'E-Learning d'Orange Digital Center vous accorde une licence limitée, non exclusive et non transférable pour accéder et utiliser
                 notre plateforme à des fins personnelles et non commerciales.
               </p>
               <ul className="list-disc list-inside space-y-2 text-muted-foreground">
@@ -38,8 +38,8 @@ export default function TermsPage() {
             <CardContent className="p-6 space-y-4">
               <h2 className="text-2xl font-bold">3. Contenu des cours</h2>
               <p className="text-muted-foreground leading-relaxed">
-                Tout le contenu disponible sur Orange Digital Learning, y compris les vidéos, textes, images et autres matériaux, est
-                protégé par les droits d'auteur et appartient à Orange Digital Learning ou à ses formateurs.
+                Tout le contenu disponible sur Orange Digital Center, y compris les vidéos, textes, images et autres matériaux, est
+                protégé par les droits d'auteur et appartient à Orange Digital Center ou à ses formateurs.
               </p>
             </CardContent>
           </Card>
@@ -48,7 +48,7 @@ export default function TermsPage() {
             <CardContent className="p-6 space-y-4">
               <h2 className="text-2xl font-bold">4. Inscription et accès aux cours</h2>
               <p className="text-muted-foreground leading-relaxed">
-                L'inscription aux cours sur Orange Digital Learning vous donne un accès à vie au contenu. Vous pouvez suivre les cours à votre rythme et y revenir autant de fois que nécessaire. Vous pouvez annuler votre inscription à tout moment depuis votre profil.
+                L'inscription aux cours sur notre plateforme vous donne un accès à vie au contenu. Vous pouvez suivre les cours à votre rythme et y revenir autant de fois que nécessaire. Vous pouvez annuler votre inscription à tout moment depuis votre profil.
               </p>
             </CardContent>
           </Card>
@@ -57,7 +57,7 @@ export default function TermsPage() {
             <CardContent className="p-6 space-y-4">
               <h2 className="text-2xl font-bold">5. Limitation de responsabilité</h2>
               <p className="text-muted-foreground leading-relaxed">
-                Orange Digital Learning ne peut être tenu responsable des dommages directs, indirects, accessoires ou consécutifs
+                La plateforme d'E-Learning d'Orange Digital Center ne peut être tenu responsable des dommages directs, indirects, accessoires ou consécutifs
                 résultant de l'utilisation ou de l'impossibilité d'utiliser notre plateforme.
               </p>
             </CardContent>

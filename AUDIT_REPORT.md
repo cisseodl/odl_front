@@ -1,4 +1,4 @@
-# 🔍 RAPPORT D'AUDIT - Orange Digital Learning Platform
+# 🔍 RAPPORT D'AUDIT - Orange Digital Center Platform
 
 **Date**: $(date)  
 **Version du projet**: 2.0.0  

@@ -70,7 +70,7 @@ export function Header() {
             <Link href="/" aria-label="Accueil">
               <Image
                 src="/logo.png"
-                alt="Orange Digital Learning"
+                alt="Orange Digital Center"
                 width={120}
                 height={40}
                 priority

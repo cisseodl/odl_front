@@ -72,7 +72,7 @@ export default function HomePage() {
           <div className="max-w-4xl mx-auto text-left">
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-2 text-balance">
               <strong className="text-primary">Orange</strong>{" "}
-              <strong>Digital Learning</strong>
+              <strong>Digital Center</strong>
             </h1>
             <p className="text-xl text-muted-foreground mb-8 text-center">
               Plateforme d'Autoformation E-Learning
@@ -80,8 +80,8 @@ export default function HomePage() {
             <p className="text-xl md:text-2xl text-muted-foreground mb-8 max-w-3xl text-justify">
               Une initiative de <strong className="text-primary">Orange</strong>{" "}
               <strong>Digital Center Mali (ODC-Mali)</strong> qui est un
-              écosystème numérique complet dédié à l'accompagnement et à
-              l'innovation pour tous. ODC-Mali réunit quatre programmes
+              écosystème numérique complet dédié à la formation et à
+              l'insertion pour tous. ODC-Mali réunit quatre programmes
               complémentaires et gratuits :
               <strong> Orange Digital Kalanso</strong> (école du code),
               <strong> FabLab Solidaire</strong> (atelier de fabrication

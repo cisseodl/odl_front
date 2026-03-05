@@ -152,7 +152,7 @@
 4. **Design plat** : Pas assez visuel
 
 #### Recommandations UX/UI
-- ✅ **Ajouter un titre** : "Pourquoi choisir Orange Digital Learning ?"
+- ✅ **Ajouter un titre** : "Pourquoi choisir Orange Digital Center ?"
 - ✅ **Rendre plus spécifique** : "Apprenez avec des experts certifiés"
 - ✅ **Ajouter des chiffres** : "200+ heures de contenu", "50+ instructeurs"
 - ✅ **Améliorer le design** : Cards avec hover, gradients subtils

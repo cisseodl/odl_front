@@ -29,7 +29,7 @@ if (process.env.NEXT_PUBLIC_VERCEL_ENV === "production") {
 // Fonts are defined in globals.css via @theme inline
 
 export const metadata: Metadata = {
-  title: "Orange Digital Learning - Plateforme de Formation en Ligne",
+  title: "Orange Digital Center - Plateforme de Formation en Ligne",
   description:
     "Apprenez de nouvelles compétences avec des cours en ligne de qualité. Développement web, data science, design et plus encore.",
   generator: "v0.app",

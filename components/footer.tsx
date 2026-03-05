@@ -54,10 +54,10 @@ export function Footer() {
               <div className="rounded-lg bg-primary p-2.5 group-hover:bg-primary/95 transition-all duration-200 shadow-lg group-hover:shadow-xl">
                 <GraduationCap className="h-6 w-6 text-white" />
               </div>
-              <span className="text-xl font-bold text-white">Orange Digital Learning</span>
+              <span className="text-xl font-bold text-white">Orange Digital Center</span>
             </Link>
             <p className="text-sm text-white/70 mb-8 leading-relaxed max-w-md">
-              Plateforme de formation en ligne qui vous aide à acquérir de nouvelles compétences et à atteindre vos
+              Plateforme d'E-Learning qui vous aide à acquérir de nouvelles compétences et à atteindre vos
               objectifs professionnels.
             </p>
 
@@ -105,7 +105,7 @@ export function Footer() {
 
         {/* Bottom Bar - Style Orange Mali - Fond Noir */}
         <div className="flex flex-col md:flex-row items-center justify-between gap-4 mt-12 pt-8 border-t border-white/10">
-          <p className="text-sm text-white/60 font-medium">© {new Date().getFullYear()} Orange Digital Learning. Tous droits réservés.</p>
+          <p className="text-sm text-white/60 font-medium">© {new Date().getFullYear()} Orange Digital Center. Tous droits réservés.</p>
 
           {/* Social Media */}
           <div className="flex items-center gap-1">

@@ -1,4 +1,4 @@
-# ✅ RÉSUMÉ DES IMPLÉMENTATIONS - Orange Digital Learning
+# ✅ RÉSUMÉ DES IMPLÉMENTATIONS - Orange Digital Center
 
 ## 🎉 Statut : Erreur SSR Corrigée ✅
 

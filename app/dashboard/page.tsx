@@ -1154,7 +1154,7 @@ export default function DashboardPage() {
                 </div>
                 <h3 className="text-2xl font-bold">Continuez votre parcours d'apprentissage</h3>
                 <p className="text-muted-foreground">
-                  Découvrez de nouveaux cours et développez vos compétences avec Orange Digital Learning
+                  Découvrez de nouveaux cours et développez vos compétences avec Orange Digital Center
                 </p>
                 <div className="flex flex-col sm:flex-row gap-3 justify-center pt-4">
                   <Button size="lg" className="bg-primary text-white hover:bg-primary/90 font-semibold shadow-lg" asChild>

@@ -43,7 +43,7 @@ export default function AdminSettingsPage() {
 
   // Form state pour Configuration Générale
   const [generalConfigForm, setGeneralConfigForm] = useState({
-    homepageText: "Commencez à prendre avec Orange Digital Learning ODL.",
+    homepageText: "Commencez à prendre avec Orange Digital Center ODL.",
     homepageImage: null as File | null,
   })
 

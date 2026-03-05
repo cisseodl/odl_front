@@ -1,4 +1,4 @@
-# 🎓 Orange Digital Learning - Plateforme de Formation en Ligne
+# 🎓 Orange Digital Center - Plateforme de Formation en Ligne
 
 Une plateforme moderne de formation en ligne (LMS) développée pour **Orange Digital Center Mali**, construite avec Next.js, TypeScript et Tailwind CSS.
 

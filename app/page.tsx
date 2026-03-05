@@ -246,11 +246,12 @@ export default function HomePage() {
                     <div className="container mx-auto px-4 lg:px-8">
                       <div className="max-w-6xl mx-auto text-center space-y-6">
                         {/* Welcome Message */}
-                        <p className="text-3xl md:text-4xl lg:text-5xl text-white/90 font-medium drop-shadow-md leading-tight">
+                        <p className="text-3xl md:text-5xl lg:text-6xl text-white/90 font-medium drop-shadow-md leading-tight">
                           Bienvenue sur la plateforme d'E-Learning de 
-                          <span className="block text-primary">Orange</span> Digital Center<br />
+                          <span className="block text-primary">Orange</span>{" "}
+                          <span>Digital Center</span>
                         </p>
-                        <br />
+                        
                         {/* Title */}
                         <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold leading-tight text-white drop-shadow-lg">
                           {slide.title}

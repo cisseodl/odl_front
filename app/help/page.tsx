@@ -63,7 +63,7 @@ export default function HelpPage() {
             <CardContent className="p-6">
               <Accordion type="single" collapsible className="w-full">
                 <AccordionItem value="item-1">
-                  <AccordionTrigger>Comment créer un compte sur Orange Digital Learning ?</AccordionTrigger>
+                  <AccordionTrigger>Comment créer un compte sur Orange Digital Center ?</AccordionTrigger>
                   <AccordionContent>
                     Cliquez sur le bouton "S'inscrire" en haut à droite de la page. Remplissez le formulaire avec votre
                     nom, email et mot de passe. Vous recevrez un email de confirmation pour activer votre compte.
@@ -102,7 +102,7 @@ export default function HelpPage() {
                 </AccordionItem>
 
                 <AccordionItem value="item-6">
-                  <AccordionTrigger>Puis-je devenir formateur sur Orange Digital Learning ?</AccordionTrigger>
+                  <AccordionTrigger>Puis-je devenir formateur sur Orange Digital Center ?</AccordionTrigger>
                   <AccordionContent>
                     Oui ! Cliquez sur "Devenir Formateur" dans le menu principal. Vous devrez remplir un formulaire de
                     candidature et notre équipe vous contactera dans les 48 heures.
