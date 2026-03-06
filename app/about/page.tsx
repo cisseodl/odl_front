@@ -78,8 +78,8 @@ export default function HomePage() {
               Plateforme d'Autoformation E-Learning
             </p>
             <p className="text-xl md:text-2xl text-muted-foreground mb-8 max-w-3xl text-justify">
-              Une initiative de <strong className="text-primary">Orange</strong>{" "}
-              <strong>Digital Center Mali (ODC-Mali)</strong> qui est un
+              <strong className="text-primary">Orange</strong>{" "}
+              <strong>Digital Center Mali (ODC-Mali)</strong> est un
               écosystème numérique complet dédié à la formation et à
               l'insertion pour tous. ODC-Mali réunit quatre programmes
               complémentaires et gratuits :
