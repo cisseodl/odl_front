@@ -10,29 +10,68 @@ import { Progress } from "@/components/ui/progress"
 import { ProtectedRoute } from "@/components/protected-route"
 import { useQuery } from "@tanstack/react-query"
 import { evaluationService, certificateService } from "@/lib/api/services"
-import { toast } from "sonner"
-import Link from "next/link"
 import { serializeData } from "@/lib/utils/serialize"
 
 interface ExamResultsPageProps {
   params: Promise<{ courseId: string; examId: string }>
 }
 
+function extractAttemptId(payload: unknown): number | null {
+  if (!payload || typeof payload !== "object") return null
+  const data = payload as Record<string, unknown>
+  const nested = data.data as Record<string, unknown> | undefined
+  const id = data.id ?? data.attemptId ?? nested?.id ?? nested?.attemptId
+  const num = Number(id)
+  return Number.isFinite(num) && num > 0 ? num : null
+}
+
 export default function ExamResultsPage({ params }: ExamResultsPageProps) {
   const { courseId, examId } = use(params)
   const router = useRouter()
   const examIdNum = Number.parseInt(examId)
+  const courseIdNum = Number.parseInt(courseId)
   const searchParams = useSearchParams()
   const attemptIdFromUrl = searchParams?.get("attemptId")
-  // Ne jamais utiliser examId comme attemptId : l'ID de l'examen (7) ≠ l'ID de la tentative (6)
+
   const [resolvedAttemptId, setResolvedAttemptId] = useState<number | null>(
     attemptIdFromUrl ? Number.parseInt(attemptIdFromUrl, 10) : null
   )
-  const attemptId = attemptIdFromUrl ? Number.parseInt(attemptIdFromUrl, 10) : resolvedAttemptId
+  const [sessionChecked, setSessionChecked] = useState(!!attemptIdFromUrl)
+
+  const attemptId = attemptIdFromUrl
+    ? Number.parseInt(attemptIdFromUrl, 10)
+    : resolvedAttemptId
 
   const [certificateDisplayName, setCertificateDisplayName] = useState<string>("")
 
-  // Sans attemptId dans l'URL : récupérer la dernière tentative pour cet examen
+  useEffect(() => {
+    if (attemptIdFromUrl) {
+      const parsed = Number.parseInt(attemptIdFromUrl, 10)
+      if (!Number.isNaN(parsed)) {
+        setResolvedAttemptId(parsed)
+        setSessionChecked(true)
+      }
+      return
+    }
+
+    if (typeof window === "undefined" || Number.isNaN(examIdNum)) {
+      setSessionChecked(true)
+      return
+    }
+
+    const stored = sessionStorage.getItem(`exam-last-attempt-${courseId}-${examId}`)
+    if (stored) {
+      const parsed = Number.parseInt(stored, 10)
+      if (!Number.isNaN(parsed)) {
+        setResolvedAttemptId(parsed)
+        setSessionChecked(true)
+        return
+      }
+    }
+
+    setSessionChecked(true)
+  }, [attemptIdFromUrl, courseId, examId, examIdNum])
+
   const {
     data: latestAttempt,
     isLoading: isLoadingLatestAttempt,
@@ -43,22 +82,22 @@ export default function ExamResultsPage({ params }: ExamResultsPageProps) {
       const response = await evaluationService.getLatestAttemptForExam(examIdNum)
       if (response.ok && response.data) {
         const data = response.data?.data ?? response.data
-        const id = data?.id ?? data?.attemptId
-        if (id != null) setResolvedAttemptId(Number(id))
+        const id = extractAttemptId(data)
+        if (id != null) setResolvedAttemptId(id)
         return data
       }
       return null
     },
-    enabled: !attemptIdFromUrl && !Number.isNaN(examIdNum),
+    enabled: sessionChecked && !attemptIdFromUrl && !Number.isNaN(examIdNum) && resolvedAttemptId == null,
   })
 
   useEffect(() => {
-    if (!attemptIdFromUrl && latestAttempt?.id != null && resolvedAttemptId === null) {
-      setResolvedAttemptId(Number(latestAttempt.id))
+    if (!attemptIdFromUrl && latestAttempt && resolvedAttemptId == null) {
+      const id = extractAttemptId(latestAttempt)
+      if (id) setResolvedAttemptId(id)
     }
   }, [attemptIdFromUrl, latestAttempt, resolvedAttemptId])
 
-  // Récupérer les résultats de l'examen (avec l'ID de la tentative, pas l'ID de l'examen)
   const {
     data: attempt,
     isLoading: isLoadingResults,
@@ -66,7 +105,9 @@ export default function ExamResultsPage({ params }: ExamResultsPageProps) {
   } = useQuery({
     queryKey: ["examResults", attemptId],
     queryFn: async () => {
-      if (attemptId == null || Number.isNaN(attemptId)) throw new Error("ID de tentative manquant")
+      if (attemptId == null || Number.isNaN(attemptId)) {
+        throw new Error("Identifiant de tentative introuvable.")
+      }
       const response = await evaluationService.getExamResults(attemptId)
       if (response.ok && response.data) {
         return serializeData(response.data?.data ?? response.data)
@@ -74,10 +115,9 @@ export default function ExamResultsPage({ params }: ExamResultsPageProps) {
       throw new Error(response.message || "Résultats non disponibles")
     },
     enabled: attemptId != null && !Number.isNaN(attemptId),
+    retry: 1,
   })
 
-  // Priorité au nom renvoyé par l'API (attempt.certificateDisplayName) pour éviter d'afficher
-  // le nom d'un autre apprenant (sessionStorage partagé ou ancienne session). Doit être après la déclaration de attempt.
   useEffect(() => {
     if (attempt?.certificateDisplayName) {
       setCertificateDisplayName(attempt.certificateDisplayName)
@@ -93,24 +133,27 @@ export default function ExamResultsPage({ params }: ExamResultsPageProps) {
     } catch (_) {}
   }, [attemptId, attempt?.certificateDisplayName])
 
-  // Récupérer les certificats de l'utilisateur
-  const {
-    data: certificates = [],
-  } = useQuery({
+  const { data: certificates = [] } = useQuery({
     queryKey: ["certificates"],
     queryFn: () => certificateService.getMyCertificates(),
   })
 
   const score = attempt?.score ?? 0
   const isPassed = score >= 70
-  const certificate = certificates.find((cert: any) => cert.courseId === Number.parseInt(courseId))
-  // Nom pour le message de félicitations : priorité à l'API (évite le mauvais nom d'une autre session)
   const displayNameForMessage = attempt?.certificateDisplayName ?? certificateDisplayName
+  const certificate = certificates.find((cert: any) => cert.courseId === courseIdNum)
 
   const showLoading =
-    (!attemptIdFromUrl && isLoadingLatestAttempt) ||
+    (!attemptIdFromUrl && !sessionChecked) ||
+    (!attemptIdFromUrl && resolvedAttemptId == null && isLoadingLatestAttempt) ||
     (attemptId != null && isLoadingResults)
-  const noAttemptFound = !attemptIdFromUrl && isLatestFetched && resolvedAttemptId === null && !isLoadingLatestAttempt
+
+  const noAttemptFound =
+    !attemptIdFromUrl &&
+    sessionChecked &&
+    isLatestFetched &&
+    resolvedAttemptId === null &&
+    !isLoadingLatestAttempt
 
   if (Number.isNaN(examIdNum)) {
     return <div>Paramètres invalides</div>
@@ -130,7 +173,7 @@ export default function ExamResultsPage({ params }: ExamResultsPageProps) {
       <div className="flex flex-col items-center justify-center min-h-[400px] space-y-4">
         <XCircle className="h-12 w-12 text-destructive" />
         <h2 className="text-xl font-semibold">Aucune tentative trouvée</h2>
-        <p className="text-muted-foreground">
+        <p className="text-muted-foreground text-center max-w-md">
           Vous n&apos;avez pas encore passé cet examen ou vos tentatives ne sont pas encore disponibles.
         </p>
         <Button onClick={() => router.push(`/learn/${courseId}`)}>
@@ -161,7 +204,6 @@ export default function ExamResultsPage({ params }: ExamResultsPageProps) {
     <ProtectedRoute>
       <div className="min-h-screen bg-muted/30">
         <div className="container max-w-4xl mx-auto px-4 py-8">
-          {/* Header */}
           <div className="mb-6">
             <Button
               variant="ghost"
@@ -171,10 +213,9 @@ export default function ExamResultsPage({ params }: ExamResultsPageProps) {
               <ChevronLeft className="h-4 w-4 mr-2" />
               Retour au cours
             </Button>
-            <h1 className="text-3xl font-bold">Résultats de l'évaluation</h1>
+            <h1 className="text-3xl font-bold">Résultats de l&apos;évaluation</h1>
           </div>
 
-          {/* Message principal : succès (score, nom, certificat sous 3 jours) ou échec */}
           <Card className="mb-6 border-2 border-primary/20">
             <CardContent className="pt-6">
               {isPassed ? (
@@ -198,7 +239,7 @@ export default function ExamResultsPage({ params }: ExamResultsPageProps) {
                   <div>
                     <p className="text-lg font-semibold text-destructive">Échec</p>
                     <p className="text-muted-foreground mt-1">
-                      Vous n'avez pas atteint le score minimum de 70% pour réussir. Vous pouvez réessayer l'évaluation.
+                      Vous n&apos;avez pas atteint le score minimum de 70% pour réussir. Vous pouvez réessayer l&apos;évaluation.
                     </p>
                   </div>
                 </div>
@@ -206,28 +247,21 @@ export default function ExamResultsPage({ params }: ExamResultsPageProps) {
             </CardContent>
           </Card>
 
-          {/* Score Card */}
           <Card className="mb-6">
             <CardHeader>
               <CardTitle className="flex items-center justify-between">
                 <span>Votre score</span>
-                <Badge
-                  variant={isPassed ? "default" : "destructive"}
-                  className="text-lg px-4 py-1"
-                >
+                <Badge variant={isPassed ? "default" : "destructive"} className="text-lg px-4 py-1">
                   {score.toFixed(1)}%
                 </Badge>
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <Progress value={score} className="h-3" />
-              <p className="text-sm text-muted-foreground">
-                Score minimum requis : 70%
-              </p>
+              <p className="text-sm text-muted-foreground">Score minimum requis : 70%</p>
             </CardContent>
           </Card>
 
-          {/* Certificat Card (téléchargement si déjà disponible) */}
           {isPassed && certificate?.certificateUrl && (
             <Card className="mb-6 border-primary/50 bg-primary/5">
               <CardHeader>
@@ -238,7 +272,7 @@ export default function ExamResultsPage({ params }: ExamResultsPageProps) {
               </CardHeader>
               <CardContent className="space-y-4">
                 <p className="text-muted-foreground">
-                  Votre certificat est également disponible au téléchargement ci-dessous (il vous sera en plus envoyé par email).
+                  Votre certificat est également disponible au téléchargement ci-dessous.
                 </p>
                 <Button
                   onClick={() => window.open(certificate.certificateUrl, "_blank")}
@@ -251,7 +285,6 @@ export default function ExamResultsPage({ params }: ExamResultsPageProps) {
             </Card>
           )}
 
-          {/* Status Card */}
           <Card>
             <CardHeader>
               <CardTitle>Détails de la tentative</CardTitle>
@@ -271,32 +304,22 @@ export default function ExamResultsPage({ params }: ExamResultsPageProps) {
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Date de soumission :</span>
                   <span>
-                    {typeof attempt.createdAt === 'string' 
+                    {typeof attempt.createdAt === "string"
                       ? new Date(attempt.createdAt).toLocaleDateString("fr-FR")
-                      : attempt.createdAt instanceof Date
-                        ? attempt.createdAt.toLocaleDateString("fr-FR")
-                        : String(attempt.createdAt)}
+                      : String(attempt.createdAt)}
                   </span>
                 </div>
               )}
             </CardContent>
           </Card>
 
-          {/* Actions */}
           <div className="mt-6 flex gap-4">
-            <Button
-              variant="outline"
-              onClick={() => router.push(`/learn/${courseId}`)}
-              className="flex-1"
-            >
+            <Button variant="outline" onClick={() => router.push(`/learn/${courseId}`)} className="flex-1">
               Retour au cours
             </Button>
             {!isPassed && (
-              <Button
-                onClick={() => router.push(`/learn/${courseId}/exam/${examId}`)}
-                className="flex-1"
-              >
-                Réessayer l'évaluation
+              <Button onClick={() => router.push(`/learn/${courseId}/exam/${examId}`)} className="flex-1">
+                Réessayer l&apos;évaluation
               </Button>
             )}
           </div>

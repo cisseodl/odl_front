@@ -1011,11 +1011,11 @@ export const evaluationService = {
   },
 
   /**
-   * Récupérer la dernière tentative pour un examen (quand l'URL n'a pas d'attemptId).
-   * GET /api/evaluations/attempts/latest?evaluationId=7
+   * Dernière tentative de l'apprenant pour un examen (fallback si attemptId absent de l'URL)
+   * GET /api/evaluations/attempts/latest?evaluationId={examId}
    */
   async getLatestAttemptForExam(evaluationId: number): Promise<ApiResponse<any>> {
-    return apiClient.get(`${API_ENDPOINTS.evaluations.getResults}/latest?evaluationId=${evaluationId}`)
+    return apiClient.get(`${API_ENDPOINTS.evaluations.getLatestAttempt}?evaluationId=${evaluationId}`)
   },
 
   /**

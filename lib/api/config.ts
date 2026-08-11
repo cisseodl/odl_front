@@ -164,6 +164,7 @@ export const API_ENDPOINTS = {
     submit: "/api/evaluations/submit",
     submitSatisfaction: "/api/evaluations/attempts",
     getResults: "/api/evaluations/attempts",
+    getLatestAttempt: "/api/evaluations/attempts/latest",
   },
 } as const
 

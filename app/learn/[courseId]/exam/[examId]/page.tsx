@@ -195,6 +195,7 @@ export default function ExamPage({ params }: ExamPageProps) {
             `exam-certificate-${attemptId}`,
             JSON.stringify({ name: certificateName || "", email: certificateEmail || "" })
           )
+          sessionStorage.setItem(`exam-last-attempt-${courseId}-${examId}`, String(attemptId))
         } catch (_) {}
       }
       if (attemptId) {
