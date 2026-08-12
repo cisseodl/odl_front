@@ -5,6 +5,7 @@ frontend:
       commands:
         - corepack enable
         - corepack prepare pnpm@latest --activate
+        - echo "ignore-scripts=false" > .npmrc
         - pnpm install --frozen-lockfile
     build:
       commands:
