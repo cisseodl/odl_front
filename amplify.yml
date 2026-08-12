@@ -5,6 +5,7 @@ frontend:
       commands:
         - corepack enable
         - corepack prepare pnpm@latest --activate
+        - pnpm config set onlyBuiltDependencies sharp
         - pnpm install --frozen-lockfile
     build:
       commands:
