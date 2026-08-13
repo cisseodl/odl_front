@@ -334,6 +334,15 @@ class ApiClient {
       const data = await response.json()
 
       if (!response.ok) {
+        if (typeof data === "object" && "ok" in data) {
+          const cResponse = data as { ok: boolean; data?: any; message?: string }
+          return {
+            data: cResponse.data,
+            ok: cResponse.ok,
+            ko: !cResponse.ok,
+            message: cResponse.message,
+          }
+        }
         return {
           data: data,
           ok: false,
@@ -342,8 +351,14 @@ class ApiClient {
         }
       }
 
-      if (typeof data === "object" && ("ok" in data || "ko" in data)) {
-        return data as ApiResponse<T>
+      if (typeof data === "object" && "ok" in data) {
+        const cResponse = data as { ok: boolean; data?: any; message?: string }
+        return {
+          data: cResponse.data as T,
+          ok: cResponse.ok,
+          ko: !cResponse.ok,
+          message: cResponse.message,
+        }
       }
 
       return {

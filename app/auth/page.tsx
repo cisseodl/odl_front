@@ -110,6 +110,14 @@ export default function AuthPage() {
     }
   }
 
+  const enrichApprenantProfile = async (apprenantData: ApprenantCreateRequest): Promise<boolean> => {
+    const apprenantResponse = await apprenantService.createApprenant(apprenantData)
+    if (apprenantResponse.ok) return true
+    const msg = (apprenantResponse.message || "").toLowerCase()
+    // Compatibilité ancien backend : profil déjà créé lors du signup
+    return msg.includes("déjà un apprenant")
+  }
+
   // Handler pour nouveau apprenant (formulaire complet)
   const handleRegisterNew = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -130,40 +138,34 @@ export default function AuthPage() {
       // 1. Créer l'utilisateur
       await register(name, email, password)
       
-          // 2. Créer le profil Apprenant avec toutes les informations (sans cohorte pour nouveau apprenant)
+      // 2. Compléter le profil Apprenant (créé automatiquement lors du signup)
       const numero = formData.get("numero") as string
       const profession = formData.get("profession") as string
       const niveauEtude = formData.get("niveauEtude") as string
       const filiere = formData.get("filiere") as string
       const attentes = formData.get("attentes") as string
-      const conditionsAccepted = formData.get("conditionsAccepted") === "true" || formData.get("satisfaction") === "true" // Compatibilité avec l'ancien nom
+      const conditionsAccepted = formData.get("conditionsAccepted") === "true" || formData.get("satisfaction") === "true"
 
-      // Utiliser le "name" du User comme "username" pour l'apprenant
-      // Note: cohorteId n'est pas inclus pour les nouveaux apprenants
-      if (name && numero) {
-        const apprenantData: ApprenantCreateRequest = {
-          username: name.trim(), // Utiliser le nom complet du User
-          numero: numero.trim(),
-          profession: profession?.trim() || undefined,
-          niveauEtude: niveauEtude || undefined,
-          filiere: filiere?.trim() || undefined,
-          attentes: attentes?.trim() || undefined,
-          conditionsAccepted: conditionsAccepted,
-          satisfaction: conditionsAccepted, // Compatibilité avec l'ancien nom
-          // cohorteId n'est pas inclus pour les nouveaux apprenants
-          activate: true,
-        }
+      const apprenantData: ApprenantCreateRequest = {
+        username: name.trim(),
+        numero: numero?.trim() || undefined,
+        profession: profession?.trim() || undefined,
+        niveauEtude: niveauEtude || undefined,
+        filiere: filiere?.trim() || undefined,
+        attentes: attentes?.trim() || undefined,
+        conditionsAccepted: conditionsAccepted,
+        satisfaction: conditionsAccepted,
+        activate: true,
+      }
 
-        const apprenantResponse = await apprenantService.createApprenant(apprenantData)
-        
-        if (!apprenantResponse.ok) {
-          setResultDialogType("warning")
-          setResultDialogTitle("Inscription partielle")
-          setResultDialogDescription("Votre compte a été créé avec succès, mais une erreur est survenue lors de la création de votre profil apprenant. Vous pourrez compléter votre profil plus tard depuis votre espace personnel.")
-          setShowResultDialog(true)
-          setIsLoading(false)
-          return
-        }
+      const profileOk = await enrichApprenantProfile(apprenantData)
+      if (!profileOk) {
+        setResultDialogType("warning")
+        setResultDialogTitle("Inscription partielle")
+        setResultDialogDescription("Votre compte a été créé avec succès, mais une erreur est survenue lors de la complétion de votre profil apprenant. Vous pourrez compléter votre profil plus tard depuis votre espace personnel.")
+        setShowResultDialog(true)
+        setIsLoading(false)
+        return
       }
 
       // Succès complet
@@ -209,39 +211,35 @@ export default function AuthPage() {
       // 1. Créer l'utilisateur
       await register(name, email, password)
       
-      // 2. Créer le profil Apprenant avec toutes les informations (cohorte obligatoire pour étudiant des cohortes passées)
+      // 2. Compléter le profil Apprenant (créé automatiquement lors du signup)
       const numero = formData.get("numero") as string
       const profession = formData.get("profession") as string
       const niveauEtude = formData.get("niveauEtude") as string
       const filiere = formData.get("filiere") as string
       const attentes = formData.get("attentes") as string
-      const conditionsAccepted = formData.get("conditionsAccepted") === "true" || formData.get("satisfaction") === "true" // Compatibilité avec l'ancien nom
+      const conditionsAccepted = formData.get("conditionsAccepted") === "true" || formData.get("satisfaction") === "true"
 
-      // Utiliser le "name" du User comme "username" pour l'apprenant
-      if (name && numero) {
-        const apprenantData: ApprenantCreateRequest = {
-          username: name.trim(), // Utiliser le nom complet du User
-          numero: numero.trim(),
-          profession: profession?.trim() || undefined,
-          niveauEtude: niveauEtude || undefined,
-          filiere: filiere?.trim() || undefined,
-          attentes: attentes?.trim() || undefined,
-          conditionsAccepted: conditionsAccepted,
-          satisfaction: conditionsAccepted, // Compatibilité avec l'ancien nom
-          cohorteId: Number.parseInt(cohorteId), // Cohorte obligatoire pour étudiant des cohortes passées
-          activate: true,
-        }
+      const apprenantData: ApprenantCreateRequest = {
+        username: name.trim(),
+        numero: numero?.trim() || undefined,
+        profession: profession?.trim() || undefined,
+        niveauEtude: niveauEtude || undefined,
+        filiere: filiere?.trim() || undefined,
+        attentes: attentes?.trim() || undefined,
+        conditionsAccepted: conditionsAccepted,
+        satisfaction: conditionsAccepted,
+        cohorteId: Number.parseInt(cohorteId),
+        activate: true,
+      }
 
-        const apprenantResponse = await apprenantService.createApprenant(apprenantData)
-        
-        if (!apprenantResponse.ok) {
-          setResultDialogType("warning")
-          setResultDialogTitle("Inscription partielle")
-          setResultDialogDescription("Votre compte a été créé avec succès, mais une erreur est survenue lors de la création de votre profil apprenant. Vous pourrez compléter votre profil plus tard depuis votre espace personnel.")
-          setShowResultDialog(true)
-          setIsLoading(false)
-          return
-        }
+      const profileOk = await enrichApprenantProfile(apprenantData)
+      if (!profileOk) {
+        setResultDialogType("warning")
+        setResultDialogTitle("Inscription partielle")
+        setResultDialogDescription("Votre compte a été créé avec succès, mais une erreur est survenue lors de la complétion de votre profil apprenant. Vous pourrez compléter votre profil plus tard depuis votre espace personnel.")
+        setShowResultDialog(true)
+        setIsLoading(false)
+        return
       }
 
       // Succès complet
