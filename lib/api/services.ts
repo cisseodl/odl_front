@@ -982,10 +982,15 @@ export const evaluationService = {
     const textAnswersMap: Record<string, string> = {}
     Object.entries(answers).forEach(([questionId, answer]) => {
       const qId = Number.parseInt(questionId)
-      if (typeof answer === 'number') {
+      if (typeof answer === "number") {
         answersMap[qId.toString()] = answer
-      } else {
-        textAnswersMap[qId.toString()] = answer
+      } else if (typeof answer === "string") {
+        const num = Number.parseInt(answer, 10)
+        if (!Number.isNaN(num) && String(num) === answer.trim()) {
+          answersMap[qId.toString()] = num
+        } else {
+          textAnswersMap[qId.toString()] = answer
+        }
       }
     })
     const body: any = {

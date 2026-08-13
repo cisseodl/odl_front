@@ -74,6 +74,9 @@ export default function ExamPage({ params }: ExamPageProps) {
     enabled: !!exam && !Number.isNaN(examIdNum),
   })
   const alreadyPassed = (latestAttempt as any)?.status === "PASSED"
+  const pendingAttemptId = (latestAttempt as any)?.status === "PENDING"
+    ? ((latestAttempt as any)?.id ?? (latestAttempt as any)?.attemptId)
+    : null
   const passedAttemptId = (latestAttempt as any)?.id ?? (latestAttempt as any)?.attemptId
 
   const [currentQuestion, setCurrentQuestion] = useState(0)
@@ -86,7 +89,15 @@ export default function ExamPage({ params }: ExamPageProps) {
   const [certificateName, setCertificateName] = useState("")
   const [certificateEmail, setCertificateEmail] = useState("")
 
-  // Ne plus restaurer l'étape "exam" depuis sessionStorage : chaque apprenant doit
+  // Reprendre une tentative en attente de satisfaction (ex. modal fermé sans soumettre)
+  useEffect(() => {
+    if (pendingAttemptId && examStep === "exam" && !showSatisfactionModal) {
+      setSubmittedAttemptId(pendingAttemptId)
+      setShowSatisfactionModal(true)
+    }
+  }, [pendingAttemptId, examStep, showSatisfactionModal])
+
+  // Ne plus restaurer l'étape "exam" depuis sessionStorage
   // toujours voir le formulaire (nom complet + email pour le certificat) avant l'évaluation,
   // pour éviter d'afficher le nom/email d'un autre utilisateur (ex. ancienne session).
   useEffect(() => {
@@ -149,6 +160,13 @@ export default function ExamPage({ params }: ExamPageProps) {
     }
   }
 
+  const resolveAttemptId = (data: any): number | null => {
+    if (!data) return null
+    const raw = data?.data ?? data
+    const id = raw?.id ?? raw?.attemptId
+    return typeof id === "number" ? id : null
+  }
+
   // Mutation pour soumettre l'examen
   const submitExamMutation = useMutation({
     mutationFn: async () => {
@@ -180,15 +198,21 @@ export default function ExamPage({ params }: ExamPageProps) {
         certificateEmail: certificateEmail?.trim() || undefined,
       })
       if (response.ok && response.data) {
-        // La réponse backend est dans CResponse, donc response.data contient les données
-        // Si response.data est un objet avec une propriété data, extraire celle-ci
         const attemptData = response.data?.data || response.data
+        const attemptId = resolveAttemptId(attemptData)
+        if (attemptId) return attemptData
+        // Fallback : récupérer la dernière tentative si l'ID n'est pas dans la réponse
+        const latest = await evaluationService.getLatestAttemptForExam(examIdNum)
+        if (latest.ok && latest.data) {
+          const latestData = (latest.data as any)?.data ?? latest.data
+          if (resolveAttemptId(latestData)) return latestData
+        }
         return attemptData
       }
       throw new Error(response.message || "Erreur lors de la soumission")
     },
     onSuccess: (data: any) => {
-      const attemptId = data?.id || data?.data?.id || (data?.data && typeof data.data === 'object' && data.data.id ? data.data.id : null)
+      const attemptId = resolveAttemptId(data)
       if (attemptId && typeof window !== "undefined") {
         try {
           sessionStorage.setItem(
@@ -202,22 +226,29 @@ export default function ExamPage({ params }: ExamPageProps) {
         setSubmittedAttemptId(attemptId)
         setShowSatisfactionModal(true)
       } else {
-        // Essayer de récupérer depuis la structure de réponse CResponse
-        const responseData = data?.data || data
-        if (responseData?.id) {
-          setSubmittedAttemptId(responseData.id)
-          setShowSatisfactionModal(true)
-        } else {
-          toast.error(t("common.error") || "Error", {
-            description: t("exam.couldNotGetAttemptId"),
-          })
-        }
+        toast.error(t("common.error") || "Error", {
+          description: t("exam.couldNotGetAttemptId"),
+        })
       }
     },
-    onError: (error: any) => {
+    onError: async (error: any) => {
       const msg = error?.message || ""
       const alreadySubmitted = /déjà|already|déjà soumis|already submitted/i.test(msg)
       if (alreadySubmitted) {
+        try {
+          const latest = await evaluationService.getLatestAttemptForExam(examIdNum)
+          const latestData = latest.ok && latest.data ? ((latest.data as any)?.data ?? latest.data) : null
+          const attemptId = resolveAttemptId(latestData)
+          if (latestData?.status === "PENDING" && attemptId) {
+            setSubmittedAttemptId(attemptId)
+            setShowSatisfactionModal(true)
+            return
+          }
+          if (latestData?.status === "PASSED" && attemptId) {
+            router.push(`/learn/${courseId}/exam/${examId}/results?attemptId=${attemptId}`)
+            return
+          }
+        } catch (_) {}
         toast.info(t("exam.alreadyPassed") || "Vous avez déjà réussi cet examen", {
           description: t("exam.alreadyPassedCannotRetake") || "Vous ne pouvez pas repasser cette évaluation. Consultez vos résultats.",
           action: {
